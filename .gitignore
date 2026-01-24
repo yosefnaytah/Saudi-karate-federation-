@@ -1,0 +1,17 @@
+# Environment
+.env
+.venv/
+
+# Python
+__pycache__/
+
+# Database
+instance/
+*.db
+
+# VS Code / Cursor
+.vscode/
+.cursor/
+
+# OS
+.DS_Store
