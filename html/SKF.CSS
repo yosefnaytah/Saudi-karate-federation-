@@ -1,0 +1,198 @@
+body {
+    background-image: url("fig-skf.png"); /* Use a relative path */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+
+.login-container {
+    background: rgba(255, 255, 255, 0.8);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    width: 350px;
+}
+
+h2 {
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+label {
+    display: block;
+    text-align: left;
+    width: 100%;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    align-items: center;
+}
+
+input {
+    padding: 10px;
+    margin: 5px 0;
+    width: 100%;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+
+button {
+    padding: 10px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 10px;
+}
+
+button:hover {
+    background: #218838;
+}
+.login-links {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.login-links a {
+    display: block;
+    color: #007bff;
+    text-decoration: none;
+    font-size: 14px;
+    margin-top: 5px;
+}
+
+.login-links a:hover {
+    text-decoration: underline;
+}
+.register-container input {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0; /* Adjust spacing */
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+/* Language Switcher */
+.language-switch {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+.language-menu {
+    display: none;
+    position: absolute;
+    top: 40px;
+    left: 10px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.language-menu div {
+    cursor: pointer;
+    padding: 5px 10px;
+}
+
+.language-menu div:hover {
+    background: #f0f0f0;
+}
+
+.register-page {
+    background-image: url("fig2-skf.png"); /* Use a relative path */
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    width: 100%;
+    height: 100vh;
+}
+ /* Background for Forgot Password Page */
+.forgot-password-page {
+    background: url("fig2-skf.png") no-repeat center center/cover;
+    background-size: cover;
+    height: 100vh;
+}
+
+/* Forgot Password Form Styling */
+.forgot-password-container {
+    position: absolute;
+    top: 50%;
+    left: 70%;
+    transform: translate(-50%, -50%);
+    width: 400px;
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.forgot-password-container h2 {
+    margin-bottom: 10px;
+    font-size: 22px;
+    font-weight: bold;
+}
+
+.forgot-password-container p {
+    font-size: 14px;
+    color: #555;
+}
+
+.forgot-password-container input {
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.reset-btn {
+    width: 100%;
+    padding: 10px;
+    background: green;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.reset-btn:hover {
+    background: darkgreen;
+}
+
+.back-to-login {
+    display: block;
+    margin-top: 10px;
+    color: blue;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.back-to-login:hover {
+    text-decoration: underline;
+}

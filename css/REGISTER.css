@@ -1,0 +1,60 @@
+/* Full-Screen Background for Registration Page */
+body {
+    background-image: url('file:///Users/yosef_naytah/Documents/CSS/SKF.CSS/fig-skf.png');  
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+    font-family: Arial, sans-serif;
+}
+.background-register {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: url('file:///Users/yosef_naytah/Documents/CSS/SKF.CSS/fig-skf.png') no-repeat center center/cover;
+    z-index: -1;
+}
+.register-container {
+    width: 350px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    margin: 100px auto;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+/* Language Switcher */
+.language-switch {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    cursor: pointer;
+    font-size: 20px;
+}
+
+.language-menu {
+    display: none;
+    position: absolute;
+    top: 40px;
+    left: 10px;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    padding: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.language-menu div {
+    cursor: pointer;
+    padding: 5px 10px;
+}
+
+.language-menu div:hover {
+    background: #f0f0f0;
+}

@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الاتحاد السعودي للكاراتيه | Saudi Karate Federation</title>
+    <style>
+        /* General Styles and CSS Classes */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+        
+        body {
+            background-color: #f8f8f8;
+            overflow-x: hidden;
+        }
+        
+        /* Common button class - Example of general class */
+        .btn {
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: #3a7d44;
+            color: white;
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+        
+        /* Button hover effects */
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn-primary:hover {
+            background-color: #2c6033;
+        }
+        
+        .btn-outline:hover {
+            background-color: rgba(255,255,255,0.1);
+        }
+        
+        /* Header Styles with Animation */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 30px;
+            position: relative;
+            overflow: hidden;
+            z-index: 100; /* Layering - header above other elements */
+        }
+        
+        /* Animated background */
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(120deg, #7ed09d, #2e8b57);
+            z-index: -1;
+            opacity: 0.9;
+            transition: background 0.5s ease;
+        }
+        
+        /* Mouse movement animation effect */
+        .header:hover::before {
+            background: linear-gradient(120deg, #2e8b57, #7ed09d);
+        }
+        
+        /* Navigation menu */
+        .nav-menu {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .nav-item {
+            position: relative;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            text-decoration: none;
+            padding: 5px 0;
+            transition: color 0.3s ease;
+        }
+        
+        /* Underline animation for nav items */
+        .nav-item::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 0;
+            height: 2px;
+            background-color: white;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-item:hover::after {
+            width: 100%;
+        }
+        
+        /* Login button styling */
+        .login-btn {
+            background-color: #3a7d44;
+            color: white;
+            padding: 10px 25px;
+            border-radius: 5px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .login-btn:hover {
+            background-color: #2c6033;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        
+        /* Vision 2030 styling */
+        .vision-logo {
+            text-align: center;
+        }
+        
+        .vision-title {
+            color: white;
+            font-size: 12px;
+            margin: 0;
+        }
+        
+        .vision-year {
+            color: white;
+            font-size: 22px;
+            font-weight: bold;
+            margin: 0;
+        }
+        
+        /* Hero Section with Enhanced Styling */
+        .hero {
+            position: relative;
+            height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: white;
+            overflow: hidden;
+            z-index: 1; /* Layering */
+        }
+        
+        /* Hero background */
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: url('hero-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            filter: brightness(0.7);
+            z-index: -1;
+        }
+        
+        /* Hero content with shadow effect */
+        .hero-content {
+            background-color: rgba(0,0,0,0.6);
+            padding: 40px;
+            border-radius: 10px;
+            max-width: 700px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            transform: translateY(0);
+            transition: transform 0.5s ease, box-shadow 0.5s ease;
+        }
+        
+        .hero-content:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.4);
+        }
+        
+        .hero h1 {
+            font-size: 36px;
+            margin-bottom: 20px;
+        }
+        
+        .hero p {
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+        }
+        
+        /* Features Section with Cards */
+        .features {
+            padding: 80px 0;
+            background-color: #f9f9f9;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .section-title {
+            text-align: center;
+            font-size: 32px;
+            margin-bottom: 50px;
+            color: #333;
+            position: relative;
+        }
+        
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(to right, #7ed09d, #2e8b57);
+            border-radius: 2px;
+        }
+        
+        .features-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+        
+        /* Card styling with hover effects */
+        .feature-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 30px;
+            width: 300px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative; /* For layering */
+            z-index: 1;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+        
+        .feature-icon {
+            font-size: 40px;
+            margin-bottom: 20px;
+            color: #2e8b57;
+        }
+        
+        .feature-card h3 {
+            font-size: 20px;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .feature-card p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        /* News Section with iframe */
+        .news-section {
+            padding: 80px 0;
+            background-color: white;
+        }
+        
+        .news-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+        }
+        
+        .news-content {
+            flex: 1;
+            min-width: 300px;
+        }
+        
+        .news-content h2 {
+            font-size: 28px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        
+        .news-content p {
+            margin-bottom: 20px;
+            color: #666;
+            line-height: 1.6;
+        }
+        
+        /* Video iframe container with shadow */
+       /* Video Section Styles */
+.video-section {
+    padding: 80px 0;
+    background-color: #f8f8f8;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+.video-container {
+    position: relative;
+    width: 100%;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    transition: transform 0.3s ease;
+}
+
+.video-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+}
+        
+        /* Footer styling with enhanced features */
+        .footer {
+            background-color: #333;
+            color: white;
+            padding: 60px 0 20px;
+            position: relative;
+            z-index: 10;
+        }
+        
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 40px;
+            padding: 0 20px;
+        }
+        
+        .footer-section {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .footer-logo {
+            margin-bottom: 20px;
+        }
+        
+        .footer-title {
+            font-size: 18px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .footer-title::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            bottom: -8px;
+            width: 50px;
+            height: 2px;
+            background-color: #2e8b57;
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+        
+        .footer-links a {
+            color: #ddd;
+            text-decoration: none;
+            transition: color 0.3s ease, transform 0.3s ease;
+            display: inline-block;
+        }
+        
+        .footer-links a:hover {
+            color: #7ed09d;
+            transform: translateX(-5px);
+        }
+        
+        .social-icons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .social-icon {
+            color: white;
+            background-color: #444;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        
+        .social-icon:hover {
+            background-color: #2e8b57;
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+        }
+        
+        .copyright {
+            text-align: center;
+            padding-top: 30px;
+            margin-top: 40px;
+            border-top: 1px solid #444;
+            color: #aaa;
+        }
+        
+        /* Team information section */
+        .team-info {
+            background-color: #444;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        
+        .team-info p {
+            margin: 5px 0;
+            font-size: 14px;
+            color: #ddd;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header with Animation -->
+    <header class="header">
+        <!-- Vision 2030 Logo -->
+        <div class="vision-logo">
+            <p class="vision-title">VISION (رؤية)</p>
+            <p class="vision-year">2030</p>
+        </div>
+        
+        <!-- Navigation Menu - Simplified -->
+        <nav class="nav-menu">
+            <a href="about.html" class="nav-item">ABOUT US</a>
+            <a href="media-center.html" class="nav-item">MEDIA CENTER</a>
+            <a href="REGISTER.html" class="nav-item">REGISTER</a>
+            <a href="contact.html" class="nav-item">CONTACT US</a>
+        </nav>
+        
+        <!-- Login Button -->
+        <a href="index.html" class="login-btn">LOGIN</a>
+    </header>
+    
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1>مرحباً بكم في الاتحاد السعودي للكاراتيه</h1>
+            <p>تعزيز التميز في الكاراتيه في جميع أنحاء المملكة العربية السعودية</p>
+            <div class="hero-buttons">
+                <a href="REGISTER.html" class="btn btn-primary">سجل الآن</a>
+                <a href="about.html" class="btn btn-outline">تعرف علينا</a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- Features Section -->
+    <section class="features">
+        <h2 class="section-title">خدماتنا</h2>
+        <div class="features-container">
+            <div class="feature-card">
+                <div class="feature-icon">🏆</div>
+                <h3>البطولات</h3>
+                <p>تسجيل وإدارة البطولات على مستوى المملكة</p>
+                <a href="#" class="btn btn-primary">المزيد</a>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">🥋</div>
+                <h3>اختبارات الأحزمة</h3>
+                <p>تنظيم وإدارة اختبارات ترقية الأحزمة</p>
+                <a href="#" class="btn btn-primary">المزيد</a>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-icon">👨‍🏫</div>
+                <h3>تدريب الحكام</h3>
+                <p>برامج تدريب وتأهيل الحكام والمدربين</p>
+                <a href="#" class="btn btn-primary">المزيد</a>
+            </div>
+        </div>
+    </section>
+    
+    <!-- News Section with iframe -->
+    <section class="news-section">
+        <div class="section-title">أخبار الكاراتيه</div>
+        <div class="news-container">
+            <div class="news-content">
+                <h2>أحدث أخبار الاتحاد السعودي للكاراتيه</h2>
+                <p>تابع أحدث الأحداث والبطولات والمسابقات في عالم الكاراتيه. الاتحاد السعودي للكاراتيه يعمل على تطوير رياضة الكاراتيه في المملكة وتعزيز مشاركة أبطالنا في المحافل الدولية.</p>
+                <p>انضم إلينا لمتابعة أحدث الأخبار والفعاليات والإنجازات.</p>
+                <a href="#" class="btn btn-primary">عرض جميع الأخبار</a>
+            </div>
+            
+            <!-- YouTube iframe for Karate video - fulfills iframe requirement -->
+       <!-- Features Section ends -->
+</section>
+
+<!-- Video Section -->
+ <!-- Video Section -->
+<section class="video-section">
+    <div class="container">
+        <h2 class="section-title">مقاطع فيديو</h2>
+        <div class="video-container">
+            <iframe 
+                width="100%" 
+                height="500" 
+                src="https://www.youtube.com/embed/B2qOg7bf7V8?autoplay=1&mute=1&playsinline=1" 
+                title="Saudi Karate Federation Video" 
+                frameborder="0" 
+                allow="autoplay; encrypted-media" 
+                allowfullscreen>
+            </iframe>
+        </div>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="footer">
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <div class="footer-logo">الاتحاد السعودي للكاراتيه</div>
+                <p>تعزيز التميز في الكاراتيه في جميع أنحاء المملكة العربية السعودية</p>
+                <div class="social-icons">
+                    <a href="https://www.snapchat.com/add/skf2034" class="social-icon">SN</a>
+                    <a href="https://x.com/skf2034" class="social-icon">X</a>
+                    <a href="https://www.instagram.com/skf2034" class="social-icon">IG</a>
+                    <a href="https://www.youtube.com/@skf2034" class="social-icon">YT</a>
+                </div>
+            </div>
+            
+            <div class="footer-section">
+                <h3 class="footer-title">روابط سريعة</h3>
+                <ul class="footer-links">
+                    <li><a href="#">الرئيسية</a></li>
+                    <li><a href="about.html">عن الاتحاد</a></li>
+                    <li><a href="#">البطولات</a></li>
+                    <li><a href="media-center.html">المركز الإعلامي</a></li>
+                    <li><a href="REGISTER.html">التسجيل</a></li>
+                    <li><a href="contact.html">اتصل بنا</a></li>
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h3 class="footer-title">تواصل معنا</h3>
+                <p>العنوان: الرياض، المملكة العربية السعودية</p>
+                <p>البريد الإلكتروني: info@skf.sa</p>
+                <p>الهاتف:  +966114803710                </p>
+                
+                <!-- Team information for assignment requirement -->
+                <div class="team-info">
+                    <p><strong>فريق التطوير / Development Team</strong></p>
+                    <p>Name: Yosef Naytah | ID:2143380 | Email: yosef.h.naytah@gmail.com</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="copyright">
+            © 2025 الاتحاد السعودي للكاراتيه - جميع الحقوق محفوظة
+        </div>
+    </footer>
+</body>
+</html>

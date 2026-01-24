@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - Saudi Karate Federation</title>
+    <style>
+        body {
+            margin: 0;
+            background-color: white;
+        }
+        /* Header */
+        .header {
+            width: 100%;
+            height: 190px;
+            background-image: url('SKF2.jpeg');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+        /* Language Switcher */
+        .language-switch {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            cursor: pointer;
+            font-size: 20px;
+        }
+        .language-menu {
+            display: none;
+            position: absolute;
+            top: 40px;
+            left: 10px;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .language-menu div {
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+        .language-menu div:hover {
+            background: #f0f0f0;
+        }
+        /* About Us Section */
+        .about-section {
+            width: 80%;
+            margin: 50px auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .about-text {
+            width: 55%;
+            text-align: right;
+            font-size: 18px;
+        }
+        .title-box {
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 10px;
+            background: #f0f0f0;
+            width: fit-content;
+            margin: 30px auto;
+            border-radius: 5px;
+        }
+        .about-image img {
+            width: 400px;
+            border-radius: 10px;
+        }
+        .services-table {
+    width: 80%;
+    margin: 20px auto;
+    border-collapse: collapse;
+    text-align: center;
+}
+
+.services-table td {
+    border: 1px solid #ddd;
+    padding: 15px;
+    font-size: 18px;
+    background-color: #f9f9f9;
+    text-align: right; /* Align text to the left */
+    direction: rtl; /* Keep Arabic text readable */
+}
+
+.services-table tr:nth-child(even) {
+    background-color: #f0f0f0;
+}
+
+.services-table td[colspan="3"] {
+    font-weight: bold;
+    background-color: #e0e0e0;
+}
+.register-button {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.register-button a {
+    display: inline-block;
+    padding: 15px 25px;
+    font-size: 18px;
+    background-color: #d41b1b;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: background 0.3s;
+}
+
+.register-button a:hover {
+    background-color: #a31616;
+}
+.social-media-icons {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.social-icon {
+    width: 50px; /* Adjust size as needed */
+    margin: 0 10px;
+    transition: transform 0.3s;
+}
+
+.social-icon:hover {
+    transform: scale(1.2);
+}
+    </style>
+</head>
+<body>
+    <!-- Language Switcher -->
+    <div class="language-switch" onclick="toggleLanguageMenu()">🌍</div>
+    <div class="language-menu" id="languageMenu">
+        <div onclick="changeLanguage('en')">English</div>
+        <div onclick="changeLanguage('ar')">العربية</div>
+    </div>
+    
+    <!-- Header -->
+    <div class="header"></div>
+    
+    <!-- About Us Title -->
+    <div class="title-box">عن الاتحاد السعودي للكاراتيه</div>
+ 
+    <!-- About Us Section -->
+    <div class="about-section">
+        <div class="about-image">
+            <img src='skf3.png' alt="Saudi Karate Federation">
+        </div>
+        <div class="about-text">
+            <p>
+ .بالاطلاع على تاريخ رياضة الكاراتيه على المستوى المحلي نجد أن هذه الرياضة أدخلت إلى المملكة العربية السعودية وتم  تأسيس أول اتحاد للعبة عام 1395هـ / 1975م بقرار من صاحب السمو الملكي الأمير / فيصل بن فهد بن عبدالعزيز "رحمه الله"، والجدير بالذكر أنه لم تدرج لعبة الكاراتيه ضمن الألعاب الأولمبية إلا حديثاً، بعد أن أضيفت خمس رياضات جديدة إلى برنامج دورة الألعاب الأولمبية وهي: الكاراتيه، والتسلق، وركوب الأمواج والتزلج، والبيسبول لترتفع عدد الرياضات في برنامج أولمبياد طوكيو إلى 33 رياضة مقابل 28 في أولمبياد ريو دي جانيرو، وتعد لعبة الكاراتيه من أشهر وأقدم أنواع فنون القتال وتصنف تحديداً ضمن رياضات الدفاع عن النفس وكلمة "الكاراتيه" هي مصطلح ياباني يقصد به "اليد الخالية" لتعبر عن نوع من الدفاع عن النفس في وقت منع فيه استخدام السلاح من جانب القوات اليابانية، وتطورت الكاراتيه وانتشرت لتصبح رياضة مشهورة تقام لها العديد من البطولات ويشارك فيها لاعبون من شتى بقاع العالم.على الصعيد المحلي تشهد رياضة الكاراتيه قيام (141) نادياً و(53) صالة ومراكز خاصة موزعة على مختلف مناطق المملكة بعدد لاعبين قدره 228,603  لاعب ولاعبة في مختلف درجات الأحزمة، إلى جانب التدريب في المدارس والجامعات والكليات والقطاعات العسكرية لزيادة ممارسة هذا النوع من الألعاب القتالية لفنون الدفاع عن النفس، ووصول اللعبة لأكبر قدر ممكن من شرائح المجتمع المختلفة ورفع مستوى اللياقة وزرع الثقة بالنفس والدفاع عن النفس.
+            </p>         
+        </div>
+    </div>
+
+    <!-- Services Title (Correctly Centered) -->
+    <div class="title-box">ماذا نقدم</div>
+    <table class="services-table">
+        <tr><td>1- تصنيف اللاعبين المحلي</td></tr>
+        <tr><td>2- اختبارات الاحزمه ومواعيدها وتسليم الشهادات</td></tr>
+        <tr><td>3- مشاهده لايف للمواجهات</td></tr>
+        <tr><td>4- سجل نتايج المباريات لايف</td></tr>
+        <tr><td>5- اختبار افتراضي للحصول على شهادات الحزام قبل التسجيل في الاختبار الحضوري</td></tr>
+        <tr><td>6- نتايج الترتيب العام في كل البطولات</td></tr>
+        <tr><td>7- قرعات المنافسه</td></tr>
+        <tr><td>8- التسجيل في البطولات</td></tr>
+        <tr><td>9- التسجيل في اختبار الاحزمه</td></tr>
+        <tr><td>10- تسجيل الحكام في البطولات</td></tr>
+        <tr><td>11- اعلانات للفعاليات وورش العمل</td></tr>
+    </table>
+    <div class="register-button">
+        <a href="register.html">REGISTER NOW IN THE SAUDI KARATE FEDERATION</a>
+    </div>
+    <div class="social-media-icons">
+        <a href="https://www.youtube.com/@skf2034" target="_blank">
+            <img src="Y-logo-skf.jpg" alt="YouTube" class="social-icon">
+        </a>
+        <a href="https://x.com/skf2034" target="_blank">
+            <img src="x-logo-skf.png" alt="X" class="social-icon">
+        </a>
+        <a href="https://www.instagram.com/skf2034" target="_blank">
+            <img src="Instagram-logo-skf.jpg" alt="Instagram" class="social-icon">
+        </a>
+        <a href="https://www.snapchat.com/add/skf2034" target="_blank">
+            <img src="SS-logo-skf.png" alt="Snapchat" class="social-icon">
+        </a>
+    </div>
+    
+    <script>
+        function toggleLanguageMenu() {
+            var menu = document.getElementById("languageMenu");
+            menu.style.display = (menu.style.display === "block") ? "none" : "block";
+        }
+        function changeLanguage(lang) {
+            alert("Language switched to " + (lang === "en" ? "English" : "العربية"));
+            // Here you can add functionality to actually change the page language dynamically.
+        }
+    </script>
+</body>
+</html>

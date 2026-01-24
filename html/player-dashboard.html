@@ -1,0 +1,274 @@
+ <!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Saudi Karate Federation</title>
+    <!-- Link to your CSS files here -->
+    <link rel="stylesheet" href="dashboard.css">
+    <script src="auth.js" defer></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Updated Header with Navigation Buttons -->
+        <header class="dashboard-header">
+            <!-- Left: Logo -->
+            <div class="header-left">
+                <div class="header-logo">Saudi Karate Federation</div>
+            </div>
+            
+            <!-- Center: Navigation Buttons -->
+            <div class="header-center">
+                <a href="transfers.html" class="nav-button">TRANSFERS</a>
+                <a href="tournament.html" class="nav-button">TOURNAMENT</a>
+            </div>
+            
+            <!-- Right: User Role and Vision 2030 -->
+            <div class="header-right">
+                <div class="user-role" id="userDisplay">Player Dashboard</div>
+                
+                <!-- Vision 2030 Logo -->
+                <div class="vision-logo">
+                    <p class="vision-title">VISION (رؤية)</p>
+                    <p class="vision-year">2030</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Menu Toggle Button (on right side) -->
+        <div class="menu-toggle" id="menuToggle">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </div>
+
+        <!-- Navigation Menu (slides from right) -->
+        <nav class="dashboard-nav" id="dashboardNav">
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#dashboard" class="nav-link active">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#tournaments" class="nav-link">Tournaments</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#belt-tests" class="nav-link">Belt Tests</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#ranked-players" class="nav-link">Ranked Players</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#virtual-exam" class="nav-link">Virtual Exam</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#matches-live" class="nav-link">Matches Live</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#media-center" class="nav-link">Media Center</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#profile" class="nav-link">Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="logout()">Logout</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#technical-support" class="nav-link">Technical Support</a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="dashboard-content">
+            
+            <!-- Stats Section -->
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-value">15</div>
+                    <div class="stat-label">Tournaments</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">42</div>
+                    <div class="stat-label">Matches</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">28</div>
+                    <div class="stat-label">Wins</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">Brown</div>
+                    <div class="stat-label">Current Belt</div>
+                </div>
+            </div>
+            
+            <!-- Upcoming Matches with Animation -->
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Upcoming Matches</h2>
+                </div>
+                
+                <div class="match-container">
+                    <div class="match-card active">
+                        <p><strong>Yousef</strong><br>vs<br><strong>Omar</strong></p>
+                        <p>Time: 16:00</p>
+                        <p>Start in: 10 mins</p>
+                    </div>
+                    <div class="match-card">
+                        <p><strong>Ali</strong><br>vs<br><strong>Salem</strong></p>
+                        <p>Time: 17:00</p>
+                        <p>Start in: 25 mins</p>
+                    </div>
+                    <div class="match-card">
+                        <p><strong>Khaled</strong><br>vs<br><strong>Fahad</strong></p>
+                        <p>Time: 18:00</p>
+                        <p>Start in: 40 mins</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Recent Results -->
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Recent Results</h2>
+                </div>
+                
+                <div class="data-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Tournament</th>
+                                <th>Opponent</th>
+                                <th>Result</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Mar 5, 2025</td>
+                                <td>Eastern Province Open</td>
+                                <td>Ahmed Al-Qahtani</td>
+                                <td>Win</td>
+                                <td>5-2</td>
+                            </tr>
+                            <tr>
+                                <td>Mar 5, 2025</td>
+                                <td>Eastern Province Open</td>
+                                <td>Fahad Al-Sulami</td>
+                                <td>Win</td>
+                                <td>3-1</td>
+                            </tr>
+                            <tr>
+                                <td>Mar 6, 2025</td>
+                                <td>Eastern Province Open</td>
+                                <td>Khalid Al-Dosari</td>
+                                <td>Loss</td>
+                                <td>1-3</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Upcoming Events -->
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Upcoming Events</h2>
+                </div>
+                
+                <div class="events-grid">
+                    <div class="event-item">
+                        <div class="event-date">April 15</div>
+                        <div class="event-details">
+                            <h3>Riyadh Regional Championship</h3>
+                            <p>Location: King Saud University Stadium</p>
+                            <p>Category: Kumite - Male 75kg</p>
+                        </div>
+                        <a href="#" class="btn">View Details</a>
+                    </div>
+                    <div class="event-item">
+                        <div class="event-date">May 10</div>
+                        <div class="event-details">
+                            <h3>Black Belt Test</h3>
+                            <p>Location: Central Dojo, Jeddah</p>
+                            <p>Status: Registered</p>
+                        </div>
+                        <a href="#" class="btn">Prepare for Test</a>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Toggle Navigation Menu
+        const menuToggle = document.getElementById('menuToggle');
+        const dashboardNav = document.getElementById('dashboardNav');
+        
+        menuToggle.addEventListener('click', function() {
+            this.classList.toggle('active');
+            dashboardNav.classList.toggle('active');
+        });
+        
+        // Match Cards Animation
+        const cards = document.querySelectorAll('.match-card');
+        let current = 0;
+        
+        setInterval(() => {
+            // Remove current card
+            cards[current].classList.remove('active');
+            cards[current].classList.add('out');
+            
+            // Move to next
+            current = (current + 1) % cards.length;
+            
+            // Reset next card position instantly
+            setTimeout(() => {
+                cards.forEach((card, i) => {
+                    if (i !== current) card.classList.remove('out');
+                });
+                cards[current].classList.add('active');
+            }, 1000); // Wait for slide out transition to finish
+        }, 10000); // Every 10 seconds
+        
+        // Animate cards on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const statCards = document.querySelectorAll('.stat-card');
+            const dashboardCards = document.querySelectorAll('.dashboard-card');
+            const tableContainers = document.querySelectorAll('.data-table-container');
+            
+            // Delay for each card to create staggered effect
+            setTimeout(() => {
+                statCards.forEach((card, index) => {
+                    setTimeout(() => {
+                        card.classList.add('loaded');
+                    }, index * 100);
+                });
+            }, 300);
+            
+            setTimeout(() => {
+                dashboardCards.forEach((card, index) => {
+                    setTimeout(() => {
+                        card.classList.add('loaded');
+                    }, index * 200);
+                });
+            }, 600);
+            
+            setTimeout(() => {
+                tableContainers.forEach((container) => {
+                    container.classList.add('loaded');
+                });
+            }, 800);
+        });
+    </script>
+    <script>
+        // Check authentication when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            if (checkAuth()) {
+                displayUserInfo();
+            }
+        });
+    </script>
+</body>
+</html>

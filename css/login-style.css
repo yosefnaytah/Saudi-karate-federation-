@@ -1,0 +1,340 @@
+/* login-style.css */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary-color: #dc3545;
+    --secondary-color: #0066cc;
+    --text-color: #333333;
+    --light-color: #ffffff;
+    --border-color: #e0e0e0;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+    --gradient-start: #1a237e;
+    --gradient-end: #4a148c;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Poppins', Arial, sans-serif;
+    background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+    color: var(--text-color);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    overflow-x: hidden;
+}
+
+.container {
+    width: 100%;
+    max-width: 1200px;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+/* Language Switcher */
+.language-switch {
+    position: absolute;
+    top: 30px;
+    left: 30px;
+    width: 50px;
+    height: 50px;
+    background-color: var(--light-color);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    box-shadow: 0 4px 10px var(--shadow-color);
+    z-index: 100;
+    transition: all 0.3s ease;
+}
+
+.language-switch:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+}
+
+.language-switch i {
+    font-size: 24px;
+    color: var(--primary-color);
+}
+
+.language-menu {
+    position: absolute;
+    top: 90px;
+    left: 30px;
+    background-color: var(--light-color);
+    border-radius: 8px;
+    padding: 10px 0;
+    box-shadow: 0 5px 15px var(--shadow-color);
+    display: none;
+    z-index: 100;
+    min-width: 120px;
+}
+
+.language-menu div {
+    padding: 10px 20px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.language-menu div:hover {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+/* Login Container */
+.login-container {
+    background-color: var(--light-color);
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    width: 100%;
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* Logo Container */
+.logo-container {
+    text-align: center;
+    padding: 40px 0 20px;
+}
+
+.logo-circle {
+    width: 80px;
+    height: 80px;
+    background-color: var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 15px;
+}
+
+.logo-text {
+    color: var(--light-color);
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.logo-container h1 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 10px;
+}
+
+/* Form Container */
+.form-container {
+    padding: 20px 50px 40px;
+}
+
+.form-container h2 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 30px;
+    text-align: center;
+}
+
+.input-group {
+    position: relative;
+    margin-bottom: 25px;
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.input-group:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(220, 53, 69, 0.15);
+}
+
+.input-icon {
+    width: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: rgba(220, 53, 69, 0.05);
+    height: 100%;
+    padding: 15px 0;
+}
+
+.input-icon i {
+    color: var(--primary-color);
+    font-size: 18px;
+}
+
+.input-group input {
+    flex: 1;
+    padding: 15px;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    color: var(--text-color);
+    font-family: 'Poppins', Arial, sans-serif;
+}
+
+.input-group input::placeholder {
+    color: #999;
+}
+
+/* Login Button */
+.login-button {
+    width: 100%;
+    padding: 15px;
+    background-color: var(--primary-color);
+    color: var(--light-color);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+    transition: all 0.3s ease;
+    font-family: 'Poppins', Arial, sans-serif;
+}
+
+.login-button:hover {
+    background-color: #b02a37;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+}
+
+.login-button i {
+    font-size: 14px;
+}
+
+/* Form Footer */
+.form-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 25px;
+}
+
+.form-footer a {
+    text-decoration: none;
+    color: var(--secondary-color);
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.form-footer a:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
+/* Decoration Shapes */
+.decoration-shapes {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.shape {
+    position: absolute;
+    border-radius: 50%;
+}
+
+.shape-1 {
+    width: 150px;
+    height: 150px;
+    background-color: rgba(220, 53, 69, 0.05);
+    top: -50px;
+    right: -50px;
+}
+
+.shape-2 {
+    width: 100px;
+    height: 100px;
+    background-color: rgba(0, 102, 204, 0.05);
+    bottom: 50px;
+    left: -30px;
+}
+
+.shape-3 {
+    width: 70px;
+    height: 70px;
+    background-color: rgba(220, 53, 69, 0.08);
+    bottom: -20px;
+    right: 80px;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .login-container {
+        max-width: 400px;
+    }
+    
+    .form-container {
+        padding: 20px 30px 40px;
+    }
+    
+    .language-switch {
+        top: 20px;
+        left: 20px;
+        width: 40px;
+        height: 40px;
+    }
+    
+    .language-switch i {
+        font-size: 20px;
+    }
+    
+    .language-menu {
+        top: 70px;
+        left: 20px;
+    }
+    
+    .logo-container h1 {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .form-container {
+        padding: 20px 20px 30px;
+    }
+    
+    .logo-circle {
+        width: 70px;
+        height: 70px;
+    }
+    
+    .logo-text {
+        font-size: 20px;
+    }
+    
+    .form-footer {
+        flex-direction: column;
+        gap: 15px;
+        align-items: center;
+    }
+    
+    .input-group {
+        margin-bottom: 20px;
+    }
+}

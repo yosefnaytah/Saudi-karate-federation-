@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account - Saudi Karate Federation</title>
+    <link rel="stylesheet" href="SKF.CSS">
+    <script src="auth.js" defer></script>
+    <style>
+    /* Move Create Account Box to the Right */
+.register-container {
+    position: absolute;
+    top: 50%;
+    left: 70%; 
+    transform: translate(-50%, -50%);
+    width: 400px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+        .register-container input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .register-btn {
+            background: green;
+            color: white;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .register-btn:hover {
+            background: darkgreen;
+        }
+
+        .back-to-login {
+            display: block;
+            margin-top: 10px;
+            color: #007bff;
+            text-decoration: none;
+        }
+
+        .back-to-login:hover {
+            text-decoration: underline;
+        }
+        .background-register {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    background: url('fig-skf.png') no-repeat center center/cover;
+    background-size: cover;
+    z-index: -1;
+}
+.register-container input {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+.register-container input, .register-container select {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+}
+/* Style for role selection */
+.role-select {
+    width: 100%;
+    padding: 10px;
+    margin: 8px 0;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: white;
+}
+    </style>
+</head>
+<body  class="register-page">
+    <!-- Language Switcher -->
+    <div class="language-switch" onclick="toggleLanguageMenu()">🌍</div>
+    <div class="language-menu" id="languageMenu">
+        <div onclick="changeLanguage('en')">English</div>
+        <div onclick="changeLanguage('ar')">العربية</div>
+    </div>
+
+    <!-- Registration Form Container -->
+    <div class="register-container">
+        <h2>Create Your Account</h2>
+        <form onsubmit="return handleRegister(event)" enctype="multipart/form-data" id="registerForm">
+            <input type="text" name="full-name" placeholder="Full Name" required>
+            <input type="text" id="national-id" name="national-id" placeholder="National ID (10 digits)" required>
+            <input type="text" id="player-id" name="player-id" placeholder="Player ID Card" required>
+            <input type="file" id="player-id-upload" name="player-id-upload" accept=".jpg, .jpeg, .png, .pdf" required>
+            <input type="tel" id="phone" name="phone" placeholder="Phone Number (10 digits, starts with 05)" required>
+            <input type="text" name="club-name" placeholder="Club Name" required>
+            <input type="email" name="email" placeholder="Email Address" required>
+            <!-- Role Selection Dropdown -->
+<select name="user-role" id="user-role" class="role-select" required>
+    <option value="" disabled selected>Select Your Role</option>
+    <option value="player">Player</option>
+    <option value="referee">Referee</option>
+    <option value="coach">Coach</option>
+    <option value="administrator">Administrator</option>
+</select>
+            <input type="text" name="username" placeholder="Username" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <input type="password" name="confirm-password" placeholder="Confirm Password" required>
+            <button type="submit" class="register-btn">Register</button>
+        </form>
+        <a href="index.html" class="back-to-login">Back to Login</a>
+    </div>
+
+    <!-- JavaScript for Language Switcher -->
+    <script>
+        // Language switching functions
+        function toggleLanguageMenu() {
+            const menu = document.getElementById('languageMenu');
+            menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function changeLanguage(lang) {
+            toggleLanguageMenu();
+            // TODO: Implement actual language switching logic
+            // For now, just close the menu
+        }
+
+        // Form validation - Make it global so auth.js can access it
+        window.validateForm = function(event) {
+            const nationalId = document.getElementById('national-id').value;
+            const phone = document.getElementById('phone').value;
+            const fileInput = document.getElementById('player-id-upload');
+            const password = document.querySelector('input[name="password"]').value;
+            const confirmPassword = document.querySelector('input[name="confirm-password"]').value;
+            const userRole = document.getElementById('user-role').value;
+
+            // Validate National ID (10 digits)
+            if (!/^\d{10}$/.test(nationalId)) {
+                alert('National ID must be exactly 10 digits.');
+                return false;
+            }
+
+            // Validate Phone Number (Starts with '05' and has 10 digits)
+            if (!/^05\d{8}$/.test(phone)) {
+                alert('Phone number must be 10 digits and start with \'05\'.');
+                return false;
+            }
+
+            // Validate File Upload (Only JPG, JPEG, PNG, PDF)
+            const allowedExtensions = /(\.jpg|\.jpeg|\.png|\.pdf)$/i;
+            if (!allowedExtensions.exec(fileInput.value)) {
+                alert('Only JPG, JPEG, PNG, and PDF files are allowed for Player ID Card.');
+                fileInput.value = '';
+                return false;
+            }
+
+            // Validate Role Selection
+            if (userRole === "") {
+                alert('Please select your role.');
+                return false;
+            }
+
+            // Validate Passwords
+            if (password !== confirmPassword) {
+                alert('Passwords do not match.');
+                return false;
+            }
+
+            return true;
+        }
+    </script>
+</body>
+</html>
