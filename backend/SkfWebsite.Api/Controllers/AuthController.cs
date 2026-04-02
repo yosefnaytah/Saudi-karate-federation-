@@ -22,12 +22,27 @@ public class AuthController : ControllerBase
     {
         try
         {
+            var normalizedRole = (request.Role ?? string.Empty).Trim().ToLower();
+            var allowedPublicRoles = new HashSet<string>
+            {
+                "player",
+                "coach",
+                "referee",
+                "club_admin",
+                "referees_plus"
+            };
+
+            if (!allowedPublicRoles.Contains(normalizedRole))
+            {
+                return BadRequest(new { message = "Invalid role. Public registration is limited to player, coach, referee, club admin, and referees plus." });
+            }
+
             var client = await _supabaseService.GetClient();
 
             // Create user account in Supabase Auth
             var authResponse = await client.Auth.SignUp(request.Email, request.Password);
             
-            if (authResponse.User == null)
+            if (authResponse?.User == null)
             {
                 return BadRequest(new { message = "Failed to create user account" });
             }
@@ -35,7 +50,7 @@ public class AuthController : ControllerBase
             // Insert additional user data into our custom users table
             var user = new Models.User
             {
-                Id = authResponse.User.Id,
+                Id = authResponse.User.Id ?? string.Empty,
                 FullName = request.FullName,
                 NationalId = request.NationalId,
                 PlayerId = request.PlayerId,
@@ -43,7 +58,7 @@ public class AuthController : ControllerBase
                 ClubName = request.ClubName,
                 Email = request.Email,
                 Username = request.Username,
-                Role = request.Role.ToLower(),
+                Role = normalizedRole,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -76,7 +91,7 @@ public class AuthController : ControllerBase
             // Authenticate with Supabase
             var authResponse = await client.Auth.SignIn(request.Email, request.Password);
             
-            if (authResponse.User == null)
+            if (authResponse?.User == null)
             {
                 return Unauthorized(new { message = "Invalid credentials" });
             }
@@ -84,15 +99,25 @@ public class AuthController : ControllerBase
             // Get additional user data
             var user = await _supabaseService.GetUserByEmail(request.Email);
 
+            // Extract access token - try multiple methods for Supabase 1.0.0 compatibility
+            string? accessToken = null;
+            
+            // Method 1: Try CurrentSession (most reliable after SignIn)
+            var session = client.Auth.CurrentSession;
+            if (session != null && !string.IsNullOrEmpty(session.AccessToken))
+            {
+                accessToken = session.AccessToken;
+            }
+
             return Ok(new {
                 message = "Login successful",
-                token = authResponse.Session?.AccessToken,
+                token = accessToken,
                 user = new {
                     id = authResponse.User.Id,
-                    email = authResponse.User.Email,
-                    fullName = user?.FullName,
-                    role = user?.Role,
-                    username = user?.Username
+                    email = authResponse.User.Email ?? string.Empty,
+                    fullName = user?.FullName ?? string.Empty,
+                    role = user?.Role ?? string.Empty,
+                    username = user?.Username ?? string.Empty
                 }
             });
         }

@@ -1,0 +1,1420 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Saudi Karate Federation</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <script src="auth.js" defer></script>
+    <style>
+        /* Admin-specific styles */
+        .pending-approvals-banner {
+            background: linear-gradient(120deg, #ff9800, #f57c00);
+            color: white;
+            padding: 15px 20px;
+            margin: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .pending-approvals-banner strong {
+            font-size: 18px;
+        }
+        .pending-count {
+            background: white;
+            color: #ff9800;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 20px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .btn-primary {
+            background-color: #3a7d44;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #2e8b57;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .btn-danger {
+            background-color: #d32f2f;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-danger:hover {
+            background-color: #c62828;
+        }
+        .btn-success {
+            background-color: #28a745;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-success:hover {
+            background-color: #218838;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        .filter-section {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .filter-section select,
+        .filter-section input {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .status-pending {
+            background-color: #ffc107;
+            color: #000;
+        }
+        .status-approved {
+            background-color: #28a745;
+            color: white;
+        }
+        .status-rejected {
+            background-color: #dc3545;
+            color: white;
+        }
+        .status-active {
+            background-color: #28a745;
+            color: white;
+        }
+        .status-inactive {
+            background-color: #6c757d;
+            color: white;
+        }
+        .status-upcoming {
+            background-color: #17a2b8;
+            color: white;
+        }
+        .status-live {
+            background-color: #28a745;
+            color: white;
+        }
+        .status-completed {
+            background-color: #6c757d;
+            color: white;
+        }
+        .status-cancelled {
+            background-color: #dc3545;
+            color: white;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3a7d44;
+        }
+        .modal-header h2 {
+            margin: 0;
+            color: #3a7d44;
+        }
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: #000;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        .user-details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .detail-item {
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        .detail-item strong {
+            color: #3a7d44;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header with Navigation -->
+        <header class="dashboard-header">
+            <div class="header-left">
+                <div class="header-logo">Saudi Karate Federation - Admin</div>
+            </div>
+            
+            <div class="header-center">
+                <a href="tournament.html" class="nav-button">TOURNAMENTS</a>
+            </div>
+            
+            <div class="header-right">
+                <div class="user-role" id="userDisplay">Loading...</div>
+                <div class="vision-logo">
+                    <p class="vision-title">VISION (رؤية)</p>
+                    <p class="vision-year">2030</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Menu Toggle Button -->
+        <div class="menu-toggle" id="menuToggle">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </div>
+
+        <!-- Navigation Menu -->
+        <nav class="dashboard-nav" id="dashboardNav">
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#dashboard" class="nav-link active" onclick="showSection('dashboard')">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#user-management" class="nav-link" onclick="showSection('user-management')">User Management</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#pending-approvals" class="nav-link" onclick="showSection('pending-approvals')">Pending Approvals</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#tournament-management" class="nav-link" onclick="showSection('tournament-management')">Tournaments</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#registration-management" class="nav-link" onclick="showSection('registration-management')">Registrations</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#club-management" class="nav-link" onclick="showSection('club-management')">Clubs</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#profile" class="nav-link" onclick="showSection('profile')">Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="logout()">Logout</a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="dashboard-content">
+            
+            <!-- Dashboard Overview Section -->
+            <section id="dashboard-section" class="dashboard-section">
+                <!-- Stats Section -->
+                <div class="stats-container">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalUsers">0</div>
+                        <div class="stat-label">Total Users</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="pendingApprovals">0</div>
+                        <div class="stat-label">Pending Approvals</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="activeTournaments">0</div>
+                        <div class="stat-label">Active Tournaments</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalRegistrations">0</div>
+                        <div class="stat-label">Total Registrations</div>
+                    </div>
+                </div>
+
+                <!-- Pending Approvals Banner -->
+                <div class="pending-approvals-banner" id="pendingBanner" style="display: none;">
+                    <div>
+                        <strong>⚠️ Pending User Approvals</strong>
+                        <p style="margin: 5px 0 0 0; font-size: 14px;">Users are waiting for your approval</p>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <span class="pending-count" id="pendingCount">0</span>
+                        <button class="btn-primary" onclick="showSection('pending-approvals')">Review Now</button>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header">
+                        <h2 class="dashboard-card-title">Recent Activity</h2>
+                    </div>
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>User</th>
+                                    <th>Action</th>
+                                    <th>Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentActivityBody">
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 20px; color: #666;">
+                                        Loading activity...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- User Management Section -->
+            <section id="user-management-section" class="dashboard-section" style="display: none;">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header">
+                        <h2 class="dashboard-card-title">User Management</h2>
+                        <button class="btn-primary" onclick="openCreateUserModal()">+ Add User</button>
+                    </div>
+                    
+                    <div class="filter-section">
+                        <select id="filterRole" onchange="filterUsers()">
+                            <option value="">All Roles</option>
+                            <option value="player">Player</option>
+                            <option value="coach">Coach</option>
+                            <option value="referee">Referee</option>
+                            <option value="club_admin">Club Admin</option>
+                            <option value="referees_plus">Referees +</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                        <select id="filterStatus" onchange="filterUsers()">
+                            <option value="">All Status</option>
+                            <option value="true">Active</option>
+                            <option value="false">Inactive</option>
+                        </select>
+                        <input type="text" id="searchUsers" placeholder="Search by name, email, or ID..." onkeyup="filterUsers()" style="flex: 1; min-width: 200px;">
+                    </div>
+
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Club</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 20px; color: #666;">
+                                        Loading users...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Pending Approvals Section -->
+            <section id="pending-approvals-section" class="dashboard-section" style="display: none;">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header">
+                        <h2 class="dashboard-card-title">Pending User Approvals</h2>
+                    </div>
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Club</th>
+                                    <th>Registered</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pendingApprovalsBody">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 20px; color: #666;">
+                                        Loading pending approvals...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tournament Management Section -->
+            <section id="tournament-management-section" class="dashboard-section" style="display: none;">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header">
+                        <h2 class="dashboard-card-title">Tournament Management</h2>
+                        <button class="btn-primary" onclick="openCreateTournamentModal()">+ Create Tournament</button>
+                    </div>
+                    
+                    <div class="filter-section">
+                        <select id="filterTournamentStatus" onchange="filterTournaments()">
+                            <option value="">All Status</option>
+                            <option value="upcoming">Upcoming</option>
+                            <option value="live">Live</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                        <input type="text" id="searchTournaments" placeholder="Search tournaments..." onkeyup="filterTournaments()" style="flex: 1; min-width: 200px;">
+                    </div>
+
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
+                                    <th>Registrations</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tournamentsTableBody">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 20px; color: #666;">
+                                        Loading tournaments...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Registration Management Section -->
+            <section id="registration-management-section" class="dashboard-section" style="display: none;">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header">
+                        <h2 class="dashboard-card-title">Registration Management</h2>
+                    </div>
+                    
+                    <div class="filter-section">
+                        <select id="filterRegistrationStatus" onchange="filterRegistrations()">
+                            <option value="">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="approved">Approved</option>
+                            <option value="rejected">Rejected</option>
+                        </select>
+                        <select id="filterPaymentStatus" onchange="filterRegistrations()">
+                            <option value="">All Payment Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="paid">Paid</option>
+                            <option value="refunded">Refunded</option>
+                        </select>
+                        <input type="text" id="searchRegistrations" placeholder="Search registrations..." onkeyup="filterRegistrations()" style="flex: 1; min-width: 200px;">
+                    </div>
+
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Tournament</th>
+                                    <th>Player</th>
+                                    <th>Email</th>
+                                    <th>Category</th>
+                                    <th>Belt</th>
+                                    <th>Status</th>
+                                    <th>Payment</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="registrationsTableBody">
+                                <tr>
+                                    <td colspan="8" style="text-align: center; padding: 20px; color: #666;">
+                                        Loading registrations...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Club Management Section -->
+            <section id="club-management-section" class="dashboard-section" style="display: none;">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header">
+                        <h2 class="dashboard-card-title">Club Management</h2>
+                        <button class="btn-primary" onclick="openCreateClubModal()">+ Add Club</button>
+                    </div>
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Club Name</th>
+                                    <th>Location</th>
+                                    <th>Contact</th>
+                                    <th>Members</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clubsTableBody">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 20px; color: #666;">
+                                        Loading clubs...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Profile Section -->
+            <section id="profile-section" class="dashboard-section" style="display: none;">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header">
+                        <h2 class="dashboard-card-title">My Profile</h2>
+                    </div>
+                    <div id="profileContent">
+                        <p>Loading profile...</p>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modals will be added here via JavaScript -->
+    <div id="modalContainer"></div>
+
+    <!-- JavaScript -->
+    <script>
+        // Base URL for API endpoints
+        // .NET backend typically runs on port 5000 (HTTP) or 5001 (HTTPS)
+        const API_BASE_URL = 'http://localhost:5000/api';
+        let allUsers = [];
+        let allTournaments = [];
+        let allRegistrations = [];
+        let allClubs = [];
+        const saudiCities = [
+            'Riyadh', 'Jeddah', 'Makkah', 'Madinah', 'Dammam', 'Khobar', 'Dhahran',
+            'Taif', 'Tabuk', 'Abha', 'Khamis Mushait', 'Buraidah', 'Hail', 'Jazan',
+            'Najran', 'Al Baha', 'Arar', 'Sakaka', 'Yanbu', 'Al Jubail', 'Al Ahsa',
+            'Qatif', 'Hafar Al-Batin', 'Unaizah'
+        ];
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAdminAuth();
+            initializeMenu();
+            loadDashboardStats();
+            loadAllData();
+        });
+
+        // Check if user is admin
+        function checkAdminAuth() {
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+            
+            if (!token || !userStr) {
+                alert('Please login to access the admin dashboard.');
+                window.location.href = 'index.html';
+                return;
+            }
+            
+            const user = JSON.parse(userStr);
+            const userRole = user.role?.toLowerCase();
+            
+            if (userRole !== 'admin') {
+                alert('Access denied. This dashboard is for SKF Admins only.');
+                // Redirect to appropriate dashboard
+                let dashboardUrl = 'index.html';
+                switch(userRole) {
+                    case 'player':
+                        dashboardUrl = 'player-dashboard.html';
+                        break;
+                    case 'coach':
+                        dashboardUrl = 'player-dashboard.html';
+                        break;
+                    case 'referee':
+                        dashboardUrl = 'player-dashboard.html';
+                        break;
+                    case 'club_admin':
+                        dashboardUrl = 'player-dashboard.html';
+                        break;
+                    case 'referees_plus':
+                        dashboardUrl = 'player-dashboard.html';
+                        break;
+                }
+                window.location.href = dashboardUrl;
+                return;
+            }
+            
+            displayUserInfo();
+        }
+
+        // Display user info
+        function displayUserInfo() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const userDisplayElement = document.getElementById('userDisplay');
+            
+            if (userDisplayElement && user.fullName) {
+                userDisplayElement.textContent = `Welcome, ${user.fullName} (SKF Admin)`;
+            }
+        }
+
+        // Initialize menu toggle
+        function initializeMenu() {
+            const menuToggle = document.getElementById('menuToggle');
+            const dashboardNav = document.getElementById('dashboardNav');
+            
+            menuToggle.addEventListener('click', function() {
+                this.classList.toggle('active');
+                dashboardNav.classList.toggle('active');
+            });
+        }
+
+        // Show section
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.dashboard-section').forEach(section => {
+                section.style.display = 'none';
+            });
+            
+            // Remove active class from all nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Show selected section
+            const section = document.getElementById(sectionName + '-section');
+            if (section) {
+                section.style.display = 'block';
+            }
+            
+            // Add active class to clicked nav link
+            event.target.classList.add('active');
+            
+            // Close menu on mobile
+            const dashboardNav = document.getElementById('dashboardNav');
+            const menuToggle = document.getElementById('menuToggle');
+            if (window.innerWidth <= 768) {
+                dashboardNav.classList.remove('active');
+                menuToggle.classList.remove('active');
+            }
+            
+            // Load section data
+            switch(sectionName) {
+                case 'user-management':
+                    loadUsers();
+                    break;
+                case 'pending-approvals':
+                    loadPendingApprovals();
+                    break;
+                case 'tournament-management':
+                    loadTournaments();
+                    break;
+                case 'registration-management':
+                    loadRegistrations();
+                    break;
+                case 'club-management':
+                    loadClubs();
+                    break;
+                case 'profile':
+                    loadProfile();
+                    break;
+            }
+        }
+
+        // Load dashboard statistics
+        async function loadDashboardStats() {
+            try {
+                const token = localStorage.getItem('token');
+                
+                // Load users
+                const usersResponse = await fetch(`${API_BASE_URL}/admin/users`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (usersResponse.ok) {
+                    const users = await usersResponse.json();
+                    document.getElementById('totalUsers').textContent = users.length || 0;
+                    
+                    const pending = users.filter(u => !u.is_active && u.role !== 'player').length;
+                    document.getElementById('pendingApprovals').textContent = pending;
+                    document.getElementById('pendingCount').textContent = pending;
+                    
+                    if (pending > 0) {
+                        document.getElementById('pendingBanner').style.display = 'flex';
+                    }
+                }
+                
+                // Load tournaments
+                const tournamentsResponse = await fetch(`${API_BASE_URL}/tournament`);
+                if (tournamentsResponse.ok) {
+                    const tournaments = await tournamentsResponse.json();
+                    const active = tournaments.filter(t => t.status === 'upcoming' || t.status === 'live').length;
+                    document.getElementById('activeTournaments').textContent = active;
+                }
+                
+                // Load registrations
+                // This would need a separate endpoint or calculate from tournaments
+                document.getElementById('totalRegistrations').textContent = '0';
+                
+            } catch (error) {
+                console.error('Error loading dashboard stats:', error);
+            }
+        }
+
+        // Load all data
+        async function loadAllData() {
+            await Promise.all([
+                loadUsers(),
+                loadTournaments(),
+                loadRegistrations(),
+                loadClubs()
+            ]);
+        }
+
+        // Load users
+        async function loadUsers() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/users`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    allUsers = await response.json();
+                    displayUsers(allUsers);
+                } else {
+                    // If endpoint doesn't exist, use demo data
+                    allUsers = [];
+                    displayUsers([]);
+                }
+            } catch (error) {
+                console.error('Error loading users:', error);
+                displayUsers([]);
+            }
+        }
+
+        // Display users
+        function displayUsers(users) {
+            const tbody = document.getElementById('usersTableBody');
+            if (!tbody) return;
+            
+            if (users.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 20px; color: #666;">
+                            No users found. API endpoint may need to be implemented.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = users.map(user => `
+                <tr>
+                    <td>${user.full_name || 'N/A'}</td>
+                    <td>${user.email || 'N/A'}</td>
+                    <td>${formatRoleName(user.role)}</td>
+                    <td>${user.club_name || 'N/A'}</td>
+                    <td><span class="status-badge ${user.is_active ? 'status-active' : 'status-inactive'}">${user.is_active ? 'Active' : 'Inactive'}</span></td>
+                    <td>${formatDate(user.created_at)}</td>
+                    <td>
+                        <button class="btn-secondary" onclick="viewUserDetails('${user.id}')" style="margin-right: 5px;">View</button>
+                        <button class="btn-success" onclick="toggleUserStatus('${user.id}', ${!user.is_active})" style="margin-right: 5px;">
+                            ${user.is_active ? 'Deactivate' : 'Activate'}
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Filter users
+        function filterUsers() {
+            const roleFilter = document.getElementById('filterRole').value;
+            const statusFilter = document.getElementById('filterStatus').value;
+            const searchTerm = document.getElementById('searchUsers').value.toLowerCase();
+            
+            let filtered = allUsers;
+            
+            if (roleFilter) {
+                filtered = filtered.filter(u => u.role === roleFilter);
+            }
+            
+            if (statusFilter !== '') {
+                filtered = filtered.filter(u => String(u.is_active) === statusFilter);
+            }
+            
+            if (searchTerm) {
+                filtered = filtered.filter(u => 
+                    (u.full_name && u.full_name.toLowerCase().includes(searchTerm)) ||
+                    (u.email && u.email.toLowerCase().includes(searchTerm)) ||
+                    (u.national_id && u.national_id.includes(searchTerm))
+                );
+            }
+            
+            displayUsers(filtered);
+        }
+
+        // Load pending approvals
+        async function loadPendingApprovals() {
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/users`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const users = await response.json();
+                    const pending = users.filter(u => !u.is_active && u.role !== 'player');
+                    displayPendingApprovals(pending);
+                } else {
+                    displayPendingApprovals([]);
+                }
+            } catch (error) {
+                console.error('Error loading pending approvals:', error);
+                displayPendingApprovals([]);
+            }
+        }
+
+        // Display pending approvals
+        function displayPendingApprovals(users) {
+            const tbody = document.getElementById('pendingApprovalsBody');
+            if (!tbody) return;
+            
+            if (users.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 20px; color: #666;">
+                            No pending approvals. All users are approved!
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = users.map(user => `
+                <tr>
+                    <td>${user.full_name || 'N/A'}</td>
+                    <td>${user.email || 'N/A'}</td>
+                    <td>${formatRoleName(user.role)}</td>
+                    <td>${user.club_name || 'N/A'}</td>
+                    <td>${formatDate(user.created_at)}</td>
+                    <td>
+                        <button class="btn-success" onclick="approveUser('${user.id}')" style="margin-right: 5px;">Approve</button>
+                        <button class="btn-danger" onclick="rejectUser('${user.id}')" style="margin-right: 5px;">Reject</button>
+                        <button class="btn-secondary" onclick="viewUserDetails('${user.id}')">View Details</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Approve user
+        async function approveUser(userId) {
+            if (!confirm('Are you sure you want to approve this user?')) return;
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/approve`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    alert('User approved successfully!');
+                    loadPendingApprovals();
+                    loadDashboardStats();
+                } else {
+                    const data = await response.json();
+                    alert('Failed to approve user: ' + (data.message || 'Unknown error'));
+                }
+            } catch (error) {
+                console.error('Error approving user:', error);
+                alert('An error occurred while approving the user.');
+            }
+        }
+
+        // Reject user
+        async function rejectUser(userId) {
+            if (!confirm('Are you sure you want to reject this user? This action cannot be undone.')) return;
+            
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/reject`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                if (response.ok) {
+                    alert('User rejected and removed.');
+                    loadPendingApprovals();
+                    loadDashboardStats();
+                } else {
+                    alert('Failed to reject user.');
+                }
+            } catch (error) {
+                console.error('Error rejecting user:', error);
+                alert('An error occurred while rejecting the user.');
+            }
+        }
+
+        // Load tournaments
+        async function loadTournaments() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/tournament`);
+                if (response.ok) {
+                    allTournaments = await response.json();
+                    displayTournaments(allTournaments);
+                } else {
+                    allTournaments = [];
+                    displayTournaments([]);
+                }
+            } catch (error) {
+                console.error('Error loading tournaments:', error);
+                displayTournaments([]);
+            }
+        }
+
+        // Display tournaments
+        function displayTournaments(tournaments) {
+            const tbody = document.getElementById('tournamentsTableBody');
+            if (!tbody) return;
+            
+            if (tournaments.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 20px; color: #666;">
+                            No tournaments found.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = tournaments.map(tournament => `
+                <tr>
+                    <td>${tournament.name || 'N/A'}</td>
+                    <td>${formatDate(tournament.start_date)}</td>
+                    <td>${formatDate(tournament.end_date)}</td>
+                    <td>${tournament.location || 'N/A'}</td>
+                    <td><span class="status-badge status-${tournament.status}">${tournament.status || 'N/A'}</span></td>
+                    <td>0</td>
+                    <td>
+                        <button class="btn-secondary" onclick="viewTournament('${tournament.id}')" style="margin-right: 5px;">View</button>
+                        <button class="btn-primary" onclick="editTournament('${tournament.id}')" style="margin-right: 5px;">Edit</button>
+                        <button class="btn-danger" onclick="deleteTournament('${tournament.id}')">Delete</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Filter tournaments
+        function filterTournaments() {
+            const statusFilter = document.getElementById('filterTournamentStatus').value;
+            const searchTerm = document.getElementById('searchTournaments').value.toLowerCase();
+            
+            let filtered = allTournaments;
+            
+            if (statusFilter) {
+                filtered = filtered.filter(t => t.status === statusFilter);
+            }
+            
+            if (searchTerm) {
+                filtered = filtered.filter(t => 
+                    (t.name && t.name.toLowerCase().includes(searchTerm)) ||
+                    (t.location && t.location.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            displayTournaments(filtered);
+        }
+
+        // Load registrations
+        async function loadRegistrations() {
+            try {
+                // Load registrations from all tournaments
+                const registrations = [];
+                for (const tournament of allTournaments) {
+                    try {
+                        const token = localStorage.getItem('token');
+                        const response = await fetch(`${API_BASE_URL}/tournament/${tournament.id}/registrations`, {
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+                        if (response.ok) {
+                            const tournamentRegs = await response.json();
+                            registrations.push(...tournamentRegs.map(reg => ({
+                                ...reg,
+                                tournament_name: tournament.name
+                            })));
+                        }
+                    } catch (error) {
+                        console.error(`Error loading registrations for tournament ${tournament.id}:`, error);
+                    }
+                }
+                allRegistrations = registrations;
+                displayRegistrations(allRegistrations);
+            } catch (error) {
+                console.error('Error loading registrations:', error);
+                displayRegistrations([]);
+            }
+        }
+
+        // Display registrations
+        function displayRegistrations(registrations) {
+            const tbody = document.getElementById('registrationsTableBody');
+            if (!tbody) return;
+            
+            if (registrations.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 20px; color: #666;">
+                            No registrations found.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            // Note: This would need user data joined - simplified for now
+            tbody.innerHTML = registrations.map(reg => `
+                <tr>
+                    <td>${reg.tournament_name || 'N/A'}</td>
+                    <td>User ${reg.user_id}</td>
+                    <td>N/A</td>
+                    <td>${reg.weight_category || 'N/A'}</td>
+                    <td>${reg.belt_level || 'N/A'}</td>
+                    <td><span class="status-badge status-${reg.status}">${reg.status || 'pending'}</span></td>
+                    <td><span class="status-badge status-${reg.payment_status}">${reg.payment_status || 'pending'}</span></td>
+                    <td>
+                        <button class="btn-success" onclick="approveRegistration('${reg.id}')" style="margin-right: 5px;">Approve</button>
+                        <button class="btn-danger" onclick="rejectRegistration('${reg.id}')">Reject</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Filter registrations
+        function filterRegistrations() {
+            const statusFilter = document.getElementById('filterRegistrationStatus').value;
+            const paymentFilter = document.getElementById('filterPaymentStatus').value;
+            const searchTerm = document.getElementById('searchRegistrations').value.toLowerCase();
+            
+            let filtered = allRegistrations;
+            
+            if (statusFilter) {
+                filtered = filtered.filter(r => r.status === statusFilter);
+            }
+            
+            if (paymentFilter) {
+                filtered = filtered.filter(r => r.payment_status === paymentFilter);
+            }
+            
+            if (searchTerm) {
+                filtered = filtered.filter(r => 
+                    (r.tournament_name && r.tournament_name.toLowerCase().includes(searchTerm))
+                );
+            }
+            
+            displayRegistrations(filtered);
+        }
+
+        // Load clubs
+        async function loadClubs() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/clubs`);
+                if (response.ok) {
+                    allClubs = await response.json();
+                    displayClubs(allClubs);
+                } else {
+                    allClubs = [];
+                    displayClubs([]);
+                }
+            } catch (error) {
+                console.error('Error loading clubs:', error);
+                displayClubs([]);
+            }
+        }
+
+        // Display clubs
+        function displayClubs(clubs) {
+            const tbody = document.getElementById('clubsTableBody');
+            if (!tbody) return;
+            
+            if (clubs.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 20px; color: #666;">
+                            No clubs found. API endpoint may need to be implemented.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tbody.innerHTML = clubs.map(club => `
+                <tr>
+                    <td>${club.name || 'N/A'}</td>
+                    <td>${club.location || 'N/A'}</td>
+                    <td>${club.contact_email || 'N/A'}</td>
+                    <td>0</td>
+                    <td><span class="status-badge ${club.is_active ? 'status-active' : 'status-inactive'}">${club.is_active ? 'Active' : 'Inactive'}</span></td>
+                    <td>
+                        <button class="btn-secondary" onclick="viewClub('${club.id}')" style="margin-right: 5px;">View</button>
+                        <button class="btn-primary" onclick="editClub('${club.id}')" style="margin-right: 5px;">Edit</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Load profile
+        function loadProfile() {
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const profileContent = document.getElementById('profileContent');
+            
+            if (profileContent) {
+                profileContent.innerHTML = `
+                    <div class="user-details-grid">
+                        <div class="detail-item">
+                            <strong>Full Name:</strong> ${user.fullName || 'N/A'}
+                        </div>
+                        <div class="detail-item">
+                            <strong>Email:</strong> ${user.email || 'N/A'}
+                        </div>
+                        <div class="detail-item">
+                            <strong>Username:</strong> ${user.username || 'N/A'}
+                        </div>
+                        <div class="detail-item">
+                            <strong>Role:</strong> SKF Admin
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Utility functions
+        function formatRoleName(role) {
+            const roleMap = {
+                'admin': 'SKF Admin',
+                'player': 'Player',
+                'coach': 'Coach',
+                'referee': 'Referee',
+                'club_admin': 'Club Admin',
+                'referees_plus': 'Referees +'
+            };
+            return roleMap[role?.toLowerCase()] || role || 'N/A';
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+        }
+
+        // Placeholder functions for actions (to be implemented)
+        function viewUserDetails(userId) {
+            alert('View user details - To be implemented');
+        }
+
+        function toggleUserStatus(userId, activate) {
+            alert(`${activate ? 'Activate' : 'Deactivate'} user - To be implemented`);
+        }
+
+        function openCreateUserModal() {
+            alert('Create user modal - To be implemented');
+        }
+
+        function openCreateTournamentModal() {
+            const modalContainer = document.getElementById('modalContainer');
+            if (!modalContainer) return;
+
+            const cityOptions = saudiCities.map(city => `<option value="${city}">${city}</option>`).join('');
+            modalContainer.innerHTML = `
+                <div class="modal" id="createTournamentModal" style="display: block;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>Create Tournament</h2>
+                            <span class="close" onclick="closeModal()">&times;</span>
+                        </div>
+                        <form onsubmit="return createTournament(event)">
+                            <div class="form-group">
+                                <label for="tournamentName">Tournament Name</label>
+                                <input type="text" id="tournamentName" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="tournamentDescription">Description</label>
+                                <textarea id="tournamentDescription" placeholder="Optional tournament details"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="tournamentStartDate">Start Date</label>
+                                <input type="datetime-local" id="tournamentStartDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="tournamentEndDate">End Date</label>
+                                <input type="datetime-local" id="tournamentEndDate" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="tournamentLocation">Tournament City (Saudi Arabia)</label>
+                                <select id="tournamentLocation" required>
+                                    <option value="" selected disabled>Select a Saudi city</option>
+                                    ${cityOptions}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="tournamentDeadline">Registration Deadline</label>
+                                <input type="datetime-local" id="tournamentDeadline" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="tournamentMaxParticipants">Max Participants</label>
+                                <input type="number" id="tournamentMaxParticipants" min="1" placeholder="Optional">
+                            </div>
+                            <div class="form-group">
+                                <label for="tournamentEntryFee">Entry Fee (SAR)</label>
+                                <input type="number" id="tournamentEntryFee" min="0" step="0.01" placeholder="Optional">
+                            </div>
+                            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                                <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                                <button type="submit" class="btn-primary">Create Tournament</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+
+        function closeModal() {
+            const modalContainer = document.getElementById('modalContainer');
+            if (modalContainer) {
+                modalContainer.innerHTML = '';
+            }
+        }
+
+        async function createTournament(event) {
+            event.preventDefault();
+
+            const name = document.getElementById('tournamentName').value.trim();
+            const description = document.getElementById('tournamentDescription').value.trim();
+            const startDate = document.getElementById('tournamentStartDate').value;
+            const endDate = document.getElementById('tournamentEndDate').value;
+            const location = document.getElementById('tournamentLocation').value;
+            const registrationDeadline = document.getElementById('tournamentDeadline').value;
+            const maxParticipantsRaw = document.getElementById('tournamentMaxParticipants').value;
+            const entryFeeRaw = document.getElementById('tournamentEntryFee').value;
+
+            if (!name || !startDate || !endDate || !location || !registrationDeadline) {
+                alert('Please fill all required tournament fields.');
+                return false;
+            }
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const deadline = new Date(registrationDeadline);
+
+            if (end < start) {
+                alert('End date must be after start date.');
+                return false;
+            }
+            if (deadline > start) {
+                alert('Registration deadline must be before tournament start date.');
+                return false;
+            }
+
+            const payload = {
+                name,
+                description: description || null,
+                startDate: start.toISOString(),
+                endDate: end.toISOString(),
+                location,
+                maxParticipants: maxParticipantsRaw ? parseInt(maxParticipantsRaw, 10) : null,
+                registrationDeadline: deadline.toISOString(),
+                entryFee: entryFeeRaw ? parseFloat(entryFeeRaw) : null
+            };
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/tournament`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    alert('Tournament created successfully!');
+                    closeModal();
+                    await loadTournaments();
+                    await loadDashboardStats();
+                    return false;
+                }
+
+                // Local fallback for local auth/testing mode.
+                const localTournament = {
+                    id: `local-${Date.now()}`,
+                    name: payload.name,
+                    description: payload.description,
+                    start_date: payload.startDate,
+                    end_date: payload.endDate,
+                    location: payload.location,
+                    status: 'upcoming',
+                    registration_deadline: payload.registrationDeadline,
+                    max_participants: payload.maxParticipants,
+                    entry_fee: payload.entryFee
+                };
+                allTournaments.unshift(localTournament);
+                displayTournaments(allTournaments);
+                alert('Tournament saved locally (API unavailable in current mode).');
+                closeModal();
+                return false;
+            } catch (error) {
+                console.error('Error creating tournament:', error);
+
+                const localTournament = {
+                    id: `local-${Date.now()}`,
+                    name: payload.name,
+                    description: payload.description,
+                    start_date: payload.startDate,
+                    end_date: payload.endDate,
+                    location: payload.location,
+                    status: 'upcoming',
+                    registration_deadline: payload.registrationDeadline,
+                    max_participants: payload.maxParticipants,
+                    entry_fee: payload.entryFee
+                };
+                allTournaments.unshift(localTournament);
+                displayTournaments(allTournaments);
+                alert('Tournament saved locally (offline fallback).');
+                closeModal();
+                return false;
+            }
+        }
+
+        function openCreateClubModal() {
+            alert('Create club modal - To be implemented');
+        }
+
+        function viewTournament(tournamentId) {
+            window.location.href = `tournament.html?id=${tournamentId}`;
+        }
+
+        function editTournament(tournamentId) {
+            alert('Edit tournament - To be implemented');
+        }
+
+        function deleteTournament(tournamentId) {
+            if (confirm('Are you sure you want to delete this tournament?')) {
+                alert('Delete tournament - To be implemented');
+            }
+        }
+
+        function approveRegistration(registrationId) {
+            alert('Approve registration - To be implemented');
+        }
+
+        function rejectRegistration(registrationId) {
+            alert('Reject registration - To be implemented');
+        }
+
+        function viewClub(clubId) {
+            alert('View club - To be implemented');
+        }
+
+        function editClub(clubId) {
+            alert('Edit club - To be implemented');
+        }
+    </script>
+</body>
+</html>

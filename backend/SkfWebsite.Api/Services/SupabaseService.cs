@@ -1,5 +1,6 @@
 using SkfWebsite.Api.Models;
 using Supabase;
+using static Supabase.Postgrest.Constants;
 
 namespace SkfWebsite.Api.Services;
 
@@ -14,7 +15,7 @@ public class SupabaseService : ISupabaseService
         
         var options = new SupabaseOptions
         {
-            AutoConnectRealtime = true
+            AutoConnectRealtime = false
         };
 
         _supabaseClient = new Client(
@@ -25,10 +26,8 @@ public class SupabaseService : ISupabaseService
 
     public async Task<Client> GetClient()
     {
-        if (!_supabaseClient.Auth.CurrentUser?.IsAuthenticated ?? true)
-        {
-            await _supabaseClient.InitializeAsync();
-        }
+        // Initialize client if needed - no need to check CurrentUser
+        await _supabaseClient.InitializeAsync();
         return _supabaseClient;
     }
 
@@ -54,13 +53,67 @@ public class SupabaseService : ISupabaseService
         return result;
     }
 
+    public async Task<List<User>> GetAllUsers()
+    {
+        var client = await GetClient();
+        var result = await client
+            .From<User>()
+            .Order(x => x.CreatedAt, Ordering.Descending)
+            .Get();
+        
+        return result.Models;
+    }
+
+    public async Task<List<User>> GetPendingUsers()
+    {
+        var client = await GetClient();
+        var result = await client
+            .From<User>()
+            .Where(x => x.IsActive == false)
+            .Order(x => x.CreatedAt, Ordering.Descending)
+            .Get();
+        
+        return result.Models;
+    }
+
+    public async Task UpdateUserStatus(string userId, bool isActive)
+    {
+        var client = await GetClient();
+        var user = await GetUserById(userId);
+        
+        if (user != null)
+        {
+            user.IsActive = isActive;
+            user.UpdatedAt = DateTime.UtcNow;
+            
+            await client
+                .From<User>()
+                .Where(x => x.Id == userId)
+                .Update(user);
+        }
+    }
+
+    public async Task DeleteUser(string userId)
+    {
+        var client = await GetClient();
+        
+        // Delete from custom users table
+        await client
+            .From<User>()
+            .Where(x => x.Id == userId)
+            .Delete();
+        
+        // Note: Supabase Auth user deletion requires admin API key
+        // For now, we just mark them as inactive in the custom table
+    }
+
     public async Task<List<Tournament>> GetTournaments()
     {
         var client = await GetClient();
         var result = await client
             .From<Tournament>()
             .Where(x => x.IsActive == true)
-            .Order(x => x.StartDate, Postgrest.Constants.Ordering.Descending)
+            .Order(x => x.StartDate, Ordering.Descending)
             .Get();
         
         return result.Models;

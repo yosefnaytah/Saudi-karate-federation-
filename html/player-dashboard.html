@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Saudi Karate Federation</title>
+    <title>Player Dashboard - Saudi Karate Federation</title>
     <!-- Link to your CSS files here -->
     <link rel="stylesheet" href="dashboard.css">
     <script src="auth.js" defer></script>
@@ -25,7 +25,7 @@
             
             <!-- Right: User Role and Vision 2030 -->
             <div class="header-right">
-                <div class="user-role" id="userDisplay">Player Dashboard</div>
+                <div class="user-role" id="userDisplay">Loading...</div>
                 
                 <!-- Vision 2030 Logo -->
                 <div class="vision-logo">
@@ -49,7 +49,7 @@
                     <a href="#dashboard" class="nav-link active">Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a href="#tournaments" class="nav-link">Tournaments</a>
+                    <a href="tournament.html" class="nav-link">Tournaments</a>
                 </li>
                 <li class="nav-item">
                     <a href="#belt-tests" class="nav-link">Belt Tests</a>
@@ -64,7 +64,7 @@
                     <a href="#matches-live" class="nav-link">Matches Live</a>
                 </li>
                 <li class="nav-item">
-                    <a href="#media-center" class="nav-link">Media Center</a>
+                    <a href="media-center.html" class="nav-link">Media Center</a>
                 </li>
                 <li class="nav-item">
                     <a href="#profile" class="nav-link">Profile</a>
@@ -170,6 +170,35 @@
                 </div>
             </div>
             
+            <!-- My Tournament Registrations -->
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">My Tournament Registrations</h2>
+                </div>
+                
+                <div class="data-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Tournament</th>
+                                <th>Date</th>
+                                <th>Category</th>
+                                <th>Status</th>
+                                <th>Payment</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="registrationsTableBody">
+                            <tr>
+                                <td colspan="6" style="text-align: center; padding: 20px; color: #666;">
+                                    Loading registrations...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
             <!-- Upcoming Events -->
             <div class="dashboard-card">
                 <div class="dashboard-card-header">
@@ -184,16 +213,16 @@
                             <p>Location: King Saud University Stadium</p>
                             <p>Category: Kumite - Male 75kg</p>
                         </div>
-                        <a href="#" class="btn">View Details</a>
+                        <a href="tournament.html" class="btn">View Details</a>
                     </div>
                     <div class="event-item">
                         <div class="event-date">May 10</div>
                         <div class="event-details">
                             <h3>Black Belt Test</h3>
                             <p>Location: Central Dojo, Jeddah</p>
-                            <p>Status: Registered</p>
+                            <p>Status: Registration Open</p>
                         </div>
-                        <a href="#" class="btn">Prepare for Test</a>
+                        <a href="#" class="btn">Register</a>
                     </div>
                 </div>
             </div>
@@ -263,12 +292,121 @@
         });
     </script>
     <script>
-        // Check authentication when page loads
+        // Check authentication and role when page loads
         document.addEventListener('DOMContentLoaded', function() {
-            if (checkAuth()) {
-                displayUserInfo();
+            const token = localStorage.getItem('token');
+            const userStr = localStorage.getItem('user');
+            
+            // Redirect to login if not authenticated
+            if (!token || !userStr) {
+                alert('Please login to access the dashboard.');
+                window.location.href = 'index.html';
+                return;
             }
+            
+            const user = JSON.parse(userStr);
+            const userRole = user.role?.toLowerCase();
+            
+            // Verify user is a player - redirect if not
+            if (userRole !== 'player') {
+                alert('Access denied. This dashboard is for Players only.');
+                // Redirect to appropriate dashboard based on role
+                const role = userRole;
+                let dashboardUrl = 'index.html';
+                
+                switch(role) {
+                    case 'admin':
+                        dashboardUrl = 'admin-dashboard.html';
+                        break;
+                    case 'coach':
+                        dashboardUrl = 'player-dashboard.html';
+                        break;
+                    case 'referee':
+                        dashboardUrl = 'player-dashboard.html';
+                        break;
+                    case 'club_admin':
+                        dashboardUrl = 'player-dashboard.html';
+                        break;
+                    case 'referees_plus':
+                        dashboardUrl = 'player-dashboard.html';
+                        break;
+                    default:
+                        dashboardUrl = 'index.html';
+                }
+                window.location.href = dashboardUrl;
+                return;
+            }
+            
+            // Display user info
+            displayUserInfo();
+            
+            // Load player statistics and registrations
+            loadPlayerStats();
+            loadTournamentRegistrations();
         });
+        
+        // Function to load player statistics
+        async function loadPlayerStats() {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            
+            if (!token || !user.id) {
+                // Use demo data if not authenticated
+                return;
+            }
+            
+            try {
+                // TODO: Fetch real statistics from API
+                // const response = await fetch(`${API_BASE_URL}/players/${user.id}/stats`, {
+                //     headers: {
+                //         'Authorization': `Bearer ${token}`
+                //     }
+                // });
+                // const stats = await response.json();
+                // Update stat cards with real data
+            } catch (error) {
+                console.error('Error loading player stats:', error);
+            }
+        }
+        
+        // Function to load tournament registrations
+        async function loadTournamentRegistrations() {
+            const token = localStorage.getItem('token');
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
+            const tbody = document.getElementById('registrationsTableBody');
+            
+            if (!token || !user.id || !tbody) {
+                return;
+            }
+            
+            try {
+                // TODO: Fetch real registrations from API
+                // const response = await fetch(`${API_BASE_URL}/tournaments/registrations`, {
+                //     headers: {
+                //         'Authorization': `Bearer ${token}`
+                //     }
+                // });
+                // const registrations = await response.json();
+                
+                // For now, show empty state or demo data
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 20px; color: #666;">
+                            No tournament registrations yet. <a href="tournament.html" style="color: #3a7d44;">Browse tournaments</a>
+                        </td>
+                    </tr>
+                `;
+            } catch (error) {
+                console.error('Error loading tournament registrations:', error);
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 20px; color: #d32f2f;">
+                            Error loading registrations. Please try again later.
+                        </td>
+                    </tr>
+                `;
+            }
+        }
     </script>
 </body>
 </html>

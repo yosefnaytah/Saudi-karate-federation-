@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS public.users (
     club_name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     username TEXT UNIQUE NOT NULL,
-    role TEXT NOT NULL CHECK (role IN ('player', 'referee', 'coach', 'administrator')),
+    role TEXT NOT NULL CHECK (role IN ('admin', 'player', 'coach', 'referee', 'club_admin', 'referees_plus')),
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     is_active BOOLEAN DEFAULT TRUE
@@ -105,7 +105,7 @@ CREATE POLICY "Anyone can read active tournaments" ON public.tournaments FOR SEL
 CREATE POLICY "Administrators can manage tournaments" ON public.tournaments FOR ALL USING (
     EXISTS (
         SELECT 1 FROM public.users 
-        WHERE id = auth.uid() AND role = 'administrator'
+        WHERE id = auth.uid() AND role IN ('admin', 'club_admin')
     )
 );
 
@@ -116,7 +116,7 @@ CREATE POLICY "Users can register themselves" ON public.tournament_registrations
 CREATE POLICY "Administrators can manage registrations" ON public.tournament_registrations FOR ALL USING (
     EXISTS (
         SELECT 1 FROM public.users 
-        WHERE id = auth.uid() AND role = 'administrator'
+        WHERE id = auth.uid() AND role IN ('admin', 'club_admin')
     )
 );
 
@@ -126,7 +126,7 @@ CREATE POLICY "Anyone can read active clubs" ON public.clubs FOR SELECT USING (i
 CREATE POLICY "Administrators can manage clubs" ON public.clubs FOR ALL USING (
     EXISTS (
         SELECT 1 FROM public.users 
-        WHERE id = auth.uid() AND role = 'administrator'
+        WHERE id = auth.uid() AND role IN ('admin', 'club_admin')
     )
 );
 
@@ -136,7 +136,7 @@ CREATE POLICY "Anyone can read published news" ON public.news FOR SELECT USING (
 CREATE POLICY "Administrators can manage news" ON public.news FOR ALL USING (
     EXISTS (
         SELECT 1 FROM public.users 
-        WHERE id = auth.uid() AND role = 'administrator'
+        WHERE id = auth.uid() AND role IN ('admin', 'club_admin')
     )
 );
 
