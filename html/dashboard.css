@@ -9,24 +9,20 @@
 
 /* Menu Toggle Button */
 .menu-toggle {
-    position: fixed;
-    top: 20px;
-    right: 20px;
+    position: relative;
     width: 50px;
     height: 50px;
-    background-color: #3a7d44;
-    border-radius: 50%;
+    background-color: transparent;
     display: flex;
     justify-content: center;
     align-items: center;
     cursor: pointer;
     z-index: 1000;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-    transition: background-color 0.3s ease, transform 0.3s ease;
+    transition: transform 0.3s ease;
+    margin-left: 20px;
 }
 
 .menu-toggle:hover {
-    background-color: #2e8b57;
     transform: scale(1.05);
 }
 
@@ -36,7 +32,11 @@
     height: 3px;
     background-color: white;
     border-radius: 3px;
-    transition: transform 0.3s ease, opacity 0.3s ease;
+    transition: background-color 0.3s ease, transform 0.3s ease, opacity 0.3s ease;
+}
+
+.menu-toggle:hover .bar {
+    background-color: #a2bcb8;
 }
 
 .menu-toggle .bar:nth-child(1) {
@@ -308,7 +308,8 @@
 
 /* Header styles with animation */
 .dashboard-header {
-    padding: 15px 30px;
+    padding: 0 42px;
+    height: 102px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -326,33 +327,38 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background: linear-gradient(120deg, #7ed09d, #2e8b57);
+    background: #014138;
     z-index: -1;
-    opacity: 0.9;
+    opacity: 1;
     transition: background 0.5s ease;
 }
 
 /* Mouse movement animation effect */
 .dashboard-header:hover::before {
-    background: linear-gradient(120deg, #2e8b57, #7ed09d);
+    background: #014138;
 }
 
 /* Header Layout */
 .header-left {
     display: flex;
     align-items: center;
+    height: 100%;
+    flex: 1;
 }
 
 .header-center {
     display: flex;
     justify-content: center;
     gap: 20px;
+    flex: 1;
 }
 
 .header-right {
     display: flex;
     align-items: center;
+    justify-content: flex-end;
     gap: 20px;
+    flex: 1;
 }
 
 .header-logo {
@@ -407,6 +413,18 @@
     font-size: 22px;
     font-weight: bold;
     margin: 0;
+}
+
+.header-logo-img {
+    height: 100%;
+    object-fit: contain;
+    margin-left: 20px;
+}
+
+.vision-logo-img {
+    height: 50px;
+    object-fit: contain;
+    margin-right: 20px;
 }
 
 /* Buttons */
@@ -606,4 +624,116 @@
     100% {
         box-shadow: 0 0 10px #1a7f3f;
     }
+}
+
+/* Footer styling with enhanced features */
+.footer {
+    background-color: #012b23;
+    color: white;
+    padding: 60px 0 20px;
+    position: relative;
+    z-index: 10;
+}
+
+.footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 40px;
+    padding: 0 20px;
+}
+
+.footer-section {
+    flex: 1;
+    min-width: 250px;
+}
+
+.footer-logo {
+    margin-bottom: 20px;
+}
+
+.footer-title {
+    font-size: 18px;
+    margin-bottom: 20px;
+    position: relative;
+}
+
+.footer-title::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: -8px;
+    width: 50px;
+    height: 2px;
+    background-color: #2e8b57;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+}
+
+.footer-links li {
+    margin-bottom: 10px;
+}
+
+.footer-links a {
+    color: #ddd;
+    text-decoration: none;
+    transition: color 0.3s ease, transform 0.3s ease;
+    display: inline-block;
+}
+
+.footer-links a:hover {
+    color: #7ed09d;
+    transform: translateX(-5px);
+}
+
+.social-icons {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.social-icon {
+    color: white;
+    background-color: #444;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    text-decoration: none;
+}
+
+.social-icon:hover {
+    background-color: #2e8b57;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+.copyright {
+    text-align: center;
+    padding-top: 30px;
+    margin-top: 40px;
+    border-top: 1px solid #444;
+    color: #aaa;
+}
+
+/* Team information section */
+.team-info {
+    background-color: #444;
+    padding: 15px;
+    border-radius: 5px;
+    margin-top: 20px;
+}
+
+.team-info p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #ddd;
 }
