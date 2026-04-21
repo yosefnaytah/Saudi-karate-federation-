@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Saudi Karate Federation</title>
-    <link rel="stylesheet" href="dashboard.css">
+    <link rel="stylesheet" href="./dashboard.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth.js" defer></script>
     <style>
         /* Admin-specific styles */
@@ -142,6 +143,18 @@
             background-color: #dc3545;
             color: white;
         }
+        .status-draft {
+            background-color: #6c757d;
+            color: white;
+        }
+        .status-registration_open {
+            background-color: #28a745;
+            color: white;
+        }
+        .status-registration_closed {
+            background-color: #dc3545;
+            color: white;
+        }
         .modal {
             display: none;
             position: fixed;
@@ -219,6 +232,41 @@
         .detail-item strong {
             color: #3a7d44;
         }
+        .modal-section-divider {
+            font-size: 13px;
+            font-weight: bold;
+            color: #3a7d44;
+            margin: 20px 0 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #3a7d44;
+        }
+        .category-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            font-size: 13px;
+        }
+        .category-table th {
+            background-color: #f0f7f0;
+            color: #333;
+            font-weight: bold;
+            padding: 8px 10px;
+            border: 1px solid #d0e6d0;
+            text-align: left;
+        }
+        .category-table td {
+            padding: 7px 10px;
+            border: 1px solid #e5e5e5;
+            vertical-align: middle;
+        }
+        .category-table tr:nth-child(even) td {
+            background-color: #fafafa;
+        }
+        .category-form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
     </style>
 </head>
 <body>
@@ -229,9 +277,7 @@
                 <div class="header-logo">Saudi Karate Federation - Admin</div>
             </div>
             
-            <div class="header-center">
-                <a href="tournament.html" class="nav-button">TOURNAMENTS</a>
-            </div>
+            <div class="header-center"></div>
             
             <div class="header-right">
                 <div class="user-role" id="userDisplay">Loading...</div>
@@ -260,6 +306,9 @@
                 </li>
                 <li class="nav-item">
                     <a href="#pending-approvals" class="nav-link" onclick="showSection('pending-approvals')">Pending Approvals</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#skf-applications" class="nav-link" onclick="showSection('skf-applications')">SKF access requests</a>
                 </li>
                 <li class="nav-item">
                     <a href="#tournament-management" class="nav-link" onclick="showSection('tournament-management')">Tournaments</a>
@@ -359,7 +408,7 @@
                             <option value="referee">Referee</option>
                             <option value="club_admin">Club Admin</option>
                             <option value="referees_plus">Referees +</option>
-                            <option value="admin">Admin</option>
+                            <option value="skf_admin">SKF Admin</option>
                         </select>
                         <select id="filterStatus" onchange="filterUsers()">
                             <option value="">All Status</option>
@@ -424,6 +473,33 @@
                 </div>
             </section>
 
+            <section id="skf-applications-section" class="dashboard-section" style="display: none;">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header">
+                        <h2 class="dashboard-card-title">SKF staff access (register → approve)</h2>
+                    </div>
+                    <p style="font-size:13px;color:#666;padding:0 20px;">Applicants use the <strong>federation staff registration</strong> page (SKF Admin &amp; Referees+ only). This queue is not for coaches or club admins. Approve assigns the <strong>SKF ID</strong> and activates the profile (registrants keep their chosen password). Copy the API response and email the SKF ID. Requires the <strong>.NET API</strong> running.</p>
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Submitted</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Account</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="skfApplicationsBody">
+                                <tr><td colspan="6" style="text-align:center;padding:20px;color:#888;">Loading…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="skfApproveResult" style="display:none;margin:16px 20px;padding:12px;background:#f5f5f5;border-radius:8px;font-size:13px;white-space:pre-wrap;"></div>
+                </div>
+            </section>
+
             <!-- Tournament Management Section -->
             <section id="tournament-management-section" class="dashboard-section" style="display: none;">
                 <div class="dashboard-card">
@@ -435,10 +511,9 @@
                     <div class="filter-section">
                         <select id="filterTournamentStatus" onchange="filterTournaments()">
                             <option value="">All Status</option>
-                            <option value="upcoming">Upcoming</option>
-                            <option value="live">Live</option>
-                            <option value="completed">Completed</option>
-                            <option value="cancelled">Cancelled</option>
+                            <option value="draft">Draft</option>
+                            <option value="registration_open">Registration Open</option>
+                            <option value="registration_closed">Registration Closed</option>
                         </select>
                         <input type="text" id="searchTournaments" placeholder="Search tournaments..." onkeyup="filterTournaments()" style="flex: 1; min-width: 200px;">
                     </div>
@@ -570,10 +645,207 @@
         // Base URL for API endpoints
         // .NET backend typically runs on port 5000 (HTTP) or 5001 (HTTPS)
         const API_BASE_URL = 'http://localhost:5000/api';
+        /** Problem 8: read/write tournaments in Supabase when logged in with a real JWT (not local-token). */
+        const USE_SUPABASE_TOURNAMENTS = true;
+        const SKF_SUPABASE_URL  = 'https://uqlpxdphikmmpdsuojil.supabase.co';
+        const SKF_SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxbHB4ZHBoaWttbXBkc3VvamlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3OTI5NDEsImV4cCI6MjA4NjM2ODk0MX0.03xQ8ltwZm_TTEAHDOHocfFKG2j_PHmL1Lzt2t-aFJU';
+
+        function isLocalDevToken() {
+            var t = localStorage.getItem('token') || '';
+            return !t || t.indexOf('local-token') === 0;
+        }
+
+        function getAdminSupabase() {
+            if (typeof supabase === 'undefined' || !USE_SUPABASE_TOURNAMENTS) return null;
+            var tok = localStorage.getItem('token');
+            if (!tok || isLocalDevToken()) return null;
+            return supabase.createClient(SKF_SUPABASE_URL, SKF_SUPABASE_ANON, {
+                global: { headers: { Authorization: 'Bearer ' + tok } },
+                auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+            });
+        }
+
+        function normalizeTournamentRow(t) {
+            if (!t) return t;
+            return {
+                id: t.id,
+                name: t.name,
+                description: t.description,
+                location: t.location,
+                status: t.status,
+                start_date: t.start_date || t.startDate,
+                end_date: t.end_date || t.endDate,
+                registration_open_date: t.registration_open_date || t.registrationOpenDate,
+                registration_close_date: t.registration_close_date || t.registrationCloseDate,
+                max_participants: t.max_participants != null ? t.max_participants : t.maxParticipants,
+                entry_fee: t.entry_fee != null ? t.entry_fee : t.entryFee,
+                created_by: t.created_by || t.createdBy,
+                is_active: t.is_active !== false
+            };
+        }
+
+        function escapeHtml(s) {
+            if (s == null || s === '') return '';
+            return String(s)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        function escapeAttr(s) {
+            return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+        }
+
+        function isSafeProfilePhotoUrl(s) {
+            if (!s || typeof s !== 'string') return false;
+            if (s.length > 950000) return false;
+            return /^data:image\/(jpeg|jpg|png);base64,/i.test(s) || /^https:\/\//i.test(s);
+        }
+
+        /** Normalize a user row from Supabase (snake_case) or API (PascalCase). */
+        function normalizeUserRow(u) {
+            if (!u) return u;
+            return {
+                id: u.id,
+                full_name: u.full_name || u.FullName || '',
+                national_id: u.national_id || u.NationalId || '',
+                player_id: u.player_id || u.PlayerId || '',
+                player_id_card: u.player_id_card != null ? u.player_id_card : u.PlayerIdCard,
+                phone: u.phone || u.Phone || '',
+                club_name: u.club_name || u.ClubName || '',
+                email: u.email || u.Email || '',
+                username: u.username || u.Username || '',
+                age_group: u.age_group || u.AgeGroup || '',
+                rank: u.rank || u.Rank || '',
+                player_category: u.player_category || u.PlayerCategory || '',
+                profile_bio: u.profile_bio || u.ProfileBio || '',
+                profile_photo_url: u.profile_photo_url || u.ProfilePhotoUrl || '',
+                role: (u.role || u.Role || '').toLowerCase(),
+                is_active: u.is_active !== false && u.IsActive !== false,
+                created_at: u.created_at || u.CreatedAt,
+                updated_at: u.updated_at || u.UpdatedAt
+            };
+        }
+
+        /** Flatten Supabase `tournament_registrations` rows with joined user/tournament names. */
+        function normalizeRegistrationRows(rows, userById, tournamentById) {
+            return (rows || []).map(function (row) {
+                var u = userById[row.user_id] || {};
+                var t = tournamentById[row.tournament_id] || {};
+                return {
+                    id: row.id,
+                    tournament_id: row.tournament_id,
+                    user_id: row.user_id,
+                    weight_category: row.weight_category,
+                    belt_level: row.belt_level,
+                    registration_date: row.registration_date,
+                    status: row.status,
+                    payment_status: row.payment_status,
+                    notes: row.notes,
+                    tournament_name: t.name || '',
+                    player_name: u.full_name || ('User ' + row.user_id),
+                    player_email: u.email || ''
+                };
+            });
+        }
+
         let allUsers = [];
         let allTournaments = [];
         let allRegistrations = [];
         let allClubs = [];
+        let allCategoriesByTournament = {};
+
+        // Persist categories to localStorage so referee dashboard can read them offline
+        function persistCategories(tournamentId, cats) {
+            allCategoriesByTournament[tournamentId] = cats;
+            try { localStorage.setItem('skf_local_cats_' + tournamentId, JSON.stringify(cats)); } catch(e) {}
+        }
+        let allRefereesByTournament = {};
+        const LOCAL_REF_ASSIGNMENTS_KEY = 'skf_local_ref_assignments';
+
+        // ── Activity log ──────────────────────────────────────────────
+        const ACTIVITY_KEY = 'skf_admin_activity_log';
+        const MAX_ACTIVITY  = 50;
+
+        function logActivity(action, details) {
+            const admin = JSON.parse(localStorage.getItem('user') || '{}');
+            const userName = admin.fullName || admin.email || 'SKF Admin';
+            const log = JSON.parse(localStorage.getItem(ACTIVITY_KEY) || '[]');
+            log.unshift({
+                date:    new Date().toISOString(),
+                user:    userName,
+                action:  action,
+                details: details || ''
+            });
+            if (log.length > MAX_ACTIVITY) log.length = MAX_ACTIVITY;
+            localStorage.setItem(ACTIVITY_KEY, JSON.stringify(log));
+            renderActivity();
+        }
+
+        function renderActivity() {
+            const log  = JSON.parse(localStorage.getItem(ACTIVITY_KEY) || '[]');
+            const body = document.getElementById('recentActivityBody');
+            if (!body) return;
+            if (log.length === 0) {
+                body.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:20px;color:#888;">No activity yet. Actions taken by the admin will appear here.</td></tr>';
+                return;
+            }
+            body.innerHTML = log.map(function(entry) {
+                const d = new Date(entry.date);
+                const dateStr = d.toLocaleDateString('en-SA', { month:'short', day:'numeric', year:'numeric' })
+                              + ' ' + d.toLocaleTimeString('en-SA', { hour:'2-digit', minute:'2-digit' });
+                const iconMap = {
+                    'Tournament Created':  '🏟️',
+                    'Tournament Updated':  '✏️',
+                    'Category Added':      '📂',
+                    'Category Deleted':    '🗑️',
+                    'Referee Assigned':    '👨‍⚖️',
+                    'Referee Removed':     '❌',
+                    'Registration Approved': '✅',
+                    'Registration Rejected': '🚫',
+                    'User Approved':       '✅',
+                    'User Activated':      '✅',
+                    'User Deactivated':    '⏸️',
+                    'User Rejected':       '🚫',
+                    'User Created':        '👤',
+                };
+                const icon = iconMap[entry.action] || '📋';
+                return '<tr>'
+                    + '<td style="white-space:nowrap;font-size:12px;color:#888;">' + dateStr + '</td>'
+                    + '<td>' + (entry.user || '—') + '</td>'
+                    + '<td><span style="font-size:14px;">' + icon + '</span> ' + entry.action + '</td>'
+                    + '<td style="color:#555;font-size:13px;">' + (entry.details || '—') + '</td>'
+                    + '</tr>';
+            }).join('');
+        }
+
+        function getLocalRefAssignments() {
+            try { return JSON.parse(localStorage.getItem(LOCAL_REF_ASSIGNMENTS_KEY) || '[]'); } catch { return []; }
+        }
+        function setLocalRefAssignments(arr) {
+            localStorage.setItem(LOCAL_REF_ASSIGNMENTS_KEY, JSON.stringify(arr));
+        }
+
+        function syncLocalRefAssignmentsForTournament(tournamentId, refereesRows) {
+            var t = allTournaments.find(function (x) { return x.id === tournamentId; }) || null;
+            var rest = getLocalRefAssignments().filter(function (a) { return a.tournamentId !== tournamentId; });
+            (refereesRows || []).forEach(function (r) {
+                var rid = r.referee_id || r.refereeId;
+                if (!rid) return;
+                rest.push({
+                    id:           'sync-' + tournamentId + '-' + rid,
+                    tournamentId: tournamentId,
+                    refereeId:    rid,
+                    assignedAt:   r.assigned_at || r.assignedAt || new Date().toISOString(),
+                    fullName:     r.full_name || r.fullName || '',
+                    email:        r.email || '',
+                    role:         r.role || 'referee',
+                    tournament:   t
+                });
+            });
+            setLocalRefAssignments(rest);
+        }
+
         const saudiCities = [
             'Riyadh', 'Jeddah', 'Makkah', 'Madinah', 'Dammam', 'Khobar', 'Dhahran',
             'Taif', 'Tabuk', 'Abha', 'Khamis Mushait', 'Buraidah', 'Hail', 'Jazan',
@@ -587,6 +859,8 @@
             initializeMenu();
             loadDashboardStats();
             loadAllData();
+            animateCards();
+            renderActivity();
         });
 
         // Check if user is admin
@@ -603,7 +877,7 @@
             const user = JSON.parse(userStr);
             const userRole = user.role?.toLowerCase();
             
-            if (userRole !== 'admin') {
+            if (userRole !== 'admin' && userRole !== 'skf_admin') {
                 alert('Access denied. This dashboard is for SKF Admins only.');
                 // Redirect to appropriate dashboard
                 let dashboardUrl = 'index.html';
@@ -615,12 +889,10 @@
                         dashboardUrl = 'player-dashboard.html';
                         break;
                     case 'referee':
-                        dashboardUrl = 'player-dashboard.html';
+                    case 'referees_plus':
+                        dashboardUrl = 'referee-dashboard.html';
                         break;
                     case 'club_admin':
-                        dashboardUrl = 'player-dashboard.html';
-                        break;
-                    case 'referees_plus':
                         dashboardUrl = 'player-dashboard.html';
                         break;
                 }
@@ -668,10 +940,12 @@
             const section = document.getElementById(sectionName + '-section');
             if (section) {
                 section.style.display = 'block';
+                // Animate newly-visible cards in this section
+                setTimeout(animateCards, 20);
             }
             
             // Add active class to clicked nav link
-            event.target.classList.add('active');
+            if (event && event.target) event.target.classList.add('active');
             
             // Close menu on mobile
             const dashboardNav = document.getElementById('dashboardNav');
@@ -688,6 +962,9 @@
                     break;
                 case 'pending-approvals':
                     loadPendingApprovals();
+                    break;
+                case 'skf-applications':
+                    loadSkfApplications();
                     break;
                 case 'tournament-management':
                     loadTournaments();
@@ -709,22 +986,37 @@
             try {
                 const token = localStorage.getItem('token');
                 
-                // Load users
-                const usersResponse = await fetch(`${API_BASE_URL}/admin/users`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
+                var sbDash = getAdminSupabase();
+                if (sbDash) {
+                    var uc = await sbDash.from('users').select('id', { count: 'exact', head: true });
+                    if (!uc.error && uc.count != null) {
+                        document.getElementById('totalUsers').textContent = String(uc.count);
                     }
-                });
-                if (usersResponse.ok) {
-                    const users = await usersResponse.json();
-                    document.getElementById('totalUsers').textContent = users.length || 0;
-                    
-                    const pending = users.filter(u => !u.is_active && u.role !== 'player').length;
-                    document.getElementById('pendingApprovals').textContent = pending;
-                    document.getElementById('pendingCount').textContent = pending;
-                    
-                    if (pending > 0) {
-                        document.getElementById('pendingBanner').style.display = 'flex';
+                    var pc = await sbDash.from('users').select('id', { count: 'exact', head: true })
+                        .eq('is_active', false)
+                        .neq('role', 'player');
+                    if (!pc.error && pc.count != null) {
+                        document.getElementById('pendingApprovals').textContent = String(pc.count);
+                        document.getElementById('pendingCount').textContent = String(pc.count);
+                        var ban = document.getElementById('pendingBanner');
+                        if (ban) ban.style.display = pc.count > 0 ? 'flex' : 'none';
+                    }
+                } else {
+                    const usersResponse = await fetch(`${API_BASE_URL}/admin/users`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    if (usersResponse.ok) {
+                        const users = await usersResponse.json();
+                        document.getElementById('totalUsers').textContent = users.length || 0;
+                        const pending = users.filter(function (u) {
+                            return !u.is_active && String(u.role || '').toLowerCase() !== 'player';
+                        }).length;
+                        document.getElementById('pendingApprovals').textContent = pending;
+                        document.getElementById('pendingCount').textContent = pending;
+                        var ban2 = document.getElementById('pendingBanner');
+                        if (ban2) ban2.style.display = pending > 0 ? 'flex' : 'none';
                     }
                 }
                 
@@ -736,9 +1028,15 @@
                     document.getElementById('activeTournaments').textContent = active;
                 }
                 
-                // Load registrations
-                // This would need a separate endpoint or calculate from tournaments
-                document.getElementById('totalRegistrations').textContent = '0';
+                var sbStats = getAdminSupabase();
+                if (sbStats) {
+                    var rq = await sbStats.from('tournament_registrations').select('id', { count: 'exact', head: true });
+                    if (!rq.error && rq.count != null) {
+                        document.getElementById('totalRegistrations').textContent = String(rq.count);
+                    }
+                } else {
+                    document.getElementById('totalRegistrations').textContent = String((allRegistrations && allRegistrations.length) || 0);
+                }
                 
             } catch (error) {
                 console.error('Error loading dashboard stats:', error);
@@ -753,10 +1051,24 @@
                 loadRegistrations(),
                 loadClubs()
             ]);
+            var trEl = document.getElementById('totalRegistrations');
+            if (trEl) trEl.textContent = String(allRegistrations.length);
+            displayTournaments(allTournaments);
         }
 
-        // Load users
+        // Load users (Supabase → .NET admin API)
         async function loadUsers() {
+            var sb = getAdminSupabase();
+            if (sb) {
+                var q = await sb.from('users').select('*').order('created_at', { ascending: false });
+                if (!q.error && q.data) {
+                    allUsers = q.data.map(normalizeUserRow);
+                    displayUsers(allUsers);
+                    return;
+                }
+                if (q.error) console.warn('Supabase users:', q.error.message || q.error);
+            }
+
             try {
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/admin/users`, {
@@ -764,17 +1076,18 @@
                         'Authorization': `Bearer ${token}`
                     }
                 });
-                
+
                 if (response.ok) {
-                    allUsers = await response.json();
+                    var raw = await response.json();
+                    allUsers = (raw || []).map(normalizeUserRow);
                     displayUsers(allUsers);
                 } else {
-                    // If endpoint doesn't exist, use demo data
                     allUsers = [];
                     displayUsers([]);
                 }
             } catch (error) {
                 console.error('Error loading users:', error);
+                allUsers = [];
                 displayUsers([]);
             }
         }
@@ -795,22 +1108,24 @@
                 return;
             }
             
-            tbody.innerHTML = users.map(user => `
-                <tr>
-                    <td>${user.full_name || 'N/A'}</td>
-                    <td>${user.email || 'N/A'}</td>
-                    <td>${formatRoleName(user.role)}</td>
-                    <td>${user.club_name || 'N/A'}</td>
-                    <td><span class="status-badge ${user.is_active ? 'status-active' : 'status-inactive'}">${user.is_active ? 'Active' : 'Inactive'}</span></td>
-                    <td>${formatDate(user.created_at)}</td>
-                    <td>
-                        <button class="btn-secondary" onclick="viewUserDetails('${user.id}')" style="margin-right: 5px;">View</button>
-                        <button class="btn-success" onclick="toggleUserStatus('${user.id}', ${!user.is_active})" style="margin-right: 5px;">
-                            ${user.is_active ? 'Deactivate' : 'Activate'}
-                        </button>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = users.map(function (user) {
+                var nm = user.full_name || 'N/A';
+                var em = user.email || 'N/A';
+                var act = user.is_active ? 'Deactivate' : 'Activate';
+                return '<tr>'
+                    + '<td>' + escapeHtml(nm) + '</td>'
+                    + '<td>' + escapeHtml(em) + '</td>'
+                    + '<td>' + escapeHtml(formatRoleName(user.role)) + '</td>'
+                    + '<td>' + escapeHtml(user.club_name || 'N/A') + '</td>'
+                    + '<td><span class="status-badge ' + (user.is_active ? 'status-active' : 'status-inactive') + '">'
+                    + (user.is_active ? 'Active' : 'Inactive') + '</span></td>'
+                    + '<td>' + escapeHtml(formatDate(user.created_at)) + '</td>'
+                    + '<td>'
+                    + '<button class="btn-secondary" onclick="viewUserDetails(\'' + user.id + '\')" style="margin-right:5px;">View</button>'
+                    + '<button class="btn-success" onclick="toggleUserStatus(\'' + user.id + '\',' + (!user.is_active ? 'true' : 'false') + ')" style="margin-right:5px;">' + act + '</button>'
+                    + '</td>'
+                    + '</tr>';
+            }).join('');
         }
 
         // Filter users
@@ -830,11 +1145,13 @@
             }
             
             if (searchTerm) {
-                filtered = filtered.filter(u => 
-                    (u.full_name && u.full_name.toLowerCase().includes(searchTerm)) ||
-                    (u.email && u.email.toLowerCase().includes(searchTerm)) ||
-                    (u.national_id && u.national_id.includes(searchTerm))
-                );
+                filtered = filtered.filter(function (u) {
+                    return (u.full_name && u.full_name.toLowerCase().includes(searchTerm))
+                        || (u.email && u.email.toLowerCase().includes(searchTerm))
+                        || (u.username && String(u.username).toLowerCase().includes(searchTerm))
+                        || (u.national_id && String(u.national_id).includes(searchTerm))
+                        || (u.player_id && String(u.player_id).toLowerCase().includes(searchTerm));
+                });
             }
             
             displayUsers(filtered);
@@ -842,6 +1159,19 @@
 
         // Load pending approvals
         async function loadPendingApprovals() {
+            var sb = getAdminSupabase();
+            if (sb) {
+                var q = await sb.from('users').select('*').eq('is_active', false).order('created_at', { ascending: false });
+                if (!q.error && q.data) {
+                    var pending = q.data.map(normalizeUserRow).filter(function (u) {
+                        return (u.role || '').toLowerCase() !== 'player';
+                    });
+                    displayPendingApprovals(pending);
+                    return;
+                }
+                if (q.error) console.warn('Supabase pending users:', q.error.message || q.error);
+            }
+
             try {
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/admin/users`, {
@@ -849,10 +1179,12 @@
                         'Authorization': `Bearer ${token}`
                     }
                 });
-                
+
                 if (response.ok) {
                     const users = await response.json();
-                    const pending = users.filter(u => !u.is_active && u.role !== 'player');
+                    const pending = users.map(normalizeUserRow).filter(function (u) {
+                        return !u.is_active && (u.role || '').toLowerCase() !== 'player';
+                    });
                     displayPendingApprovals(pending);
                 } else {
                     displayPendingApprovals([]);
@@ -860,6 +1192,107 @@
             } catch (error) {
                 console.error('Error loading pending approvals:', error);
                 displayPendingApprovals([]);
+            }
+        }
+
+        async function loadSkfApplications() {
+            var tbody = document.getElementById('skfApplicationsBody');
+            var out = document.getElementById('skfApproveResult');
+            if (out) { out.style.display = 'none'; out.textContent = ''; }
+            if (!tbody) return;
+            var tok = localStorage.getItem('token');
+            if (!tok || tok.indexOf('local-token') === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#888;">Sign in with a real SKF Admin session to load requests.</td></tr>';
+                return;
+            }
+            try {
+                var res = await fetch(API_BASE_URL + '/SkfApplications?status=pending', {
+                    headers: { 'Authorization': 'Bearer ' + tok }
+                });
+                var data = await res.json().catch(function () { return []; });
+                if (!res.ok) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#c62828;">'
+                        + (data.message || 'Could not load (start .NET API and run database/skf_applications.sql).') + '</td></tr>';
+                    return;
+                }
+                displaySkfApplications(Array.isArray(data) ? data : []);
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#c62828;">Network error loading requests.</td></tr>';
+            }
+        }
+
+        function displaySkfApplications(rows) {
+            var tbody = document.getElementById('skfApplicationsBody');
+            if (!tbody) return;
+            if (!rows || rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#888;">No pending access requests.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = rows.map(function (a) {
+                var dt = a.created_at || a.createdAt || '';
+                var name = escapeHtml(a.full_name || a.fullName || '');
+                var em = escapeHtml(a.email || '');
+                var role = escapeHtml(a.requested_role || a.requestedRole || '');
+                var id = a.id || '';
+                var hasAuth = !!(a.auth_user_id || a.authUserId);
+                var acct = hasAuth ? '<span title="They registered with email + password on the site">Yes</span>' : '<span title="Legacy: no Auth user until you approve">No</span>';
+                return '<tr>'
+                    + '<td style="white-space:nowrap;font-size:12px;color:#666;">' + escapeHtml(String(dt).slice(0, 16)) + '</td>'
+                    + '<td>' + name + '</td>'
+                    + '<td>' + em + '</td>'
+                    + '<td>' + role + '</td>'
+                    + '<td style="font-size:12px;">' + acct + '</td>'
+                    + '<td>'
+                    + '<button class="btn-success" onclick="approveSkfApplication(\'' + id + '\')" style="margin-right:6px;">Approve</button>'
+                    + '<button class="btn-danger" onclick="rejectSkfApplication(\'' + id + '\')">Reject</button>'
+                    + '</td></tr>';
+            }).join('');
+        }
+
+        async function approveSkfApplication(id) {
+            if (!confirm('Approve this request? If they already registered on the site, their password stays the same — only the SKF ID is assigned.')) return;
+            var tok = localStorage.getItem('token');
+            var out = document.getElementById('skfApproveResult');
+            try {
+                var res = await fetch(API_BASE_URL + '/SkfApplications/' + id + '/approve', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + tok }
+                });
+                var data = await res.json().catch(function () { return {}; });
+                if (!res.ok) {
+                    alert(data.message || data.detail || 'Approve failed');
+                    return;
+                }
+                if (out) {
+                    out.style.display = 'block';
+                    out.textContent = 'Send to applicant securely:\n  SKF ID: ' + (data.assignedSkfId || '')
+                        + (data.temporaryPassword ? '\n  One-time password (legacy row only): ' + data.temporaryPassword : '\n  Password: unchanged — the one they set at staff registration.')
+                        + '\n\n' + (data.emailNote || '');
+                }
+                logActivity('SKF access approved', data.assignedSkfId + ' — ' + (data.message || ''));
+                await loadSkfApplications();
+            } catch (e) {
+                alert('Request failed. Is the API running?');
+            }
+        }
+
+        async function rejectSkfApplication(id) {
+            if (!confirm('Reject this access request?')) return;
+            var tok = localStorage.getItem('token');
+            try {
+                var res = await fetch(API_BASE_URL + '/SkfApplications/' + id + '/reject', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + tok }
+                });
+                if (!res.ok) {
+                    var data = await res.json().catch(function () { return ({}); });
+                    alert(data.message || 'Reject failed');
+                    return;
+                }
+                logActivity('SKF access rejected', id);
+                await loadSkfApplications();
+            } catch (e) {
+                alert('Request failed.');
             }
         }
 
@@ -879,26 +1312,42 @@
                 return;
             }
             
-            tbody.innerHTML = users.map(user => `
-                <tr>
-                    <td>${user.full_name || 'N/A'}</td>
-                    <td>${user.email || 'N/A'}</td>
-                    <td>${formatRoleName(user.role)}</td>
-                    <td>${user.club_name || 'N/A'}</td>
-                    <td>${formatDate(user.created_at)}</td>
-                    <td>
-                        <button class="btn-success" onclick="approveUser('${user.id}')" style="margin-right: 5px;">Approve</button>
-                        <button class="btn-danger" onclick="rejectUser('${user.id}')" style="margin-right: 5px;">Reject</button>
-                        <button class="btn-secondary" onclick="viewUserDetails('${user.id}')">View Details</button>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = users.map(function (user) {
+                return '<tr>'
+                    + '<td>' + escapeHtml(user.full_name || 'N/A') + '</td>'
+                    + '<td>' + escapeHtml(user.email || 'N/A') + '</td>'
+                    + '<td>' + escapeHtml(formatRoleName(user.role)) + '</td>'
+                    + '<td>' + escapeHtml(user.club_name || 'N/A') + '</td>'
+                    + '<td>' + escapeHtml(formatDate(user.created_at)) + '</td>'
+                    + '<td>'
+                    + '<button class="btn-success" onclick="approveUser(\'' + user.id + '\')" style="margin-right:5px;">Approve</button>'
+                    + '<button class="btn-danger" onclick="rejectUser(\'' + user.id + '\')" style="margin-right:5px;">Reject</button>'
+                    + '<button class="btn-secondary" onclick="viewUserDetails(\'' + user.id + '\')">View Details</button>'
+                    + '</td>'
+                    + '</tr>';
+            }).join('');
         }
 
         // Approve user
         async function approveUser(userId) {
             if (!confirm('Are you sure you want to approve this user?')) return;
-            
+
+            var sb = getAdminSupabase();
+            if (sb) {
+                var up = await sb.from('users').update({ is_active: true, updated_at: new Date().toISOString() }).eq('id', userId);
+                if (!up.error) {
+                    var u = allUsers.find(function (x) { return x.id === userId; });
+                    logActivity('User Approved', (u ? (u.full_name || u.email) : 'User') + ' — role: ' + (u ? u.role : ''));
+                    alert('User approved successfully!');
+                    await loadUsers();
+                    loadPendingApprovals();
+                    loadDashboardStats();
+                    return;
+                }
+                alert((up.error && up.error.message) || 'Failed to approve user.');
+                return;
+            }
+
             try {
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/approve`, {
@@ -908,9 +1357,12 @@
                         'Content-Type': 'application/json'
                     }
                 });
-                
+
                 if (response.ok) {
+                    const u = allUsers.find(x => x.id === userId);
+                    logActivity('User Approved', (u ? (u.full_name || u.email) : 'User') + ' — role: ' + (u ? u.role : ''));
                     alert('User approved successfully!');
+                    await loadUsers();
                     loadPendingApprovals();
                     loadDashboardStats();
                 } else {
@@ -923,10 +1375,26 @@
             }
         }
 
-        // Reject user
+        // Reject user (removes public.users row; auth user may still exist in Supabase Auth)
         async function rejectUser(userId) {
-            if (!confirm('Are you sure you want to reject this user? This action cannot be undone.')) return;
-            
+            if (!confirm('Are you sure you want to reject this user? This removes their profile from the directory.')) return;
+
+            var sb = getAdminSupabase();
+            if (sb) {
+                var del = await sb.from('users').delete().eq('id', userId);
+                if (!del.error) {
+                    var u = allUsers.find(function (x) { return x.id === userId; });
+                    logActivity('User Rejected', (u ? (u.full_name || u.email) : 'User'));
+                    alert('User profile removed.');
+                    await loadUsers();
+                    loadPendingApprovals();
+                    loadDashboardStats();
+                    return;
+                }
+                alert((del.error && del.error.message) || 'Failed to reject user (check FK constraints or RLS).');
+                return;
+            }
+
             try {
                 const token = localStorage.getItem('token');
                 const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/reject`, {
@@ -935,9 +1403,12 @@
                         'Authorization': `Bearer ${token}`
                     }
                 });
-                
+
                 if (response.ok) {
+                    const u = allUsers.find(x => x.id === userId);
+                    logActivity('User Rejected', (u ? (u.full_name || u.email) : 'User'));
                     alert('User rejected and removed.');
+                    await loadUsers();
                     loadPendingApprovals();
                     loadDashboardStats();
                 } else {
@@ -949,21 +1420,43 @@
             }
         }
 
-        // Load tournaments
+        // ── Tournament localStorage helpers ───────────────────────
+        function saveLocalTournaments(list) {
+            try { localStorage.setItem('skf_local_tournaments', JSON.stringify(list)); } catch(e) {}
+        }
+        function getLocalTournaments() {
+            try { return JSON.parse(localStorage.getItem('skf_local_tournaments') || '[]'); } catch(e) { return []; }
+        }
+
+        // Load tournaments (Supabase → API → localStorage)
         async function loadTournaments() {
+            var sb = getAdminSupabase();
+            if (sb) {
+                var q = await sb.from('tournaments')
+                    .select('*')
+                    .eq('is_active', true)
+                    .order('start_date', { ascending: true });
+                if (!q.error && q.data) {
+                    allTournaments = q.data.map(normalizeTournamentRow);
+                    saveLocalTournaments(allTournaments);
+                    displayTournaments(allTournaments);
+                    return;
+                }
+                if (q.error) console.warn('Supabase tournaments:', q.error.message || q.error);
+            }
+
             try {
                 const response = await fetch(`${API_BASE_URL}/tournament`);
                 if (response.ok) {
                     allTournaments = await response.json();
+                    saveLocalTournaments(allTournaments);
                     displayTournaments(allTournaments);
-                } else {
-                    allTournaments = [];
-                    displayTournaments([]);
+                    return;
                 }
-            } catch (error) {
-                console.error('Error loading tournaments:', error);
-                displayTournaments([]);
-            }
+            } catch (error) { /* fall through to local */ }
+
+            allTournaments = getLocalTournaments();
+            displayTournaments(allTournaments);
         }
 
         // Display tournaments
@@ -988,11 +1481,12 @@
                     <td>${formatDate(tournament.start_date)}</td>
                     <td>${formatDate(tournament.end_date)}</td>
                     <td>${tournament.location || 'N/A'}</td>
-                    <td><span class="status-badge status-${tournament.status}">${tournament.status || 'N/A'}</span></td>
-                    <td>0</td>
+                    <td><span class="status-badge status-${tournament.status}">${formatTournamentStatus(tournament.status)}</span></td>
+                    <td>${(allRegistrations || []).filter(function (r) { return r.tournament_id === tournament.id; }).length}</td>
                     <td>
-                        <button class="btn-secondary" onclick="viewTournament('${tournament.id}')" style="margin-right: 5px;">View</button>
                         <button class="btn-primary" onclick="editTournament('${tournament.id}')" style="margin-right: 5px;">Edit</button>
+                        <button class="btn-secondary" onclick="manageCategories('${tournament.id}')" style="margin-right: 5px;">Categories</button>
+                        <button class="btn-secondary" onclick="manageReferees('${tournament.id}')" style="margin-right: 5px;">Referees</button>
                         <button class="btn-danger" onclick="deleteTournament('${tournament.id}')">Delete</button>
                     </td>
                 </tr>
@@ -1020,10 +1514,41 @@
             displayTournaments(filtered);
         }
 
-        // Load registrations
+        // Load registrations (Supabase → per-tournament API)
         async function loadRegistrations() {
+            var sb = getAdminSupabase();
+            if (sb) {
+                var q = await sb.from('tournament_registrations')
+                    .select('*')
+                    .order('registration_date', { ascending: false });
+                if (!q.error && q.data) {
+                    var rows = q.data;
+                    var uids = [];
+                    var tids = [];
+                    rows.forEach(function (r) {
+                        if (r.user_id && uids.indexOf(r.user_id) === -1) uids.push(r.user_id);
+                        if (r.tournament_id && tids.indexOf(r.tournament_id) === -1) tids.push(r.tournament_id);
+                    });
+                    var userById = {};
+                    var tournamentById = {};
+                    if (uids.length > 0) {
+                        var qu = await sb.from('users').select('id, full_name, email').in('id', uids);
+                        if (qu.error) console.warn('Supabase registrations users join:', qu.error);
+                        (qu.data || []).forEach(function (u) { userById[u.id] = u; });
+                    }
+                    if (tids.length > 0) {
+                        var qt = await sb.from('tournaments').select('id, name').in('id', tids);
+                        if (qt.error) console.warn('Supabase registrations tournaments join:', qt.error);
+                        (qt.data || []).forEach(function (t) { tournamentById[t.id] = t; });
+                    }
+                    allRegistrations = normalizeRegistrationRows(rows, userById, tournamentById);
+                    displayRegistrations(allRegistrations);
+                    return;
+                }
+                if (q.error) console.warn('Supabase tournament_registrations:', q.error.message || q.error);
+            }
+
             try {
-                // Load registrations from all tournaments
                 const registrations = [];
                 for (const tournament of allTournaments) {
                     try {
@@ -1035,19 +1560,24 @@
                         });
                         if (response.ok) {
                             const tournamentRegs = await response.json();
-                            registrations.push(...tournamentRegs.map(reg => ({
-                                ...reg,
-                                tournament_name: tournament.name
-                            })));
+                            tournamentRegs.forEach(function (reg) {
+                                registrations.push({
+                                    ...reg,
+                                    tournament_name: tournament.name,
+                                    player_name: reg.player_name || reg.full_name || reg.fullName || ('User ' + (reg.user_id || '')),
+                                    player_email: reg.player_email || reg.email || ''
+                                });
+                            });
                         }
                     } catch (error) {
-                        console.error(`Error loading registrations for tournament ${tournament.id}:`, error);
+                        console.error('Error loading registrations for tournament ' + tournament.id + ':', error);
                     }
                 }
                 allRegistrations = registrations;
                 displayRegistrations(allRegistrations);
             } catch (error) {
                 console.error('Error loading registrations:', error);
+                allRegistrations = [];
                 displayRegistrations([]);
             }
         }
@@ -1068,22 +1598,29 @@
                 return;
             }
             
-            // Note: This would need user data joined - simplified for now
-            tbody.innerHTML = registrations.map(reg => `
-                <tr>
-                    <td>${reg.tournament_name || 'N/A'}</td>
-                    <td>User ${reg.user_id}</td>
-                    <td>N/A</td>
-                    <td>${reg.weight_category || 'N/A'}</td>
-                    <td>${reg.belt_level || 'N/A'}</td>
-                    <td><span class="status-badge status-${reg.status}">${reg.status || 'pending'}</span></td>
-                    <td><span class="status-badge status-${reg.payment_status}">${reg.payment_status || 'pending'}</span></td>
-                    <td>
-                        <button class="btn-success" onclick="approveRegistration('${reg.id}')" style="margin-right: 5px;">Approve</button>
-                        <button class="btn-danger" onclick="rejectRegistration('${reg.id}')">Reject</button>
-                    </td>
-                </tr>
-            `).join('');
+            tbody.innerHTML = registrations.map(function (reg) {
+                var pid = reg.player_name || ('User ' + reg.user_id);
+                var pem = reg.player_email || 'N/A';
+                var actions;
+                if (reg.status === 'rejected') {
+                    actions = '<span style="color:#888;font-size:13px;">—</span>';
+                } else if (reg.status === 'pending') {
+                    actions = '<button class="btn-success" onclick="approveRegistration(\'' + reg.id + '\')" style="margin-right:5px;">Approve</button>'
+                        + '<button class="btn-danger" onclick="rejectRegistration(\'' + reg.id + '\')">Reject</button>';
+                } else {
+                    actions = '<button class="btn-danger" onclick="rejectRegistration(\'' + reg.id + '\')">Reject</button>';
+                }
+                return '<tr>'
+                    + '<td>' + escapeHtml(reg.tournament_name || 'N/A') + '</td>'
+                    + '<td>' + escapeHtml(pid) + '</td>'
+                    + '<td>' + escapeHtml(pem) + '</td>'
+                    + '<td>' + escapeHtml(reg.weight_category || 'N/A') + '</td>'
+                    + '<td>' + escapeHtml(reg.belt_level || 'N/A') + '</td>'
+                    + '<td><span class="status-badge status-' + (reg.status || 'pending') + '">' + (reg.status || 'pending') + '</span></td>'
+                    + '<td><span class="status-badge status-' + (reg.payment_status || 'pending') + '">' + (reg.payment_status || 'pending') + '</span></td>'
+                    + '<td>' + actions + '</td>'
+                    + '</tr>';
+            }).join('');
         }
 
         // Filter registrations
@@ -1103,9 +1640,13 @@
             }
             
             if (searchTerm) {
-                filtered = filtered.filter(r => 
-                    (r.tournament_name && r.tournament_name.toLowerCase().includes(searchTerm))
-                );
+                filtered = filtered.filter(function (r) {
+                    return (r.tournament_name && r.tournament_name.toLowerCase().includes(searchTerm))
+                        || (r.player_name && String(r.player_name).toLowerCase().includes(searchTerm))
+                        || (r.player_email && String(r.player_email).toLowerCase().includes(searchTerm))
+                        || (r.weight_category && String(r.weight_category).toLowerCase().includes(searchTerm))
+                        || (r.belt_level && String(r.belt_level).toLowerCase().includes(searchTerm));
+                });
             }
             
             displayRegistrations(filtered);
@@ -1184,10 +1725,20 @@
             }
         }
 
+        function formatTournamentStatus(status) {
+            const map = {
+                'draft': 'Draft',
+                'registration_open': 'Registration Open',
+                'registration_closed': 'Registration Closed'
+            };
+            return map[(status || '').toLowerCase()] || status || 'N/A';
+        }
+
         // Utility functions
         function formatRoleName(role) {
             const roleMap = {
                 'admin': 'SKF Admin',
+                'skf_admin': 'SKF Admin',
                 'player': 'Player',
                 'coach': 'Coach',
                 'referee': 'Referee',
@@ -1203,13 +1754,104 @@
             return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
         }
 
-        // Placeholder functions for actions (to be implemented)
-        function viewUserDetails(userId) {
-            alert('View user details - To be implemented');
+        async function viewUserDetails(userId) {
+            var u = allUsers.find(function (x) { return x.id === userId; });
+            var sb = getAdminSupabase();
+            if (!u && sb) {
+                var q = await sb.from('users').select('*').eq('id', userId).maybeSingle();
+                if (!q.error && q.data) u = normalizeUserRow(q.data);
+            }
+            if (!u) {
+                alert('User not found.');
+                return;
+            }
+            var modalContainer = document.getElementById('modalContainer');
+            if (!modalContainer) return;
+
+            var card = u.player_id_card ? escapeHtml(String(u.player_id_card)) : '—';
+            var pid = escapeHtml(String(u.player_id || '—'));
+            var row = function (label, val) {
+                return '<div class="detail-item" style="padding:8px 0;border-bottom:1px solid #eee;"><strong>' + label + '</strong><br>'
+                    + '<span style="color:#444;">' + val + '</span></div>';
+            };
+            modalContainer.innerHTML = `
+                <div class="modal" style="display:block;">
+                    <div class="modal-content" style="max-width:520px;">
+                        <div class="modal-header">
+                            <h2>User profile</h2>
+                            <span class="close" onclick="closeModal()">&times;</span>
+                        </div>
+                        <div style="padding:0 8px 16px;">
+                            ${row('Full name', escapeHtml(u.full_name || '—'))}
+                            ${row('Email', escapeHtml(u.email || '—'))}
+                            ${row('Username', escapeHtml(u.username || '—'))}
+                            ${row('Role', escapeHtml(formatRoleName(u.role)))}
+                            ${row('Status', u.is_active ? 'Active' : 'Inactive')}
+                            ${row('Phone', escapeHtml(u.phone || '—'))}
+                            ${row('National ID', escapeHtml(u.national_id || '—'))}
+                            ${row('Player ID', pid)}
+                            ${row('Player ID card', card)}
+                            ${row('Club', escapeHtml(u.club_name || '—'))}
+                            ${row('Age group', escapeHtml(u.age_group || '—'))}
+                            ${row('Rank', escapeHtml(u.rank || '—'))}
+                            ${row('Category', escapeHtml(u.player_category || '—'))}
+                            ${row('About / bio', escapeHtml(u.profile_bio || '—'))}
+                            ${row('Profile photo', (u.profile_photo_url && isSafeProfilePhotoUrl(u.profile_photo_url))
+                                ? ('<img src="' + escapeAttr(u.profile_photo_url) + '" alt="Profile" style="max-width:180px;max-height:180px;border-radius:8px;object-fit:cover;border:1px solid #ddd;margin-top:6px;">')
+                                : escapeHtml(u.profile_photo_url ? '(invalid or non-image URL)' : '—'))}
+                            ${row('User ID', escapeHtml(String(u.id)))}
+                            ${row('Created', escapeHtml(formatDate(u.created_at)))}
+                            ${row('Updated', escapeHtml(formatDate(u.updated_at)))}
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
-        function toggleUserStatus(userId, activate) {
-            alert(`${activate ? 'Activate' : 'Deactivate'} user - To be implemented`);
+        async function toggleUserStatus(userId, activate) {
+            var wantActive = activate === true || activate === 'true';
+            if (!wantActive && !confirm('Deactivate this user? They may be unable to use the app until reactivated.')) return;
+
+            var sb = getAdminSupabase();
+            if (sb) {
+                var up = await sb.from('users').update({
+                    is_active: wantActive,
+                    updated_at: new Date().toISOString()
+                }).eq('id', userId);
+                if (!up.error) {
+                    logActivity(wantActive ? 'User Activated' : 'User Deactivated',
+                        (allUsers.find(function (x) { return x.id === userId; }) || {}).full_name || userId);
+                    await loadUsers();
+                    filterUsers();
+                    loadDashboardStats();
+                    return;
+                }
+                alert((up.error && up.error.message) || 'Could not update user status.');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/admin/users/${userId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ isActive: wantActive })
+                });
+                if (response.ok) {
+                    await loadUsers();
+                    filterUsers();
+                    loadDashboardStats();
+                } else {
+                    var data = await response.json().catch(function () { return {}; });
+                    alert(data.message || 'Could not update user status.');
+                }
+            } catch (e) {
+                console.error(e);
+                alert('Could not update user status.');
+            }
         }
 
         function openCreateUserModal() {
@@ -1228,43 +1870,55 @@
                             <h2>Create Tournament</h2>
                             <span class="close" onclick="closeModal()">&times;</span>
                         </div>
-                        <form onsubmit="return createTournament(event)">
+                        <form onsubmit="return saveTournament(event, null)">
                             <div class="form-group">
-                                <label for="tournamentName">Tournament Name</label>
-                                <input type="text" id="tournamentName" required>
+                                <label for="t_name">Tournament Name *</label>
+                                <input type="text" id="t_name" required placeholder="e.g. Saudi Karate Championship 2026">
                             </div>
                             <div class="form-group">
-                                <label for="tournamentDescription">Description</label>
-                                <textarea id="tournamentDescription" placeholder="Optional tournament details"></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label for="tournamentStartDate">Start Date</label>
-                                <input type="datetime-local" id="tournamentStartDate" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="tournamentEndDate">End Date</label>
-                                <input type="datetime-local" id="tournamentEndDate" required>
-                            </div>
-                            <div class="form-group">
-                                <label for="tournamentLocation">Tournament City (Saudi Arabia)</label>
-                                <select id="tournamentLocation" required>
+                                <label for="t_location">City (Saudi Arabia) *</label>
+                                <select id="t_location" required>
                                     <option value="" selected disabled>Select a Saudi city</option>
                                     ${cityOptions}
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label for="tournamentDeadline">Registration Deadline</label>
-                                <input type="datetime-local" id="tournamentDeadline" required>
+                                <label for="t_start">Start Date *</label>
+                                <input type="datetime-local" id="t_start" required>
                             </div>
                             <div class="form-group">
-                                <label for="tournamentMaxParticipants">Max Participants</label>
-                                <input type="number" id="tournamentMaxParticipants" min="1" placeholder="Optional">
+                                <label for="t_end">End Date *</label>
+                                <input type="datetime-local" id="t_end" required>
                             </div>
                             <div class="form-group">
-                                <label for="tournamentEntryFee">Entry Fee (SAR)</label>
-                                <input type="number" id="tournamentEntryFee" min="0" step="0.01" placeholder="Optional">
+                                <label for="t_reg_open">Registration Open Date *</label>
+                                <input type="datetime-local" id="t_reg_open" required>
                             </div>
-                            <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                            <div class="form-group">
+                                <label for="t_reg_close">Registration Close Date *</label>
+                                <input type="datetime-local" id="t_reg_close" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="t_status">Status *</label>
+                                <select id="t_status" required>
+                                    <option value="draft" selected>Draft</option>
+                                    <option value="registration_open">Registration Open</option>
+                                    <option value="registration_closed">Registration Closed</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="t_description">Description</label>
+                                <textarea id="t_description" placeholder="Optional tournament details"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="t_max">Max Participants</label>
+                                <input type="number" id="t_max" min="1" placeholder="Optional">
+                            </div>
+                            <div class="form-group">
+                                <label for="t_fee">Entry Fee (SAR)</label>
+                                <input type="number" id="t_fee" min="0" step="0.01" placeholder="Optional">
+                            </div>
+                            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
                                 <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
                                 <button type="submit" class="btn-primary">Create Tournament</button>
                             </div>
@@ -1281,33 +1935,41 @@
             }
         }
 
-        async function createTournament(event) {
+        // Shared create/edit handler. editId is null for create, a tournament id for edit.
+        async function saveTournament(event, editId) {
             event.preventDefault();
 
-            const name = document.getElementById('tournamentName').value.trim();
-            const description = document.getElementById('tournamentDescription').value.trim();
-            const startDate = document.getElementById('tournamentStartDate').value;
-            const endDate = document.getElementById('tournamentEndDate').value;
-            const location = document.getElementById('tournamentLocation').value;
-            const registrationDeadline = document.getElementById('tournamentDeadline').value;
-            const maxParticipantsRaw = document.getElementById('tournamentMaxParticipants').value;
-            const entryFeeRaw = document.getElementById('tournamentEntryFee').value;
+            const name = document.getElementById('t_name').value.trim();
+            const location = document.getElementById('t_location').value;
+            const startDate = document.getElementById('t_start').value;
+            const endDate = document.getElementById('t_end').value;
+            const regOpen = document.getElementById('t_reg_open').value;
+            const regClose = document.getElementById('t_reg_close').value;
+            const status = document.getElementById('t_status').value;
+            const description = document.getElementById('t_description').value.trim();
+            const maxRaw = document.getElementById('t_max').value;
+            const feeRaw = document.getElementById('t_fee').value;
 
-            if (!name || !startDate || !endDate || !location || !registrationDeadline) {
-                alert('Please fill all required tournament fields.');
+            if (!name || !location || !startDate || !endDate || !regOpen || !regClose || !status) {
+                alert('Please fill all required fields.');
                 return false;
             }
 
             const start = new Date(startDate);
             const end = new Date(endDate);
-            const deadline = new Date(registrationDeadline);
+            const open = new Date(regOpen);
+            const close = new Date(regClose);
 
-            if (end < start) {
+            if (end <= start) {
                 alert('End date must be after start date.');
                 return false;
             }
-            if (deadline > start) {
-                alert('Registration deadline must be before tournament start date.');
+            if (close <= open) {
+                alert('Registration close date must be after registration open date.');
+                return false;
+            }
+            if (close > start) {
+                alert('Registration must close before the tournament starts.');
                 return false;
             }
 
@@ -1317,15 +1979,63 @@
                 startDate: start.toISOString(),
                 endDate: end.toISOString(),
                 location,
-                maxParticipants: maxParticipantsRaw ? parseInt(maxParticipantsRaw, 10) : null,
-                registrationDeadline: deadline.toISOString(),
-                entryFee: entryFeeRaw ? parseFloat(entryFeeRaw) : null
+                registrationOpenDate: open.toISOString(),
+                registrationCloseDate: close.toISOString(),
+                status,
+                maxParticipants: maxRaw ? parseInt(maxRaw, 10) : null,
+                entryFee: feeRaw ? parseFloat(feeRaw) : null
             };
+
+            const isEdit = editId !== null;
+            const url = isEdit ? `${API_BASE_URL}/tournament/${editId}` : `${API_BASE_URL}/tournament`;
+            const method = isEdit ? 'PUT' : 'POST';
+            const successMsg = isEdit ? 'Tournament updated successfully!' : 'Tournament created successfully!';
+
+            var sbSave = getAdminSupabase();
+            if (sbSave) {
+                var userSave = JSON.parse(localStorage.getItem('user') || '{}');
+                var uidSave = userSave.id;
+                if (!uidSave) {
+                    alert('Missing user id. Please log in again.');
+                    return false;
+                }
+                var rowDb = {
+                    name: payload.name,
+                    description: payload.description,
+                    start_date: payload.startDate,
+                    end_date: payload.endDate,
+                    location: payload.location,
+                    status: payload.status,
+                    registration_open_date: payload.registrationOpenDate,
+                    registration_close_date: payload.registrationCloseDate,
+                    max_participants: payload.maxParticipants,
+                    entry_fee: payload.entryFee
+                };
+                var qSave;
+                if (isEdit) {
+                    qSave = await sbSave.from('tournaments').update(rowDb).eq('id', editId);
+                } else {
+                    rowDb.created_by = uidSave;
+                    rowDb.is_active = true;
+                    qSave = await sbSave.from('tournaments').insert(rowDb);
+                }
+                if (!qSave.error) {
+                    logActivity(isEdit ? 'Tournament Updated' : 'Tournament Created',
+                        payload.name + ' — ' + (payload.location || '') + ' (Supabase)');
+                    alert(successMsg);
+                    closeModal();
+                    await loadTournaments();
+                    await loadDashboardStats();
+                    return false;
+                }
+                alert('Save failed: ' + (qSave.error.message || JSON.stringify(qSave.error)));
+                return false;
+            }
 
             try {
                 const token = localStorage.getItem('token');
-                const response = await fetch(`${API_BASE_URL}/tournament`, {
-                    method: 'POST',
+                const response = await fetch(url, {
+                    method,
                     headers: {
                         'Content-Type': 'application/json',
                         ...(token ? { 'Authorization': `Bearer ${token}` } : {})
@@ -1334,78 +2044,194 @@
                 });
 
                 if (response.ok) {
-                    alert('Tournament created successfully!');
+                    logActivity(isEdit ? 'Tournament Updated' : 'Tournament Created', payload.name + ' — ' + (payload.location || ''));
+                    alert(successMsg);
                     closeModal();
                     await loadTournaments();
                     await loadDashboardStats();
                     return false;
                 }
 
-                // Local fallback for local auth/testing mode.
-                const localTournament = {
-                    id: `local-${Date.now()}`,
-                    name: payload.name,
-                    description: payload.description,
-                    start_date: payload.startDate,
-                    end_date: payload.endDate,
-                    location: payload.location,
-                    status: 'upcoming',
-                    registration_deadline: payload.registrationDeadline,
-                    max_participants: payload.maxParticipants,
-                    entry_fee: payload.entryFee
-                };
-                allTournaments.unshift(localTournament);
-                displayTournaments(allTournaments);
-                alert('Tournament saved locally (API unavailable in current mode).');
-                closeModal();
+                const errData = await response.json().catch(() => ({}));
+                alert((errData.message || 'Save failed') + (errData.error ? `\n${errData.error}` : ''));
                 return false;
             } catch (error) {
-                console.error('Error creating tournament:', error);
-
-                const localTournament = {
-                    id: `local-${Date.now()}`,
+                // Local fallback for LOCAL_TEST_MODE
+                console.warn('API unavailable, using local fallback:', error.message);
+                const localRecord = {
+                    id: editId || `local-${Date.now()}`,
                     name: payload.name,
                     description: payload.description,
                     start_date: payload.startDate,
                     end_date: payload.endDate,
                     location: payload.location,
-                    status: 'upcoming',
-                    registration_deadline: payload.registrationDeadline,
+                    status: payload.status,
+                    registration_open_date: payload.registrationOpenDate,
+                    registration_close_date: payload.registrationCloseDate,
                     max_participants: payload.maxParticipants,
                     entry_fee: payload.entryFee
                 };
-                allTournaments.unshift(localTournament);
+
+                if (isEdit) {
+                    const idx = allTournaments.findIndex(t => t.id === editId);
+                    if (idx !== -1) allTournaments[idx] = localRecord;
+                } else {
+                    allTournaments.unshift(localRecord);
+                }
+                logActivity(isEdit ? 'Tournament Updated' : 'Tournament Created', payload.name + ' — ' + (payload.location || '') + ' (local)');
+                saveLocalTournaments(allTournaments); // persist so referee dashboard can see it
                 displayTournaments(allTournaments);
-                alert('Tournament saved locally (offline fallback).');
+                alert(isEdit ? 'Tournament updated locally (API offline).' : 'Tournament saved locally (API offline).');
                 closeModal();
                 return false;
             }
+        }
+
+        function editTournament(tournamentId) {
+            const tournament = allTournaments.find(t => t.id === tournamentId);
+            if (!tournament) {
+                alert('Tournament not found.');
+                return;
+            }
+
+            const modalContainer = document.getElementById('modalContainer');
+            if (!modalContainer) return;
+
+            const cityOptions = saudiCities.map(city =>
+                `<option value="${city}" ${tournament.location === city ? 'selected' : ''}>${city}</option>`
+            ).join('');
+
+            const toLocal = (iso) => iso ? iso.substring(0, 16) : '';
+
+            modalContainer.innerHTML = `
+                <div class="modal" id="editTournamentModal" style="display: block;">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2>Edit Tournament</h2>
+                            <span class="close" onclick="closeModal()">&times;</span>
+                        </div>
+                        <form onsubmit="return saveTournament(event, '${tournament.id}')">
+                            <div class="form-group">
+                                <label for="t_name">Tournament Name *</label>
+                                <input type="text" id="t_name" required value="${tournament.name || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label for="t_location">City (Saudi Arabia) *</label>
+                                <select id="t_location" required>
+                                    <option value="" disabled>Select a Saudi city</option>
+                                    ${cityOptions}
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="t_start">Start Date *</label>
+                                <input type="datetime-local" id="t_start" required value="${toLocal(tournament.start_date)}">
+                            </div>
+                            <div class="form-group">
+                                <label for="t_end">End Date *</label>
+                                <input type="datetime-local" id="t_end" required value="${toLocal(tournament.end_date)}">
+                            </div>
+                            <div class="form-group">
+                                <label for="t_reg_open">Registration Open Date *</label>
+                                <input type="datetime-local" id="t_reg_open" required value="${toLocal(tournament.registration_open_date)}">
+                            </div>
+                            <div class="form-group">
+                                <label for="t_reg_close">Registration Close Date *</label>
+                                <input type="datetime-local" id="t_reg_close" required value="${toLocal(tournament.registration_close_date)}">
+                            </div>
+                            <div class="form-group">
+                                <label for="t_status">Status *</label>
+                                <select id="t_status" required>
+                                    <option value="draft" ${tournament.status === 'draft' ? 'selected' : ''}>Draft</option>
+                                    <option value="registration_open" ${tournament.status === 'registration_open' ? 'selected' : ''}>Registration Open</option>
+                                    <option value="registration_closed" ${tournament.status === 'registration_closed' ? 'selected' : ''}>Registration Closed</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="t_description">Description</label>
+                                <textarea id="t_description">${tournament.description || ''}</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="t_max">Max Participants</label>
+                                <input type="number" id="t_max" min="1" value="${tournament.max_participants || ''}">
+                            </div>
+                            <div class="form-group">
+                                <label for="t_fee">Entry Fee (SAR)</label>
+                                <input type="number" id="t_fee" min="0" step="0.01" value="${tournament.entry_fee || ''}">
+                            </div>
+                            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                                <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                                <button type="submit" class="btn-primary">Save Changes</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
         }
 
         function openCreateClubModal() {
             alert('Create club modal - To be implemented');
         }
 
-        function viewTournament(tournamentId) {
-            window.location.href = `tournament.html?id=${tournamentId}`;
-        }
+        async function deleteTournament(tournamentId) {
+            if (!confirm('Are you sure you want to delete this tournament? It will be hidden from lists (soft delete).')) return;
 
-        function editTournament(tournamentId) {
-            alert('Edit tournament - To be implemented');
-        }
-
-        function deleteTournament(tournamentId) {
-            if (confirm('Are you sure you want to delete this tournament?')) {
-                alert('Delete tournament - To be implemented');
+            var sbDel = getAdminSupabase();
+            if (sbDel) {
+                var qDel = await sbDel.from('tournaments').update({ is_active: false }).eq('id', tournamentId);
+                if (!qDel.error) {
+                    logActivity('Tournament Updated', 'Archived / deleted (Supabase) — ' + tournamentId);
+                    await loadTournaments();
+                    await loadDashboardStats();
+                    return;
+                }
+                alert('Delete failed: ' + (qDel.error.message || JSON.stringify(qDel.error)));
+                return;
             }
+
+            var list = getLocalTournaments().filter(function (t) { return t.id !== tournamentId; });
+            saveLocalTournaments(list);
+            allTournaments = list;
+            displayTournaments(allTournaments);
+            logActivity('Tournament Updated', 'Removed (local) — ' + tournamentId);
         }
 
-        function approveRegistration(registrationId) {
-            alert('Approve registration - To be implemented');
+        async function approveRegistration(registrationId) {
+            var reg = allRegistrations.find(function (r) { return r.id === registrationId; });
+            var sb = getAdminSupabase();
+            if (sb) {
+                var up = await sb.from('tournament_registrations')
+                    .update({ status: 'approved' })
+                    .eq('id', registrationId);
+                if (!up.error) {
+                    logActivity('Registration Approved', (reg && reg.tournament_name ? reg.tournament_name : '') + ' — ' + (reg && reg.player_name ? reg.player_name : registrationId));
+                    await loadRegistrations();
+                    filterRegistrations();
+                    return;
+                }
+                alert((up.error && up.error.message) || 'Could not approve registration.');
+                return;
+            }
+            alert('Approve registration requires Supabase admin session or API support.');
         }
 
-        function rejectRegistration(registrationId) {
-            alert('Reject registration - To be implemented');
+        async function rejectRegistration(registrationId) {
+            if (!confirm('Reject this registration? The player will be marked as rejected.')) return;
+            var reg = allRegistrations.find(function (r) { return r.id === registrationId; });
+            var sb = getAdminSupabase();
+            if (sb) {
+                var up = await sb.from('tournament_registrations')
+                    .update({ status: 'rejected' })
+                    .eq('id', registrationId);
+                if (!up.error) {
+                    logActivity('Registration Rejected', (reg && reg.tournament_name ? reg.tournament_name : '') + ' — ' + (reg && reg.player_name ? reg.player_name : registrationId));
+                    await loadRegistrations();
+                    filterRegistrations();
+                    return;
+                }
+                alert((up.error && up.error.message) || 'Could not reject registration.');
+                return;
+            }
+            alert('Reject registration requires Supabase admin session or API support.');
         }
 
         function viewClub(clubId) {
@@ -1414,6 +2240,596 @@
 
         function editClub(clubId) {
             alert('Edit club - To be implemented');
+        }
+
+        // ── Referee Assignment Management ────────────────────────────────────
+
+        async function manageReferees(tournamentId) {
+            const tournament = allTournaments.find(t => t.id === tournamentId);
+            const name = tournament ? tournament.name : 'Tournament';
+            const modalContainer = document.getElementById('modalContainer');
+            if (!modalContainer) return;
+
+            modalContainer.innerHTML = `
+                <div class="modal" style="display:block;">
+                    <div class="modal-content" style="max-width:720px;">
+                        <div class="modal-header">
+                            <h2>Referees — ${name}</h2>
+                            <span class="close" onclick="closeModal()">&times;</span>
+                        </div>
+
+                        <div class="modal-section-divider">Assigned Referees</div>
+                        <div id="refereesListWrapper">
+                            <p style="color:#666;font-size:14px;padding:6px 0;">Loading...</p>
+                        </div>
+
+                        <div class="modal-section-divider">Assign New Referee</div>
+                        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                            <div class="form-group" style="flex:1;min-width:220px;margin-bottom:0;">
+                                <label for="refereeSelect">Select Referee</label>
+                                <select id="refereeSelect">
+                                    <option value="" disabled selected>Loading referees...</option>
+                                </select>
+                            </div>
+                            <button class="btn-primary" onclick="assignRefereeToTournament('${tournamentId}')"
+                                style="height:38px;white-space:nowrap;">Assign</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            await loadTournamentReferees(tournamentId);
+            await populateRefereeDropdown(tournamentId);
+        }
+
+        async function loadTournamentReferees(tournamentId) {
+            const wrapper = document.getElementById('refereesListWrapper');
+            if (!wrapper) return;
+
+            var sbR = getAdminSupabase();
+            if (sbR) {
+                var q1 = await sbR.from('tournament_referees')
+                    .select('referee_id, assigned_at')
+                    .eq('tournament_id', tournamentId);
+                if (!q1.error) {
+                    var trs = q1.data || [];
+                    var referees = [];
+                    if (trs.length > 0) {
+                        var ids = trs.map(function (x) { return x.referee_id; });
+                        var q2 = await sbR.from('users')
+                            .select('id, full_name, email, role')
+                            .in('id', ids);
+                        var byId = {};
+                        (q2.data || []).forEach(function (p) { byId[p.id] = p; });
+                        referees = trs.map(function (tr) {
+                            var u = byId[tr.referee_id] || {};
+                            return {
+                                referee_id: tr.referee_id,
+                                refereeId:  tr.referee_id,
+                                assigned_at: tr.assigned_at,
+                                full_name:  u.full_name,
+                                fullName:   u.full_name,
+                                email:      u.email,
+                                role:       u.role
+                            };
+                        });
+                    }
+                    allRefereesByTournament[tournamentId] = referees;
+                    syncLocalRefAssignmentsForTournament(tournamentId, referees);
+                    renderRefereesList(tournamentId, referees);
+                    return;
+                }
+                console.warn('Supabase load referees:', q1.error);
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${API_BASE_URL}/tournament/${tournamentId}/referees`, {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+                if (res.ok) {
+                    const referees = await res.json();
+                    allRefereesByTournament[tournamentId] = referees;
+                    renderRefereesList(tournamentId, referees);
+                    return;
+                }
+            } catch { /* fall through to local */ }
+
+            const local = getLocalRefAssignments()
+                .filter(a => a.tournamentId === tournamentId)
+                .map(a => ({ refereeId: a.refereeId, fullName: a.fullName, email: a.email, role: a.role }));
+            allRefereesByTournament[tournamentId] = local;
+            renderRefereesList(tournamentId, local);
+        }
+
+        function renderRefereesList(tournamentId, referees) {
+            const wrapper = document.getElementById('refereesListWrapper');
+            if (!wrapper) return;
+
+            if (!referees || referees.length === 0) {
+                wrapper.innerHTML = '<p style="color:#888;font-size:13px;padding:6px 0;">No referees assigned yet.</p>';
+                return;
+            }
+
+            wrapper.innerHTML = `
+                <table class="category-table">
+                    <thead>
+                        <tr><th>Name</th><th>Email</th><th>Role</th><th>Action</th></tr>
+                    </thead>
+                    <tbody>
+                        ${referees.map(r => {
+                            const refId = r.refereeId || r.referee_id || r.id || '';
+                            const name  = r.fullName  || r.full_name || 'N/A';
+                            const email = r.email || 'N/A';
+                            const role  = r.role === 'referees_plus' ? 'Referee+' : 'Referee';
+                            return `<tr>
+                                <td>${name}</td>
+                                <td>${email}</td>
+                                <td>${role}</td>
+                                <td><button class="btn-danger"
+                                    onclick="removeRefereeFromTournament('${tournamentId}','${refId}')"
+                                    style="padding:4px 10px;">Remove</button></td>
+                            </tr>`;
+                        }).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        async function populateRefereeDropdown(tournamentId) {
+            const select = document.getElementById('refereeSelect');
+            if (!select) return;
+
+            var sbP = getAdminSupabase();
+            if (sbP) {
+                var qu = await sbP.from('users')
+                    .select('id, full_name, email, role')
+                    .eq('is_active', true)
+                    .in('role', ['referee', 'referees_plus']);
+                if (!qu.error && qu.data) {
+                    var assignedIds = (allRefereesByTournament[tournamentId] || []).map(function (r) {
+                        return r.referee_id || r.refereeId;
+                    });
+                    var available = qu.data.filter(function (u) {
+                        return assignedIds.indexOf(u.id) === -1;
+                    });
+                    fillRefereeSelect(select, available);
+                    return;
+                }
+                if (qu.error) console.warn('Supabase list referees:', qu.error);
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${API_BASE_URL}/tournament/${tournamentId}/available-referees`, {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+                if (res.ok) {
+                    const referees = await res.json();
+                    fillRefereeSelect(select, referees);
+                    return;
+                }
+            } catch { /* fall through to local */ }
+
+            // Local fallback — read skf_local_users, filter referee roles, exclude already assigned
+            try {
+                const localUsers = JSON.parse(localStorage.getItem('skf_local_users') || '[]');
+                const assigned = (allRefereesByTournament[tournamentId] || [])
+                    .map(r => r.refereeId || r.referee_id || r.id);
+                const available = localUsers.filter(u =>
+                    ['referee', 'referees_plus'].includes((u.role || '').toLowerCase()) &&
+                    !assigned.includes(u.id)
+                );
+                fillRefereeSelect(select, available);
+            } catch {
+                select.innerHTML = '<option value="" disabled selected>No referees available</option>';
+            }
+        }
+
+        function fillRefereeSelect(select, referees) {
+            if (!referees || referees.length === 0) {
+                select.innerHTML = '<option value="" disabled selected>No available referees</option>';
+                return;
+            }
+            select.innerHTML = '<option value="" disabled selected>Select a referee...</option>' +
+                referees.map(r => {
+                    const id   = r.id || r.refereeId || '';
+                    const name = r.fullName || r.full_name || 'Unknown';
+                    const email = r.email ? ' (' + r.email + ')' : '';
+                    return `<option value="${id}">${name}${email}</option>`;
+                }).join('');
+        }
+
+        async function assignRefereeToTournament(tournamentId) {
+            const select = document.getElementById('refereeSelect');
+            if (!select || !select.value) {
+                alert('Please select a referee.');
+                return;
+            }
+            const refereeId = select.value;
+
+            var sbA = getAdminSupabase();
+            if (sbA) {
+                var ins = await sbA.from('tournament_referees').insert({
+                    tournament_id: tournamentId,
+                    referee_id: refereeId
+                });
+                if (!ins.error) {
+                    const t = allTournaments.find(x => x.id === tournamentId);
+                    logActivity('Referee Assigned', 'Tournament: ' + (t ? t.name : tournamentId));
+                    await loadTournamentReferees(tournamentId);
+                    await populateRefereeDropdown(tournamentId);
+                    return;
+                }
+                alert((ins.error && ins.error.message) || 'Assignment failed (duplicate or not allowed).');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${API_BASE_URL}/tournament/${tournamentId}/referees`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    },
+                    body: JSON.stringify({ refereeId })
+                });
+
+                if (res.ok) {
+                    const t = allTournaments.find(x => x.id === tournamentId);
+                    logActivity('Referee Assigned', 'Tournament: ' + (t ? t.name : tournamentId));
+                    await loadTournamentReferees(tournamentId);
+                    await populateRefereeDropdown(tournamentId);
+                    return;
+                }
+                const err = await res.json().catch(() => ({}));
+                alert(err.message || 'Assignment failed.');
+                return;
+            } catch { /* fall through to local */ }
+
+            // Local fallback
+            const localUsers  = JSON.parse(localStorage.getItem('skf_local_users') || '[]');
+            const referee     = localUsers.find(u => u.id === refereeId);
+            const tournament  = allTournaments.find(t => t.id === tournamentId);
+            const assignments = getLocalRefAssignments();
+
+            if (!assignments.find(a => a.tournamentId === tournamentId && a.refereeId === refereeId)) {
+                assignments.push({
+                    id:           `local-ra-${Date.now()}`,
+                    tournamentId,
+                    refereeId,
+                    assignedAt:   new Date().toISOString(),
+                    fullName:     referee ? (referee.fullName || referee.full_name || '') : 'Unknown',
+                    email:        referee ? (referee.email || '') : '',
+                    role:         referee ? (referee.role || 'referee') : 'referee',
+                    tournament:   tournament || null
+                });
+                setLocalRefAssignments(assignments);
+                logActivity('Referee Assigned', 'Tournament: ' + (tournament ? tournament.name : tournamentId) + ' (local)');
+            }
+
+            // Refresh modal state from local store
+            allRefereesByTournament[tournamentId] = assignments
+                .filter(a => a.tournamentId === tournamentId)
+                .map(a => ({ refereeId: a.refereeId, fullName: a.fullName, email: a.email, role: a.role }));
+            renderRefereesList(tournamentId, allRefereesByTournament[tournamentId]);
+            await populateRefereeDropdown(tournamentId);
+        }
+
+        async function removeRefereeFromTournament(tournamentId, refereeId) {
+            if (!confirm('Remove this referee from the tournament?')) return;
+
+            var sbD = getAdminSupabase();
+            if (sbD) {
+                var del = await sbD.from('tournament_referees')
+                    .delete()
+                    .eq('tournament_id', tournamentId)
+                    .eq('referee_id', refereeId);
+                if (!del.error) {
+                    const t = allTournaments.find(x => x.id === tournamentId);
+                    logActivity('Referee Removed', 'Tournament: ' + (t ? t.name : tournamentId));
+                    await loadTournamentReferees(tournamentId);
+                    await populateRefereeDropdown(tournamentId);
+                    return;
+                }
+                alert((del.error && del.error.message) || 'Remove failed.');
+                return;
+            }
+
+            try {
+                const token = localStorage.getItem('token');
+                const res = await fetch(`${API_BASE_URL}/tournament/${tournamentId}/referees/${refereeId}`, {
+                    method: 'DELETE',
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+
+                if (res.ok || res.status === 204) {
+                    const t = allTournaments.find(x => x.id === tournamentId);
+                    logActivity('Referee Removed', 'Tournament: ' + (t ? t.name : tournamentId));
+                    allRefereesByTournament[tournamentId] = (allRefereesByTournament[tournamentId] || [])
+                        .filter(r => (r.refereeId || r.id) !== refereeId);
+                    renderRefereesList(tournamentId, allRefereesByTournament[tournamentId]);
+                    await populateRefereeDropdown(tournamentId);
+                    return;
+                }
+                alert('Remove failed.');
+                return;
+            } catch { /* fall through to local */ }
+
+            // Local fallback
+            const updated = getLocalRefAssignments()
+                .filter(a => !(a.tournamentId === tournamentId && a.refereeId === refereeId));
+            setLocalRefAssignments(updated);
+
+            allRefereesByTournament[tournamentId] = updated
+                .filter(a => a.tournamentId === tournamentId)
+                .map(a => ({ refereeId: a.refereeId, fullName: a.fullName, email: a.email, role: a.role }));
+            renderRefereesList(tournamentId, allRefereesByTournament[tournamentId]);
+            await populateRefereeDropdown(tournamentId);
+        }
+
+        // ── Category Management ──────────────────────────────────────────────
+
+        async function manageCategories(tournamentId) {
+            const tournament = allTournaments.find(t => t.id === tournamentId);
+            const name = tournament ? tournament.name : 'Tournament';
+
+            const modalContainer = document.getElementById('modalContainer');
+            if (!modalContainer) return;
+
+            modalContainer.innerHTML = `
+                <div class="modal" style="display: block;">
+                    <div class="modal-content" style="max-width: 780px;">
+                        <div class="modal-header">
+                            <h2>Categories — ${name}</h2>
+                            <span class="close" onclick="closeModal()">&times;</span>
+                        </div>
+
+                        <div class="modal-section-divider">Current Categories</div>
+                        <div id="categoriesTableWrapper">
+                            <p style="color:#666; font-size:14px;">Loading...</p>
+                        </div>
+
+                        <div class="modal-section-divider" id="cat_form_title">Add Category</div>
+                        <form id="categoryForm" onsubmit="return saveCategoryForm(event, '${tournamentId}')">
+                            <input type="hidden" id="cat_edit_id" value="">
+                            <div class="category-form-grid">
+                                <div class="form-group">
+                                    <label for="cat_discipline">Discipline *</label>
+                                    <select id="cat_discipline" required>
+                                        <option value="" disabled selected>Select</option>
+                                        <option value="kata">Kata</option>
+                                        <option value="kumite">Kumite</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cat_gender">Gender *</label>
+                                    <select id="cat_gender" required>
+                                        <option value="" disabled selected>Select</option>
+                                        <option value="male">Male</option>
+                                        <option value="female">Female</option>
+                                        <option value="mixed">Mixed</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cat_age_group">Age Group *</label>
+                                    <select id="cat_age_group" required>
+                                        <option value="" disabled selected>Select</option>
+                                        <option value="U12">Under 12</option>
+                                        <option value="U14">Under 14</option>
+                                        <option value="U16">Under 16</option>
+                                        <option value="U18">Under 18</option>
+                                        <option value="U21">Under 21</option>
+                                        <option value="Senior">Senior</option>
+                                        <option value="Veteran">Veteran</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="cat_weight">Weight Class *</label>
+                                    <input type="text" id="cat_weight" required placeholder="e.g. -60kg, +84kg, Open">
+                                </div>
+                            </div>
+                            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px;">
+                                <button type="button" class="btn-secondary" id="cat_cancel_edit" style="display:none;" onclick="resetCategoryForm()">Cancel Edit</button>
+                                <button type="submit" class="btn-primary" id="cat_submit_btn">Add Category</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+
+            await loadCategories(tournamentId);
+        }
+
+        async function loadCategories(tournamentId) {
+            const wrapper = document.getElementById('categoriesTableWrapper');
+            if (!wrapper) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/tournament/${tournamentId}/categories`, {
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+
+                if (response.ok) {
+                    const categories = await response.json();
+                    persistCategories(tournamentId, categories);
+                    renderCategoriesTable(tournamentId, categories);
+                } else {
+                    renderCategoriesTable(tournamentId, allCategoriesByTournament[tournamentId] || []);
+                }
+            } catch {
+                renderCategoriesTable(tournamentId, allCategoriesByTournament[tournamentId] || []);
+            }
+        }
+
+        function renderCategoriesTable(tournamentId, categories) {
+            const wrapper = document.getElementById('categoriesTableWrapper');
+            if (!wrapper) return;
+
+            if (!categories || categories.length === 0) {
+                wrapper.innerHTML = '<p style="color:#888; font-size:13px; padding: 6px 0;">No categories yet. Add one below.</p>';
+                return;
+            }
+
+            wrapper.innerHTML = `
+                <table class="category-table">
+                    <thead>
+                        <tr>
+                            <th>Discipline</th>
+                            <th>Gender</th>
+                            <th>Age Group</th>
+                            <th>Weight Class</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${categories.map(cat => `
+                            <tr>
+                                <td style="text-transform:capitalize;">${cat.discipline || 'N/A'}</td>
+                                <td style="text-transform:capitalize;">${cat.gender || 'N/A'}</td>
+                                <td>${cat.age_group || cat.ageGroup || 'N/A'}</td>
+                                <td>${cat.weight_class || cat.weightClass || 'N/A'}</td>
+                                <td>
+                                    <button class="btn-secondary" onclick="editCategoryInModal('${tournamentId}','${cat.id}')" style="margin-right:4px; padding:5px 10px;">Edit</button>
+                                    <button class="btn-danger" onclick="deleteCategoryInModal('${tournamentId}','${cat.id}')" style="padding:5px 10px;">Delete</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        async function saveCategoryForm(event, tournamentId) {
+            event.preventDefault();
+
+            const editId = document.getElementById('cat_edit_id').value || null;
+            const discipline = document.getElementById('cat_discipline').value;
+            const gender = document.getElementById('cat_gender').value;
+            const ageGroup = document.getElementById('cat_age_group').value;
+            const weightClass = document.getElementById('cat_weight').value.trim();
+
+            if (!discipline || !gender || !ageGroup || !weightClass) {
+                alert('Please fill all category fields.');
+                return false;
+            }
+
+            const payload = { discipline, gender, ageGroup, weightClass };
+            const isEdit = editId !== null;
+            const url = isEdit
+                ? `${API_BASE_URL}/tournament/${tournamentId}/categories/${editId}`
+                : `${API_BASE_URL}/tournament/${tournamentId}/categories`;
+            const method = isEdit ? 'PUT' : 'POST';
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (response.ok) {
+                    const t = allTournaments.find(x => x.id === tournamentId);
+                    logActivity('Category Added', discipline + ' / ' + gender + ' / ' + ageGroup + ' — ' + (t ? t.name : ''));
+                    resetCategoryForm();
+                    await loadCategories(tournamentId);
+                    return false;
+                }
+
+                const err = await response.json().catch(() => ({}));
+                alert(err.message || 'Save failed.');
+                return false;
+            } catch {
+                // Local fallback for LOCAL_TEST_MODE
+                const cats = allCategoriesByTournament[tournamentId] || [];
+                if (isEdit) {
+                    const idx = cats.findIndex(c => c.id === editId);
+                    if (idx !== -1) {
+                        cats[idx] = { ...cats[idx], discipline, gender, age_group: ageGroup, weight_class: weightClass };
+                    }
+                } else {
+                    cats.push({
+                        id: `local-cat-${Date.now()}`,
+                        tournament_id: tournamentId,
+                        discipline,
+                        gender,
+                        age_group: ageGroup,
+                        weight_class: weightClass
+                    });
+                }
+                persistCategories(tournamentId, cats);
+                const t2 = allTournaments.find(x => x.id === tournamentId);
+                logActivity('Category Added', discipline + ' / ' + gender + ' / ' + ageGroup + ' — ' + (t2 ? t2.name : '') + ' (local)');
+                resetCategoryForm();
+                renderCategoriesTable(tournamentId, cats);
+                return false;
+            }
+        }
+
+        function editCategoryInModal(tournamentId, categoryId) {
+            const cats = allCategoriesByTournament[tournamentId] || [];
+            const cat = cats.find(c => c.id === categoryId);
+            if (!cat) return;
+
+            document.getElementById('cat_edit_id').value = categoryId;
+            document.getElementById('cat_discipline').value = cat.discipline || '';
+            document.getElementById('cat_gender').value = cat.gender || '';
+            document.getElementById('cat_age_group').value = cat.age_group || cat.ageGroup || '';
+            document.getElementById('cat_weight').value = cat.weight_class || cat.weightClass || '';
+            document.getElementById('cat_submit_btn').textContent = 'Update Category';
+            document.getElementById('cat_cancel_edit').style.display = 'inline-block';
+            document.getElementById('cat_form_title').textContent = 'Edit Category';
+            document.getElementById('cat_discipline').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function resetCategoryForm() {
+            document.getElementById('cat_edit_id').value = '';
+            document.getElementById('categoryForm').reset();
+            document.getElementById('cat_submit_btn').textContent = 'Add Category';
+            document.getElementById('cat_cancel_edit').style.display = 'none';
+            document.getElementById('cat_form_title').textContent = 'Add Category';
+        }
+
+        async function deleteCategoryInModal(tournamentId, categoryId) {
+            if (!confirm('Delete this category? This cannot be undone.')) return;
+
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch(`${API_BASE_URL}/tournament/${tournamentId}/categories/${categoryId}`, {
+                    method: 'DELETE',
+                    headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+                });
+
+                if (response.ok || response.status === 204) {
+                    const t = allTournaments.find(x => x.id === tournamentId);
+                    logActivity('Category Deleted', 'Tournament: ' + (t ? t.name : tournamentId));
+                    persistCategories(tournamentId, (allCategoriesByTournament[tournamentId] || []).filter(c => c.id !== categoryId));
+                    renderCategoriesTable(tournamentId, allCategoriesByTournament[tournamentId]);
+                    return;
+                }
+                alert('Delete failed.');
+            } catch {
+                // Local fallback
+                const t = allTournaments.find(x => x.id === tournamentId);
+                logActivity('Category Deleted', 'Tournament: ' + (t ? t.name : tournamentId) + ' (local)');
+                persistCategories(tournamentId, (allCategoriesByTournament[tournamentId] || []).filter(c => c.id !== categoryId));
+                renderCategoriesTable(tournamentId, allCategoriesByTournament[tournamentId]);
+            }
+        }
+        // ── Reveal all cards and tables (opacity: 0 → 1) ──────────────
+        function animateCards() {
+            var selectors = ['.stat-card', '.dashboard-card', '.data-table-container'];
+            selectors.forEach(function(sel) {
+                document.querySelectorAll(sel).forEach(function(el, i) {
+                    setTimeout(function() { el.classList.add('loaded'); }, i * 80);
+                });
+            });
         }
     </script>
 </body>

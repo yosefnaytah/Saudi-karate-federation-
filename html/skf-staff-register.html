@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REGISTER: SKF Admin &amp; Referees+ — Saudi Karate Federation</title>
+    <link rel="stylesheet" href="SKF.CSS">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js" defer></script>
+    <style>
+        /* Same treatment as member login/register (SKF.CSS): full-viewport cover; this page uses SKF-REGISTER.png */
+        body.staff-register-page {
+            background-color: #1a237e;
+            background-image: url('SKF-REGISTER.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            min-height: 100vh;
+            min-height: 100dvh;
+            height: auto;
+            margin: 0;
+            padding: 24px 16px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .reg-wrap { max-width: 520px; width: 100%; margin: 0 auto; padding: 24px; background: rgba(255,255,255,0.95); border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.12); max-height: calc(100dvh - 48px); overflow-y: auto; }
+        .reg-wrap input, .reg-wrap select, .reg-wrap textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        .reg-wrap label { font-size: 13px; color: #444; display: block; margin-top: 10px; }
+        .btn { width: 100%; padding: 12px; background: #2e7d32; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 16px; }
+        .btn:hover { background: #1b5e20; }
+        #regErr { display: none; background: #ffebee; color: #c62828; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 13px; }
+        #regOk { display: none; background: #e8f5e9; color: #2e7d32; padding: 12px; border-radius: 6px; margin-bottom: 12px; font-size: 14px; }
+        .reg-wrap a.btn-skf-staff-register { margin-top: 0; margin-bottom: 16px; }
+    </style>
+</head>
+<body class="staff-register-page">
+    <div class="reg-wrap">
+        <h1 style="margin-top:0;font-size:1.5rem;color:#1b5e20;">Create account</h1>
+        <a href="registration.html" class="btn-skf-staff-register">Choose your registration path</a>
+        <div id="regErr"></div>
+        <div id="regOk"></div>
+        <form id="staffRegForm">
+            <label for="a_fname">First name *</label>
+            <input type="text" id="a_fname" required autocomplete="given-name" placeholder="First name">
+
+            <label for="a_lname">Last name *</label>
+            <input type="text" id="a_lname" required autocomplete="family-name" placeholder="Last name">
+
+            <label for="a_email">Email *</label>
+            <input type="email" id="a_email" required autocomplete="email" placeholder="your@email.com">
+
+            <label for="a_pass">Password *</label>
+            <input type="password" id="a_pass" required autocomplete="new-password" minlength="8" placeholder="At least 8 characters">
+
+            <label for="a_pass2">Confirm password *</label>
+            <input type="password" id="a_pass2" required autocomplete="new-password" minlength="8" placeholder="Same password again">
+
+            <label for="a_phone">Phone</label>
+            <input type="tel" id="a_phone" autocomplete="tel" placeholder="05xxxxxxxx">
+
+            <input type="hidden" id="a_role" name="a_role" value="">
+
+            <button type="submit" class="btn">Submit</button>
+        </form>
+    </div>
+    <script>
+        (function () {
+            var params = new URLSearchParams(window.location.search || '');
+            var roleFromUrl = (params.get('role') || '').trim().toLowerCase();
+            var roleEl = document.getElementById('a_role');
+            if (roleFromUrl === 'skf_admin' || roleFromUrl === 'referees_plus') {
+                if (roleEl) roleEl.value = roleFromUrl;
+            } else {
+                if (roleEl) roleEl.value = '';
+                window.location.replace('registration.html');
+                return;
+            }
+
+            var form = document.getElementById('staffRegForm');
+            var err = document.getElementById('regErr');
+            var ok = document.getElementById('regOk');
+            form.addEventListener('submit', async function (e) {
+                e.preventDefault();
+                err.style.display = 'none';
+                ok.style.display = 'none';
+                var email = document.getElementById('a_email').value.trim().toLowerCase();
+                var p1 = document.getElementById('a_pass').value;
+                var p2 = document.getElementById('a_pass2').value;
+                if (p1.length < 8) {
+                    err.textContent = 'Password must be at least 8 characters.';
+                    err.style.display = 'block';
+                    return;
+                }
+                if (p1 !== p2) {
+                    err.textContent = 'Passwords do not match.';
+                    err.style.display = 'block';
+                    return;
+                }
+                var role = document.getElementById('a_role').value;
+                if (role !== 'skf_admin' && role !== 'referees_plus') {
+                    err.textContent = 'Open this page again from Registration and choose SKF Administrator or Referees+.';
+                    err.style.display = 'block';
+                    return;
+                }
+                var sb = typeof getSupabase === 'function' ? getSupabase() : null;
+                if (!sb) {
+                    err.textContent = 'Could not load Supabase. Check that auth.js and the Supabase script are available.';
+                    err.style.display = 'block';
+                    return;
+                }
+                var path = window.location.pathname || '';
+                var dir = path.substring(0, path.lastIndexOf('/') + 1);
+                var emailRedirectTo = window.location.origin + dir + 'auth-callback.html';
+                var phone = document.getElementById('a_phone').value.trim();
+                var fn = document.getElementById('a_fname').value.trim();
+                var ln = document.getElementById('a_lname').value.trim();
+                var fullName = (fn + ' ' + ln).trim();
+                if (!fn || !ln) {
+                    err.textContent = 'Please enter your first and last name.';
+                    err.style.display = 'block';
+                    return;
+                }
+                try {
+                    var res = await sb.auth.signUp({
+                        email: email,
+                        password: p1,
+                        options: {
+                            emailRedirectTo: emailRedirectTo,
+                            data: {
+                                full_name: fullName,
+                                role: role,
+                                phone: phone || undefined,
+                                club_name: 'SKF Federation',
+                                skf_staff_application: 'true'
+                            }
+                        }
+                    });
+                    if (res.error) {
+                        ok.style.display = 'none';
+                        ok.innerHTML = '';
+                        var msg = res.error.message || 'Registration failed.';
+                        if (/database error saving new user/i.test(msg)) {
+                            msg += ' Your Supabase project could not create the profile row (often a role check on public.users). In the Supabase SQL Editor, run database/users_role_add_skf_admin.sql, then check Auth → Logs for details.';
+                        }
+                        err.textContent = msg;
+                        err.style.display = 'block';
+                        return;
+                    }
+                    err.style.display = 'none';
+                    err.textContent = '';
+                    ok.innerHTML = '<strong>Registration received.</strong> ' +
+                        '<strong>Email verification is required</strong> — use the link in your inbox (and spam) before you try to sign in. ' +
+                        '<strong>Your SKF official ID is not sent in this email.</strong> It is created only after an SKF administrator <strong>approves</strong> your request (via the federation admin queue); they can then share your ID with you. ' +
+                        'Your password stays the one you just chose.';
+                    ok.style.display = 'block';
+                    form.reset();
+                    if (roleEl) roleEl.value = roleFromUrl;
+                } catch (x) {
+                    console.error(x);
+                    err.textContent = 'Something went wrong. Try again or contact support.';
+                    err.style.display = 'block';
+                }
+            });
+        })();
+    </script>
+</body>
+</html>

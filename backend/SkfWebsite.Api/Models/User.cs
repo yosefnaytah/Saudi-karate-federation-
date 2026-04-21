@@ -34,7 +34,7 @@ public class User : BaseModel
     public string Username { get; set; } = string.Empty;
 
     [Column("role")]
-    public string Role { get; set; } = string.Empty; // admin, player, coach, referee, club_admin, referees_plus
+    public string Role { get; set; } = string.Empty; // skf_admin, player, coach, referee, club_admin, referees_plus
 
     [Column("created_at")]
     public DateTime CreatedAt { get; set; }
@@ -48,10 +48,10 @@ public class User : BaseModel
 
 public enum UserRole
 {
-    Admin,          // SKF Admin
+    SkfAdmin,       // SKF Admin (value: skf_admin)
     Player,
     Coach,
     Referee,
-    ClubAdmin,      // Club Admin
-    RefereesPlus    // Referees +
+    ClubAdmin,      // Club Admin (value: club_admin)
+    RefereesPlus    // Referees + (value: referees_plus)
 }

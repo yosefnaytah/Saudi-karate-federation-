@@ -3,25 +3,65 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Page</title>
+    <title>Login — Saudi Karate Federation</title>
     <link rel="stylesheet" href="SKF.CSS">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth.js" defer></script>
+    <style>
+        #emailCodeError {
+            display: none;
+            background: #ffeaea;
+            color: #c0392b;
+            border: 1px solid #f5c6cb;
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            text-align: center;
+        }
+        #emailCodeHint {
+            display: none;
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            text-align: center;
+        }
+    </style>
 </head>
 <body>
     <div class="login-container">
-        <h2>Login</h2>
-        <form onsubmit="return handleLogin(event)">
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required>
+        <h2>Member sign-in</h2>
+        <p style="font-size:13px;color:#555;margin:0 0 14px;text-align:center;">For <strong>player</strong>, <strong>coach</strong>, and <strong>club admin</strong> only. Enter your registered email — we send a one-time code. No password on this page.</p>
 
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required>
+        <div id="loginEmailCodePanel">
+            <div id="emailCodeError"></div>
+            <div id="emailCodeHint"></div>
+            <form onsubmit="return handleSendEmailCode(event)">
+                <label for="emailCodeAddress">Email</label>
+                <input type="email" id="emailCodeAddress" autocomplete="username" placeholder="your@email.com" required>
 
-            <button type="submit">Login</button>
-        </form>
+                <button type="submit" id="emailCodeSendBtn">Send code</button>
+            </form>
+            <form onsubmit="return handleVerifyEmailCode(event)" style="margin-top:14px;">
+                <div id="emailCodeRow" style="display:none;">
+                    <label for="emailCodeInput">Code</label>
+                    <input type="text" id="emailCodeInput" inputmode="numeric" autocomplete="one-time-code" placeholder="Code" maxlength="8">
+
+                    <button type="submit">Verify &amp; sign in</button>
+                </div>
+            </form>
+        </div>
+
+        <a href="registration.html" class="btn-skf-staff-register">Choose your registration path</a>
+
+        <p style="font-size:12px;color:#666;margin:10px 0 0;"><a href="skf-admin-login.html">SKF Admin portal</a></p>
+
         <div class="login-links">
-            <a href="forgot-password.html" class="forgot-password">Did you forget your password?</a>
-            <a href="REGISTER.html" class="create-account">Create your account</a>
+            <a href="registration.html" class="create-account">Create a new account</a>
         </div>
     </div>
 </body>

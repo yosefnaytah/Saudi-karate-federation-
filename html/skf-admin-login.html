@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKF Admin portal — Saudi Karate Federation</title>
+    <link rel="stylesheet" href="SKF.CSS">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js" defer></script>
+    <style>
+        #adminLoginError, #staffOtpError {
+            display: none;
+            background: #ffeaea;
+            color: #c0392b;
+            border: 1px solid #f5c6cb;
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            text-align: center;
+        }
+        #staffOtpHint {
+            display: none;
+            background: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            text-align: center;
+        }
+        .staff-login-tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 16px;
+            border-bottom: 1px solid #ddd;
+        }
+        .staff-login-tabs button {
+            flex: 1;
+            padding: 10px 8px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-size: 14px;
+            color: #555;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -1px;
+        }
+        .staff-login-tabs button:hover { color: #1b5e20; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>SKF Admin portal</h2>
+
+        <div class="staff-login-tabs" role="tablist">
+            <button type="button" id="tabStaffPassword" role="tab" onclick="showStaffLoginMode('password')">Email or ID &amp; password</button>
+            <button type="button" id="tabStaffEmailCode" role="tab" onclick="showStaffLoginMode('emailcode')">Email code (OTP)</button>
+        </div>
+
+        <div id="staffPasswordPanel">
+            <form onsubmit="return handleSkfAdminLogin(event)">
+                <div id="adminLoginError"></div>
+                <label for="skfAdminId">Email or ID</label>
+                <input type="text" id="skfAdminId" name="skf-admin-id" autocomplete="username" required
+                       placeholder="Sign in with email or ID">
+
+                <label for="adminPassword">Password</label>
+                <input type="password" id="adminPassword" name="password" autocomplete="current-password" required>
+
+                <button type="submit">Sign in</button>
+            </form>
+        </div>
+
+        <div id="staffEmailCodePanel" style="display:none;">
+            <div id="staffOtpError"></div>
+            <div id="staffOtpHint"></div>
+            <form onsubmit="return handleSendStaffEmailCode(event)">
+                <label for="staffOtpIdField">Email or ID</label>
+                <input type="text" id="staffOtpIdField" autocomplete="username" placeholder="Sign in with email or ID" required>
+
+                <button type="submit" id="staffOtpSendBtn">Send code</button>
+            </form>
+            <form onsubmit="return handleVerifyStaffEmailCode(event)" style="margin-top:14px;">
+                <div id="staffOtpCodeRow" style="display:none;">
+                    <label for="staffOtpCodeInput">Code</label>
+                    <input type="text" id="staffOtpCodeInput" inputmode="numeric" autocomplete="one-time-code" placeholder="Code" maxlength="8">
+
+                    <button type="submit">Verify &amp; sign in</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="login-links" style="margin-top:14px;">
+            <a href="index.html">Member sign-in</a>
+            &nbsp;·&nbsp;
+            <a href="registration.html">Registration</a>
+        </div>
+    </div>
+</body>
+</html>

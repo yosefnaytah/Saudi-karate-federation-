@@ -5,20 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Create Account - Saudi Karate Federation</title>
     <link rel="stylesheet" href="SKF.CSS">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="auth.js" defer></script>
     <style>
-    /* Move Create Account Box to the Right */
-.register-container {
-    position: absolute;
-    top: 50%;
-    left: 70%; 
-    transform: translate(-50%, -50%);
-    width: 400px;
-    background: rgba(255, 255, 255, 0.9);
-    padding: 20px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
+    html { height: 100%; }
+    body.register-page {
+        margin: 0;
+        min-height: 100vh;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 16px 72px;
+        box-sizing: border-box;
+    }
+    .register-container {
+        position: relative;
+        top: auto;
+        left: auto;
+        transform: none;
+        width: min(420px, 94vw);
+        max-height: calc(100dvh - 48px);
+        overflow-y: auto;
+        background: rgba(255, 255, 255, 0.94);
+        padding: 22px 20px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    }
         .register-container input {
             width: 100%;
             padding: 10px;
@@ -28,28 +42,81 @@
         }
 
         .register-btn {
-            background: green;
+            background: #2e7d32;
             color: white;
-            padding: 10px;
+            padding: 12px 28px;
             width: 100%;
+            max-width: 280px;
+            margin: 12px auto 0;
+            display: block;
             border: none;
-            border-radius: 5px;
+            border-radius: 8px;
             cursor: pointer;
+            font-weight: 600;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.12);
         }
 
         .register-btn:hover {
-            background: darkgreen;
+            background: #1b5e20;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.18);
         }
+
+        .register-btn:active {
+            transform: translateY(0);
+        }
+
+        .register-top-actions {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin: 0 0 12px;
+        }
+        .register-nav-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            text-decoration: none !important;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .register-nav-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.14);
+        }
+        .register-nav-btn--paths {
+            background: #fff;
+            color: #1b5e20 !important;
+            border: 2px solid #2e7d32;
+        }
+        .register-nav-btn--paths:hover { background: #e8f5e9; }
 
         .back-to-login {
             display: block;
-            margin-top: 10px;
-            color: #007bff;
-            text-decoration: none;
+            margin: 14px auto 0;
+            max-width: 220px;
+            text-align: center;
+            padding: 10px 16px;
+            border-radius: 8px;
+            color: #1565c0 !important;
+            text-decoration: none !important;
+            font-weight: 600;
+            font-size: 14px;
+            border: 2px solid #1565c0;
+            background: #fff;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
         }
 
         .back-to-login:hover {
-            text-decoration: underline;
+            background: #e3f2fd;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
         }
         .background-register {
     position: fixed;
@@ -86,7 +153,7 @@
 }
     </style>
 </head>
-<body  class="register-page">
+<body class="register-page">
     <!-- Language Switcher -->
     <div class="language-switch" onclick="toggleLanguageMenu()">🌍</div>
     <div class="language-menu" id="languageMenu">
@@ -97,26 +164,83 @@
     <!-- Registration Form Container -->
     <div class="register-container">
         <h2>Create Your Account</h2>
+        <div class="register-top-actions">
+            <a class="register-nav-btn register-nav-btn--paths" href="registration.html">Choose your registration path</a>
+        </div>
+        <p style="font-size:12px;margin:10px 0 8px;color:#555;">This form is for <strong>players, coaches, and club administrators</strong> only. Not the right place? Use the button above to return to the registration menu and pick your path.</p>
+        <div id="registerError" style="display:none;background:#ffebee;color:#c62828;padding:10px;border-radius:6px;margin-bottom:10px;font-size:13px;"></div>
+        <div id="registerSuccess" style="display:none;"></div>
         <form onsubmit="return handleRegister(event)" enctype="multipart/form-data" id="registerForm">
             <input type="text" name="full-name" placeholder="Full Name" required>
             <input type="text" id="national-id" name="national-id" placeholder="National ID (10 digits)" required>
-            <input type="tel" id="phone" name="phone" placeholder="Phone Number (05xxxxxxxx)" required>
-            <input type="text" name="club-name" placeholder="Club Name" required>
+            <input type="tel" id="phone" name="phone" placeholder="Phone Number (10 digits, starts with 05)" required>
+            <div id="player-only-fields" style="display:none;border-left:3px solid #2e7d32;padding-left:12px;margin:12px 0;">
+                <p style="font-size:13px;color:#333;margin:0 0 8px;"><strong>Player profile</strong> — required for players only.</p>
+                <label for="age-group" style="font-size:12px;color:#555;">Age group *</label>
+                <select name="age-group" id="age-group" class="role-select">
+                    <option value="" disabled selected>Select age group</option>
+                    <option value="U10">U10</option>
+                    <option value="U12">U12</option>
+                    <option value="U14">U14</option>
+                    <option value="U16">U16</option>
+                    <option value="U18">U18</option>
+                    <option value="U21">U21</option>
+                    <option value="Seniors">Seniors</option>
+                </select>
+                <label for="belt-rank" style="font-size:12px;color:#555;">Rank (belt / dan) *</label>
+                <select name="belt-rank" id="belt-rank" class="role-select">
+                    <option value="" disabled selected>Select rank</option>
+                    <option value="10th Kyu">10th Kyu</option>
+                    <option value="9th Kyu">9th Kyu</option>
+                    <option value="8th Kyu">8th Kyu</option>
+                    <option value="7th Kyu">7th Kyu</option>
+                    <option value="6th Kyu">6th Kyu</option>
+                    <option value="5th Kyu">5th Kyu</option>
+                    <option value="4th Kyu">4th Kyu</option>
+                    <option value="3rd Kyu">3rd Kyu</option>
+                    <option value="2nd Kyu">2nd Kyu</option>
+                    <option value="1st Kyu">1st Kyu</option>
+                    <option value="1st Dan">1st Dan</option>
+                    <option value="2nd Dan">2nd Dan</option>
+                    <option value="3rd Dan">3rd Dan</option>
+                    <option value="4th Dan">4th Dan</option>
+                    <option value="5th Dan+">5th Dan+</option>
+                </select>
+                <label for="player-category" style="font-size:12px;color:#555;">Primary category *</label>
+                <select name="player-category" id="player-category" class="role-select">
+                    <option value="" disabled selected>Select category</option>
+                    <option value="Kata">Kata</option>
+                    <option value="Kumite -50kg">Kumite -50 kg</option>
+                    <option value="Kumite -55kg">Kumite -55 kg</option>
+                    <option value="Kumite -60kg">Kumite -60 kg</option>
+                    <option value="Kumite -67kg">Kumite -67 kg</option>
+                    <option value="Kumite -75kg">Kumite -75 kg</option>
+                    <option value="Kumite -84kg">Kumite -84 kg</option>
+                    <option value="Kumite +84kg">Kumite +84 kg</option>
+                    <option value="Kumite -50kg (F)">Kumite -50 kg (female)</option>
+                    <option value="Kumite -55kg (F)">Kumite -55 kg (female)</option>
+                    <option value="Kumite -61kg (F)">Kumite -61 kg (female)</option>
+                    <option value="Kumite -68kg (F)">Kumite -68 kg (female)</option>
+                    <option value="Kumite +68kg (F)">Kumite +68 kg (female)</option>
+                    <option value="Open">Open / club team</option>
+                </select>
+                <label for="profile-face-photo" style="font-size:12px;color:#555;">Profile picture (face photo) *</label>
+                <p style="font-size:11px;color:#666;margin:0 0 6px;">Upload a <strong>clear portrait</strong> (face visible, plain background). JPEG or PNG only, max 3&nbsp;MB. No logos or full-body only.</p>
+                <input type="file" id="profile-face-photo" name="profile-face-photo" accept="image/jpeg,image/png" capture="user">
+            </div>
             <input type="email" name="email" placeholder="Email Address" required>
             <!-- Role Selection Dropdown -->
 <select name="user-role" id="user-role" class="role-select" required>
-    <option value="" disabled selected>Select Your Role</option>
+    <option value="" disabled selected>Select your role</option>
     <option value="player">Player</option>
     <option value="coach">Coach</option>
-    <option value="referee">Referee</option>
-    <option value="club_admin">Club Admin</option>
-    <option value="referees_plus">Referees +</option>
+    <option value="club_admin">Club administrator</option>
 </select>
             <input type="password" name="password" placeholder="Password" required>
             <input type="password" name="confirm-password" placeholder="Confirm Password" required>
             <button type="submit" class="register-btn">Register</button>
         </form>
-        <a href="index.html" class="back-to-login">Back to Login</a>
+        <a href="index.html" class="back-to-login">Return to sign-in</a>
     </div>
 
     <!-- JavaScript for Language Switcher -->
@@ -133,10 +257,24 @@
             // For now, just close the menu
         }
 
+        function togglePlayerFields() {
+            var role = document.getElementById('user-role').value;
+            var block = document.getElementById('player-only-fields');
+            if (!block) return;
+            block.style.display = role === 'player' ? 'block' : 'none';
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            var sel = document.getElementById('user-role');
+            if (sel) {
+                sel.addEventListener('change', togglePlayerFields);
+                togglePlayerFields();
+            }
+        });
+
         // Form validation - Make it global so auth.js can access it
         window.validateForm = function(event) {
-            const nationalId = document.getElementById('national-id').value.trim();
-            const phone = document.getElementById('phone').value.trim();
+            const nationalId = document.getElementById('national-id').value;
+            const phone = document.getElementById('phone').value;
             const password = document.querySelector('input[name="password"]').value;
             const confirmPassword = document.querySelector('input[name="confirm-password"]').value;
             const userRole = document.getElementById('user-role').value;
@@ -147,9 +285,9 @@
                 return false;
             }
 
-            // Validate Phone Number (Saudi format: starts with 05 and has 10 digits)
+            // Validate Phone Number (Starts with '05' and has 10 digits)
             if (!/^05\d{8}$/.test(phone)) {
-                alert('Phone number must be 10 digits and start with 05.');
+                alert('Phone number must be 10 digits and start with \'05\'.');
                 return false;
             }
 
@@ -157,6 +295,38 @@
             if (userRole === "") {
                 alert('Please select your role.');
                 return false;
+            }
+
+            if (userRole === 'player') {
+                var age = document.getElementById('age-group');
+                var belt = document.getElementById('belt-rank');
+                var cat = document.getElementById('player-category');
+                var face = document.getElementById('profile-face-photo');
+                if (!age || !age.value) {
+                    alert('Please select your age group.');
+                    return false;
+                }
+                if (!belt || !belt.value) {
+                    alert('Please select your rank (belt).');
+                    return false;
+                }
+                if (!cat || !cat.value) {
+                    alert('Please select your primary category.');
+                    return false;
+                }
+                if (!face || !face.files || !face.files[0]) {
+                    alert('Please upload a profile picture (clear face photo).');
+                    return false;
+                }
+                var ff = face.files[0];
+                if (!/^image\/(jpeg|png)$/i.test(ff.type)) {
+                    alert('Profile picture must be JPEG or PNG.');
+                    return false;
+                }
+                if (ff.size > 3 * 1024 * 1024) {
+                    alert('Profile picture must be 3 MB or smaller.');
+                    return false;
+                }
             }
 
             // Validate Passwords

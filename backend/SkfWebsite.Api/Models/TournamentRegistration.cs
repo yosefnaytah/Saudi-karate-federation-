@@ -12,6 +12,9 @@ public class TournamentRegistration : BaseModel
     [Column("tournament_id")]
     public string TournamentId { get; set; } = string.Empty;
 
+    [Column("category_id")]
+    public string? CategoryId { get; set; }
+
     [Column("user_id")]
     public string UserId { get; set; } = string.Empty;
 
@@ -25,10 +28,7 @@ public class TournamentRegistration : BaseModel
     public DateTime RegistrationDate { get; set; }
 
     [Column("status")]
-    public string Status { get; set; } = string.Empty; // pending, approved, rejected
-
-    [Column("payment_status")]
-    public string PaymentStatus { get; set; } = string.Empty; // pending, paid, refunded
+    public string Status { get; set; } = "pending"; // pending, approved, rejected
 
     [Column("notes")]
     public string? Notes { get; set; }

@@ -14,6 +14,18 @@ public interface ISupabaseService
     Task<List<Tournament>> GetTournaments();
     Task<Tournament?> GetTournamentById(string id);
     Task<Tournament> CreateTournament(Tournament tournament);
+    Task<Tournament> UpdateTournament(string id, Tournament tournament);
+    Task<List<TournamentReferee>> GetRefereesByTournament(string tournamentId);
+    Task<List<Tournament>> GetTournamentsByReferee(string refereeId);
+    Task<TournamentReferee> AssignRefereeToTournament(string tournamentId, string refereeId);
+    Task RemoveRefereeFromTournament(string tournamentId, string refereeId);
+    Task<List<User>> GetRefereeUsers();
+    Task<List<TournamentCategory>> GetCategoriesByTournament(string tournamentId);
+    Task<TournamentCategory> CreateCategory(TournamentCategory category);
+    Task<TournamentCategory> UpdateCategory(string categoryId, TournamentCategory category);
+    Task<TournamentCategory> SetCategoryFormat(string categoryId, string format);
+    Task DeleteCategory(string categoryId);
     Task<List<TournamentRegistration>> GetTournamentRegistrations(string tournamentId);
+    Task<List<TournamentRegistration>> GetRegistrationsByUser(string userId);
     Task<TournamentRegistration> RegisterForTournament(TournamentRegistration registration);
 }

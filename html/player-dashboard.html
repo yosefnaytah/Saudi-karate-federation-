@@ -1,182 +1,550 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Player Dashboard - Saudi Karate Federation</title>
-    <!-- Link to your CSS files here -->
     <link rel="stylesheet" href="dashboard.css">
-    <script src="auth.js" defer></script>
+    <style>
+        .dashboard-section { display: none; }
+
+        /* result / status badges */
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .badge-win      { background:#e8f5e9; color:#2e7d32; }
+        .badge-loss     { background:#fce4ec; color:#c62828; }
+        .badge-draw     { background:#fff3e0; color:#e65100; }
+        .badge-pending  { background:#e3f2fd; color:#1565c0; }
+        .badge-approved { background:#e8f5e9; color:#2e7d32; }
+        .badge-open     { background:#f3e5f5; color:#6a1b9a; }
+
+        /* empty / placeholder */
+        .placeholder-box {
+            text-align:center; padding:40px 20px;
+            color:#999; background:#fafafa;
+            border:2px dashed #e0e0e0; border-radius:10px; margin-top:8px;
+        }
+        .placeholder-box .ph-icon { font-size:36px; margin-bottom:10px; }
+        .placeholder-box p { margin:4px 0; font-size:14px; }
+        .placeholder-box a { color:#3a7d44; font-weight:bold; text-decoration:none; }
+
+        /* overview two-col */
+        .overview-grid {
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:20px;
+            margin-top:20px;
+        }
+        @media(max-width:768px){ .overview-grid{ grid-template-columns:1fr; } }
+
+        /* ── Animated match cards ── */
+        .match-container {
+            position: relative;
+            width: 100%;
+            height: 220px;
+            overflow: hidden;
+            border-radius: 14px;
+            margin-top: 12px;
+        }
+        .match-card {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #2e7d44 0%, #1a5c30 100%);
+            color: white;
+            border-radius: 14px;
+            padding: 24px 20px;
+            text-align: center;
+            /* start off-screen to the right */
+            transform: translateX(100%);
+            opacity: 0;
+            transition: transform .65s cubic-bezier(.4,0,.2,1), opacity .65s ease;
+        }
+        .match-card.active {
+            transform: translateX(0);   /* slides to the center */
+            opacity: 1;
+        }
+        .match-card.out {
+            transform: translateX(-100%); /* slides out to the left */
+            opacity: 0;
+        }
+        .match-badge {
+            font-size: 10px; letter-spacing: 2.5px;
+            text-transform: uppercase; opacity: .7;
+            margin-bottom: 16px;
+        }
+        /* player avatars row */
+        .match-players {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            width: 100%;
+        }
+        .match-player {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+        .match-avatar {
+            width: 72px; height: 72px; border-radius: 50%;
+            background: rgba(255,255,255,.15);
+            border: 3px solid rgba(255,255,255,.6);
+            display: flex; align-items: flex-end; justify-content: center;
+            overflow: hidden;
+            box-shadow: 0 6px 18px rgba(0,0,0,.3);
+            position: relative;
+        }
+        .match-avatar svg {
+            width: 58px; height: 62px;
+            fill: rgba(255,255,255,.85);
+            position: absolute;
+            bottom: -2px;
+        }
+        /* flip right-side avatar to face left (mirror) */
+        .match-player:last-child .match-avatar svg {
+            transform: scaleX(-1);
+        }
+        .match-player-name {
+            font-size: 16px; font-weight: 700; letter-spacing: .5px;
+        }
+        .match-vs-badge {
+            flex-shrink: 0;
+            width: 38px; height: 38px; border-radius: 50%;
+            background: rgba(255,255,255,.15);
+            border: 2px solid rgba(255,255,255,.4);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 12px; font-weight: bold; color: #fff;
+            margin: 0 12px;
+        }
+        .match-info {
+            font-size: 12px; opacity: .75;
+            margin-top: 14px; letter-spacing: .5px;
+        }
+        /* progress dots */
+        .match-dots {
+            display: flex; gap: 6px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .match-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: rgba(255,255,255,.3);
+            transition: background .3s;
+        }
+        .match-dot.active { background: #fff; }
+        /* ── Animated event cards ── */
+        @keyframes cardSlideIn {
+            from { opacity:0; transform: translateY(24px); }
+            to   { opacity:1; transform: translateY(0); }
+        }
+        .event-item {
+            animation: cardSlideIn .5s ease both;
+        }
+        .event-item:nth-child(2) { animation-delay: .1s; }
+        .event-item:nth-child(3) { animation-delay: .2s; }
+        .event-item:nth-child(4) { animation-delay: .3s; }
+        .event-item:nth-child(5) { animation-delay: .4s; }
+        .event-item:nth-child(6) { animation-delay: .5s; }
+
+        /* stats extended grid */
+        .stats-extended {
+            display:grid;
+            grid-template-columns:repeat(auto-fill,minmax(160px,1fr));
+            gap:20px; margin-bottom:24px;
+        }
+        .stats-extended .stat-card { opacity:1; transform:none; }
+
+        /* win-rate bar */
+        .wr-bar-wrap {
+            background:#eee; border-radius:6px;
+            height:8px; margin-top:6px; overflow:hidden;
+        }
+        .wr-bar { background:#3a7d44; height:100%; border-radius:6px; transition:width .6s ease; }
+
+        /* profile */
+        .profile-card {
+            display:grid;
+            grid-template-columns:110px 1fr;
+            gap:24px; align-items:start;
+        }
+        @media(max-width:600px){ .profile-card{ grid-template-columns:1fr; } }
+        .profile-avatar {
+            width:100px; height:100px; border-radius:50%;
+            background:linear-gradient(135deg,#3a7d44,#2e8b57);
+            display:flex; align-items:center; justify-content:center;
+            font-size:36px; color:white; font-weight:bold;
+        }
+        .prow { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+        .plabel { font-weight:bold; color:#555; font-size:14px; min-width:110px; }
+        .pvalue { color:#333; font-size:14px; }
+    </style>
 </head>
 <body>
-    <div class="dashboard-container">
-        <!-- Updated Header with Navigation Buttons -->
-        <header class="dashboard-header">
-            <!-- Left: Logo -->
-            <div class="header-left">
-                <div class="header-logo">Saudi Karate Federation</div>
-            </div>
-            
-            <!-- Center: Navigation Buttons -->
-            <div class="header-center">
-                <a href="transfers.html" class="nav-button">TRANSFERS</a>
-                <a href="tournament.html" class="nav-button">TOURNAMENT</a>
-            </div>
-            
-            <!-- Right: User Role and Vision 2030 -->
-            <div class="header-right">
-                <div class="user-role" id="userDisplay">Loading...</div>
-                
-                <!-- Vision 2030 Logo -->
-                <div class="vision-logo">
-                    <p class="vision-title">VISION (رؤية)</p>
-                    <p class="vision-year">2030</p>
-                </div>
-            </div>
-        </header>
+<div class="dashboard-container">
 
-        <!-- Menu Toggle Button (on right side) -->
-        <div class="menu-toggle" id="menuToggle">
-            <span class="bar"></span>
-            <span class="bar"></span>
-            <span class="bar"></span>
+    <!-- ── Header ──────────────────────────────── -->
+    <header class="dashboard-header">
+        <div class="header-left">
+            <div class="header-logo">Saudi Karate Federation</div>
         </div>
+        <div class="header-center"></div>
+        <div class="header-right">
+            <div class="user-role" id="userDisplay">Loading...</div>
+            <div class="vision-logo">
+                <p class="vision-title">VISION (رؤية)</p>
+                <p class="vision-year">2030</p>
+            </div>
+        </div>
+    </header>
 
-        <!-- Navigation Menu (slides from right) -->
-        <nav class="dashboard-nav" id="dashboardNav">
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="#dashboard" class="nav-link active">Dashboard</a>
-                </li>
-                <li class="nav-item">
-                    <a href="tournament.html" class="nav-link">Tournaments</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#belt-tests" class="nav-link">Belt Tests</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#ranked-players" class="nav-link">Ranked Players</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#virtual-exam" class="nav-link">Virtual Exam</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#matches-live" class="nav-link">Matches Live</a>
-                </li>
-                <li class="nav-item">
-                    <a href="media-center.html" class="nav-link">Media Center</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#profile" class="nav-link">Profile</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" onclick="logout()">Logout</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#technical-support" class="nav-link">Technical Support</a>
-                </li>
-            </ul>
-        </nav>
+    <!-- ── Menu Toggle ───────────────────────────── -->
+    <div class="menu-toggle" id="menuToggle">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+    </div>
 
-        <!-- Main Content Area -->
-        <main class="dashboard-content">
-            
-            <!-- Stats Section -->
-            <div class="stats-container">
-                <div class="stat-card">
-                    <div class="stat-value">15</div>
-                    <div class="stat-label">Tournaments</div>
+    <!-- ── Sidebar Navigation ────────────────────── -->
+    <nav class="dashboard-nav" id="dashboardNav">
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="#" class="nav-link active" onclick="showSection('overview',event)">Overview</a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="showSection('events',event)">Upcoming Events</a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="showSection('matches',event)">Upcoming Matches</a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="showSection('registrations',event)">My Registrations</a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="showSection('stats',event)">Stats</a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="showSection('rankings',event)">Rankings</a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="showSection('belttest',event)">Belt Test</a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="showSection('virtual',event)">Virtual Exam</a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="showSection('profile',event)">Profile</a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="doLogout()">Logout</a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- ── Main Content ───────────────────────────── -->
+    <main class="dashboard-content">
+
+        <!-- ════ OVERVIEW ════ -->
+        <section id="overview-section" class="dashboard-section" style="display:block;">
+
+            <!-- 1 ── Upcoming Event (full width) -->
+            <div class="dashboard-card loaded">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Upcoming Event</h2>
+                    <a href="#" onclick="showSection('events',event)"
+                       style="color:#3a7d44;font-size:13px;text-decoration:none;">View all &rarr;</a>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value">42</div>
-                    <div class="stat-label">Matches</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">28</div>
-                    <div class="stat-label">Wins</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">Brown</div>
-                    <div class="stat-label">Current Belt</div>
+                <div id="overviewNextEvent" style="margin-top:8px;">
+                    <p style="color:#888;font-size:14px;padding:8px 0;">Loading&hellip;</p>
                 </div>
             </div>
-            
-            <!-- Upcoming Matches with Animation -->
-            <div class="dashboard-card">
+
+            <!-- 2 ── Upcoming Matches (full width, animated) -->
+            <div class="dashboard-card loaded">
                 <div class="dashboard-card-header">
                     <h2 class="dashboard-card-title">Upcoming Matches</h2>
+                    <a href="#" onclick="showSection('matches',event)"
+                       style="color:#3a7d44;font-size:13px;text-decoration:none;">View all &rarr;</a>
                 </div>
-                
-                <div class="match-container">
+                <div class="match-container" id="overviewMatchContainer">
                     <div class="match-card active">
-                        <p><strong>Yousef</strong><br>vs<br><strong>Omar</strong></p>
-                        <p>Time: 16:00</p>
-                        <p>Start in: 10 mins</p>
+                        <div class="match-badge">SCHEDULED MATCH</div>
+                        <div class="match-players">
+                            <div class="match-player">
+                                <div class="match-avatar"><svg viewBox="0 0 60 66" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="30" cy="18" r="13"/>
+                                    <path d="M4 66 C4 44 56 44 56 66Z"/>
+                                </svg></div>
+                                <div class="match-player-name">Yousef</div>
+                            </div>
+                            <div class="match-vs-badge">VS</div>
+                            <div class="match-player">
+                                <div class="match-avatar"><svg viewBox="0 0 60 66" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="30" cy="18" r="13"/>
+                                    <path d="M4 66 C4 44 56 44 56 66Z"/>
+                                </svg></div>
+                                <div class="match-player-name">Omar</div>
+                            </div>
+                        </div>
+                        <div class="match-info">🕓 16:00 &nbsp;|&nbsp; Starts in 10 mins</div>
+                        <div class="match-dots"><div class="match-dot active"></div><div class="match-dot"></div><div class="match-dot"></div></div>
                     </div>
                     <div class="match-card">
-                        <p><strong>Ali</strong><br>vs<br><strong>Salem</strong></p>
-                        <p>Time: 17:00</p>
-                        <p>Start in: 25 mins</p>
+                        <div class="match-badge">SCHEDULED MATCH</div>
+                        <div class="match-players">
+                            <div class="match-player">
+                                <div class="match-avatar"><svg viewBox="0 0 60 66" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="30" cy="18" r="13"/>
+                                    <path d="M4 66 C4 44 56 44 56 66Z"/>
+                                </svg></div>
+                                <div class="match-player-name">Ali</div>
+                            </div>
+                            <div class="match-vs-badge">VS</div>
+                            <div class="match-player">
+                                <div class="match-avatar"><svg viewBox="0 0 60 66" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="30" cy="18" r="13"/>
+                                    <path d="M4 66 C4 44 56 44 56 66Z"/>
+                                </svg></div>
+                                <div class="match-player-name">Salem</div>
+                            </div>
+                        </div>
+                        <div class="match-info">🕓 17:00 &nbsp;|&nbsp; Starts in 25 mins</div>
+                        <div class="match-dots"><div class="match-dot"></div><div class="match-dot active"></div><div class="match-dot"></div></div>
                     </div>
                     <div class="match-card">
-                        <p><strong>Khaled</strong><br>vs<br><strong>Fahad</strong></p>
-                        <p>Time: 18:00</p>
-                        <p>Start in: 40 mins</p>
+                        <div class="match-badge">SCHEDULED MATCH</div>
+                        <div class="match-players">
+                            <div class="match-player">
+                                <div class="match-avatar"><svg viewBox="0 0 60 66" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="30" cy="18" r="13"/>
+                                    <path d="M4 66 C4 44 56 44 56 66Z"/>
+                                </svg></div>
+                                <div class="match-player-name">Khaled</div>
+                            </div>
+                            <div class="match-vs-badge">VS</div>
+                            <div class="match-player">
+                                <div class="match-avatar"><svg viewBox="0 0 60 66" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="30" cy="18" r="13"/>
+                                    <path d="M4 66 C4 44 56 44 56 66Z"/>
+                                </svg></div>
+                                <div class="match-player-name">Fahad</div>
+                            </div>
+                        </div>
+                        <div class="match-info">🕓 18:00 &nbsp;|&nbsp; Starts in 40 mins</div>
+                        <div class="match-dots"><div class="match-dot"></div><div class="match-dot"></div><div class="match-dot active"></div></div>
                     </div>
                 </div>
             </div>
-            
-            <!-- Recent Results -->
-            <div class="dashboard-card">
+
+            <!-- 3 ── Recent Results (overview preview) -->
+            <div class="dashboard-card loaded">
                 <div class="dashboard-card-header">
                     <h2 class="dashboard-card-title">Recent Results</h2>
                 </div>
-                
-                <div class="data-table-container">
+                <div class="data-table-container loaded" id="overviewResults">
                     <table class="data-table">
                         <thead>
                             <tr>
                                 <th>Date</th>
                                 <th>Tournament</th>
                                 <th>Opponent</th>
+                                <th>Category</th>
                                 <th>Result</th>
                                 <th>Score</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <tbody id="overviewResultsBody">
                             <tr>
-                                <td>Mar 5, 2025</td>
-                                <td>Eastern Province Open</td>
-                                <td>Ahmed Al-Qahtani</td>
-                                <td>Win</td>
-                                <td>5-2</td>
-                            </tr>
-                            <tr>
-                                <td>Mar 5, 2025</td>
-                                <td>Eastern Province Open</td>
-                                <td>Fahad Al-Sulami</td>
-                                <td>Win</td>
-                                <td>3-1</td>
-                            </tr>
-                            <tr>
-                                <td>Mar 6, 2025</td>
-                                <td>Eastern Province Open</td>
-                                <td>Khalid Al-Dosari</td>
-                                <td>Loss</td>
-                                <td>1-3</td>
+                                <td colspan="6">
+                                    <div class="placeholder-box">
+                                        <div class="ph-icon">🥋</div>
+                                        <p>No recent results yet.</p>
+                                        <p>Your match results will appear here after tournaments.</p>
+                                    </div>
+                                </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-            
-            <!-- My Tournament Registrations -->
-            <div class="dashboard-card">
+
+            <!-- 5 ── My Registrations (full width) -->
+            <div class="dashboard-card loaded">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">My Registrations</h2>
+                    <a href="#" onclick="showSection('registrations',event)"
+                       style="color:#3a7d44;font-size:13px;text-decoration:none;">View all &rarr;</a>
+                </div>
+                <div id="overviewRegs">
+                    <div class="placeholder-box">
+                        <div class="ph-icon">📋</div>
+                        <p>No registrations yet.</p>
+                        <p><a href="#" onclick="showSection('events',event)">Browse upcoming events</a> to register.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4 ── Stat cards (full width, last) -->
+            <div class="stats-container">
+                <div class="stat-card loaded">
+                    <div class="stat-value" id="ovTournaments">—</div>
+                    <div class="stat-label">Tournaments</div>
+                </div>
+                <div class="stat-card loaded">
+                    <div class="stat-value" id="ovMatches">—</div>
+                    <div class="stat-label">Matches</div>
+                </div>
+                <div class="stat-card loaded">
+                    <div class="stat-value" id="ovWins">—</div>
+                    <div class="stat-label">Wins</div>
+                </div>
+                <div class="stat-card loaded">
+                    <div class="stat-value" id="ovBelt">—</div>
+                    <div class="stat-label">Belt Rank</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ════ UPCOMING EVENTS ════ -->
+        <section id="events-section" class="dashboard-section">
+            <div class="dashboard-card loaded">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Upcoming Events</h2>
+                    <span style="font-size:12px;color:#888;">Loaded from the server &mdash; sorted by date</span>
+                </div>
+                <div class="events-grid" id="eventsGrid">
+                    <p style="grid-column:1/-1;color:#888;padding:16px 0;">Loading tournaments&hellip;</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ════ UPCOMING MATCHES ════ -->
+        <section id="matches-section" class="dashboard-section">
+            <!-- animated highlight -->
+            <div class="dashboard-card loaded">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Upcoming Matches</h2>
+                </div>
+                <div class="match-container">
+                    <div class="match-card active">
+                        <div class="match-badge">SCHEDULED MATCH</div>
+                        <div class="match-players">
+                            <div class="match-player">
+                                <div class="match-avatar"><svg viewBox="0 0 60 66" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="30" cy="18" r="13"/>
+                                    <path d="M4 66 C4 44 56 44 56 66Z"/>
+                                </svg></div>
+                                <div class="match-player-name">Yousef</div>
+                            </div>
+                            <div class="match-vs-badge">VS</div>
+                            <div class="match-player">
+                                <div class="match-avatar"><svg viewBox="0 0 60 66" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="30" cy="18" r="13"/>
+                                    <path d="M4 66 C4 44 56 44 56 66Z"/>
+                                </svg></div>
+                                <div class="match-player-name">Omar</div>
+                            </div>
+                        </div>
+                        <div class="match-info">🕓 16:00 &nbsp;|&nbsp; Starts in 10 mins</div>
+                        <div class="match-dots"><div class="match-dot active"></div><div class="match-dot"></div><div class="match-dot"></div></div>
+                    </div>
+                    <div class="match-card">
+                        <div class="match-badge">SCHEDULED MATCH</div>
+                        <div class="match-players">
+                            <div class="match-player">
+                                <div class="match-avatar"><svg viewBox="0 0 60 66" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="30" cy="18" r="13"/>
+                                    <path d="M4 66 C4 44 56 44 56 66Z"/>
+                                </svg></div>
+                                <div class="match-player-name">Ali</div>
+                            </div>
+                            <div class="match-vs-badge">VS</div>
+                            <div class="match-player">
+                                <div class="match-avatar"><svg viewBox="0 0 60 66" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="30" cy="18" r="13"/>
+                                    <path d="M4 66 C4 44 56 44 56 66Z"/>
+                                </svg></div>
+                                <div class="match-player-name">Salem</div>
+                            </div>
+                        </div>
+                        <div class="match-info">🕓 17:00 &nbsp;|&nbsp; Starts in 25 mins</div>
+                        <div class="match-dots"><div class="match-dot"></div><div class="match-dot active"></div><div class="match-dot"></div></div>
+                    </div>
+                    <div class="match-card">
+                        <div class="match-badge">SCHEDULED MATCH</div>
+                        <div class="match-players">
+                            <div class="match-player">
+                                <div class="match-avatar"><svg viewBox="0 0 60 66" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="30" cy="18" r="13"/>
+                                    <path d="M4 66 C4 44 56 44 56 66Z"/>
+                                </svg></div>
+                                <div class="match-player-name">Khaled</div>
+                            </div>
+                            <div class="match-vs-badge">VS</div>
+                            <div class="match-player">
+                                <div class="match-avatar"><svg viewBox="0 0 60 66" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="30" cy="18" r="13"/>
+                                    <path d="M4 66 C4 44 56 44 56 66Z"/>
+                                </svg></div>
+                                <div class="match-player-name">Fahad</div>
+                            </div>
+                        </div>
+                        <div class="match-info">🕓 18:00 &nbsp;|&nbsp; Starts in 40 mins</div>
+                        <div class="match-dots"><div class="match-dot"></div><div class="match-dot"></div><div class="match-dot active"></div></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- full schedule table -->
+            <div class="dashboard-card loaded">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Match Schedule</h2>
+                </div>
+                <div class="data-table-container loaded">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Tournament</th>
+                                <th>Opponent</th>
+                                <th>Category</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5">
+                                    <div class="placeholder-box">
+                                        <div class="ph-icon">🥋</div>
+                                        <p>No upcoming matches scheduled yet.</p>
+                                        <p>Matches will appear here once a referee assigns them.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ════ MY REGISTRATIONS ════ -->
+        <section id="registrations-section" class="dashboard-section">
+            <div class="dashboard-card loaded">
                 <div class="dashboard-card-header">
                     <h2 class="dashboard-card-title">My Tournament Registrations</h2>
+                    <a href="#" class="btn" style="font-size:13px;" onclick="showSection('events',event);return false;">Upcoming Events</a>
                 </div>
-                
-                <div class="data-table-container">
+                <div class="data-table-container loaded">
                     <table class="data-table">
                         <thead>
                             <tr>
@@ -184,229 +552,946 @@
                                 <th>Date</th>
                                 <th>Category</th>
                                 <th>Status</th>
-                                <th>Payment</th>
-                                <th>Action</th>
+                                <th>Registered On</th>
                             </tr>
                         </thead>
                         <tbody id="registrationsTableBody">
                             <tr>
-                                <td colspan="6" style="text-align: center; padding: 20px; color: #666;">
-                                    Loading registrations...
+                                <td colspan="5">
+                                    <div class="placeholder-box">
+                                        <div class="ph-icon">📋</div>
+                                        <p>No tournament registrations yet.</p>
+                                        <p><a href="#" onclick="showSection('events',event)">Browse upcoming events</a> to register.</p>
+                                    </div>
                                 </td>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-            
-            <!-- Upcoming Events -->
-            <div class="dashboard-card">
+        </section>
+
+        <!-- ════ STATS ════ -->
+        <section id="stats-section" class="dashboard-section">
+            <!-- performance -->
+            <div class="dashboard-card loaded">
                 <div class="dashboard-card-header">
-                    <h2 class="dashboard-card-title">Upcoming Events</h2>
+                    <h2 class="dashboard-card-title">Performance Overview</h2>
                 </div>
-                
-                <div class="events-grid">
-                    <div class="event-item">
-                        <div class="event-date">April 15</div>
-                        <div class="event-details">
-                            <h3>Riyadh Regional Championship</h3>
-                            <p>Location: King Saud University Stadium</p>
-                            <p>Category: Kumite - Male 75kg</p>
-                        </div>
-                        <a href="tournament.html" class="btn">View Details</a>
+                <div class="stats-extended">
+                    <div class="stat-card">
+                        <div class="stat-value" id="stTournaments">—</div>
+                        <div class="stat-label">Tournaments Entered</div>
                     </div>
-                    <div class="event-item">
-                        <div class="event-date">May 10</div>
-                        <div class="event-details">
-                            <h3>Black Belt Test</h3>
-                            <p>Location: Central Dojo, Jeddah</p>
-                            <p>Status: Registration Open</p>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stMatches">—</div>
+                        <div class="stat-label">Matches Played</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stWins">—</div>
+                        <div class="stat-label">Wins</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stLosses">—</div>
+                        <div class="stat-label">Losses</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stDraws">—</div>
+                        <div class="stat-label">Draws</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stWinRate">—</div>
+                        <div class="stat-label">Win Rate</div>
+                        <div class="wr-bar-wrap">
+                            <div class="wr-bar" id="winRateBar" style="width:0%"></div>
                         </div>
-                        <a href="#" class="btn">Register</a>
                     </div>
                 </div>
             </div>
-        </main>
-    </div>
+            <!-- player info -->
+            <div class="dashboard-card loaded">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Player Info</h2>
+                </div>
+                <div class="stats-extended">
+                    <div class="stat-card">
+                        <div class="stat-value" id="stBelt">—</div>
+                        <div class="stat-label">Belt Rank</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stClub">—</div>
+                        <div class="stat-label">Club</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stWeight">—</div>
+                        <div class="stat-label">Weight Class</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="stDiscipline">—</div>
+                        <div class="stat-label">Discipline</div>
+                    </div>
+                </div>
+            </div>
+        </section>
 
-    <!-- JavaScript -->
-    <script>
-        // Toggle Navigation Menu
-        const menuToggle = document.getElementById('menuToggle');
-        const dashboardNav = document.getElementById('dashboardNav');
-        
-        menuToggle.addEventListener('click', function() {
+        <!-- ════ RANKINGS ════ -->
+        <section id="rankings-section" class="dashboard-section">
+            <div class="dashboard-card loaded">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Rankings</h2>
+                    <span style="font-size:12px;color:#888;">National &amp; Club Standings</span>
+                </div>
+
+                <!-- ── Filter bar ── -->
+                <div style="display:flex;flex-wrap:wrap;gap:12px;margin:16px 0 20px;">
+                    <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px;">
+                        <label style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.8px;">Age Group</label>
+                        <select id="rkAgeGroup" onchange="filterRankings()"
+                            style="padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;background:#fafafa;color:#1a1a1a;outline:none;cursor:pointer;">
+                            <option value="">All Age Groups</option>
+                            <option value="under12">Under 12</option>
+                            <option value="under14">Under 14</option>
+                            <option value="under16">Under 16</option>
+                            <option value="under18">Under 18</option>
+                            <option value="under21">Under 21</option>
+                            <option value="senior">Senior (+21)</option>
+                        </select>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px;">
+                        <label style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.8px;">Discipline</label>
+                        <select id="rkDiscipline" onchange="filterRankings()"
+                            style="padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;background:#fafafa;color:#1a1a1a;outline:none;cursor:pointer;">
+                            <option value="">All Disciplines</option>
+                            <option value="kata">Kata</option>
+                            <option value="kumite">Kumite</option>
+                        </select>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:4px;flex:1;min-width:140px;">
+                        <label style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase;letter-spacing:.8px;">Gender</label>
+                        <select id="rkGender" onchange="filterRankings()"
+                            style="padding:8px 12px;border:1.5px solid #ddd;border-radius:8px;font-size:14px;background:#fafafa;color:#1a1a1a;outline:none;cursor:pointer;">
+                            <option value="">All</option>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                        </select>
+                    </div>
+                    <div style="display:flex;align-items:flex-end;padding-bottom:1px;">
+                        <button onclick="resetRankingFilters()"
+                            style="padding:8px 18px;background:#f0f0f0;border:1.5px solid #ddd;border-radius:8px;font-size:13px;color:#555;cursor:pointer;font-weight:600;white-space:nowrap;">
+                            Reset
+                        </button>
+                    </div>
+                </div>
+
+                <div class="data-table-container loaded">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Player</th>
+                                <th>Club</th>
+                                <th>Age Group</th>
+                                <th>Discipline</th>
+                                <th>Gender</th>
+                                <th>Points</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rankingsTableBody">
+                            <tr>
+                                <td colspan="7">
+                                    <div class="placeholder-box">
+                                        <div class="ph-icon">🏆</div>
+                                        <p>Rankings will be available after tournaments are completed.</p>
+                                        <p>Compete in events to earn ranking points.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Player's own ranking card -->
+            <div class="dashboard-card loaded">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">My Ranking Position</h2>
+                </div>
+                <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:8px;">
+                    <div class="stat-card loaded" style="flex:1;min-width:140px;opacity:1;transform:none;">
+                        <div class="stat-value">—</div>
+                        <div class="stat-label">National Rank</div>
+                    </div>
+                    <div class="stat-card loaded" style="flex:1;min-width:140px;opacity:1;transform:none;">
+                        <div class="stat-value">—</div>
+                        <div class="stat-label">Club Rank</div>
+                    </div>
+                    <div class="stat-card loaded" style="flex:1;min-width:140px;opacity:1;transform:none;">
+                        <div class="stat-value">—</div>
+                        <div class="stat-label">Total Points</div>
+                    </div>
+                    <div class="stat-card loaded" style="flex:1;min-width:140px;opacity:1;transform:none;">
+                        <div class="stat-value">—</div>
+                        <div class="stat-label">Category</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ════ BELT TEST ════ -->
+        <section id="belttest-section" class="dashboard-section">
+            <div class="dashboard-card loaded">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Belt Test</h2>
+                    <span style="font-size:12px;color:#888;">Examination Schedule &amp; Results</span>
+                </div>
+
+                <!-- Current belt status -->
+                <div style="display:flex;align-items:center;gap:20px;padding:16px 0;border-bottom:1px solid #eee;margin-bottom:20px;">
+                    <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,#3a7d44,#2e8b57);display:flex;align-items:center;justify-content:center;font-size:26px;">🥋</div>
+                    <div>
+                        <div style="font-size:18px;font-weight:700;color:#1a1a1a;" id="btCurrentBelt">Current Belt: —</div>
+                        <div style="font-size:13px;color:#888;margin-top:4px;">Next examination date will appear here once scheduled by SKF Admin.</div>
+                    </div>
+                </div>
+
+                <!-- Upcoming exam -->
+                <div class="dashboard-card-header" style="margin-bottom:12px;">
+                    <h3 style="font-size:15px;font-weight:600;color:#2e7d44;">Upcoming Examinations</h3>
+                </div>
+                <div class="placeholder-box">
+                    <div class="ph-icon">📅</div>
+                    <p>No belt examinations scheduled yet.</p>
+                    <p>Your examiner will notify you when a test date is set.</p>
+                </div>
+            </div>
+
+            <!-- Past belt test results -->
+            <div class="dashboard-card loaded">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Past Test Results</h2>
+                </div>
+                <div class="data-table-container loaded">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Belt Level</th>
+                                <th>Examiner</th>
+                                <th>Score</th>
+                                <th>Result</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5">
+                                    <div class="placeholder-box">
+                                        <div class="ph-icon">🎖️</div>
+                                        <p>No belt test history yet.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ════ VIRTUAL EXAM ════ -->
+        <section id="virtual-section" class="dashboard-section">
+            <div class="dashboard-card loaded">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Virtual Exam</h2>
+                    <span style="font-size:12px;color:#888;">Online Assessments &amp; Training</span>
+                </div>
+
+                <!-- Status cards -->
+                <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px;">
+                    <div class="stat-card loaded" style="flex:1;min-width:140px;opacity:1;transform:none;">
+                        <div class="stat-value">—</div>
+                        <div class="stat-label">Exams Available</div>
+                    </div>
+                    <div class="stat-card loaded" style="flex:1;min-width:140px;opacity:1;transform:none;">
+                        <div class="stat-value">—</div>
+                        <div class="stat-label">Completed</div>
+                    </div>
+                    <div class="stat-card loaded" style="flex:1;min-width:140px;opacity:1;transform:none;">
+                        <div class="stat-value">—</div>
+                        <div class="stat-label">Avg. Score</div>
+                    </div>
+                </div>
+
+                <!-- Available exams -->
+                <div class="dashboard-card-header" style="margin-bottom:12px;">
+                    <h3 style="font-size:15px;font-weight:600;color:#2e7d44;">Available Exams</h3>
+                </div>
+                <div class="placeholder-box">
+                    <div class="ph-icon">💻</div>
+                    <p>No virtual exams available right now.</p>
+                    <p>SKF Admin will publish exams here for you to complete online.</p>
+                </div>
+            </div>
+
+            <!-- Completed exams -->
+            <div class="dashboard-card loaded">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Completed Exams</h2>
+                </div>
+                <div class="data-table-container loaded">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Exam Title</th>
+                                <th>Type</th>
+                                <th>Score</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td colspan="5">
+                                    <div class="placeholder-box">
+                                        <div class="ph-icon">📝</div>
+                                        <p>No completed exams yet.</p>
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ════ PROFILE ════ -->
+        <section id="profile-section" class="dashboard-section">
+            <div class="dashboard-card loaded">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">My Profile</h2>
+                </div>
+                <div class="profile-card">
+                    <div class="profile-avatar" id="profileAvatar">?</div>
+                    <div>
+                        <div class="prow">
+                            <span class="plabel">Full Name</span>
+                            <span class="pvalue" id="pName">—</span>
+                        </div>
+                        <div class="prow">
+                            <span class="plabel">Email</span>
+                            <span class="pvalue" id="pEmail">—</span>
+                        </div>
+                        <div class="prow">
+                            <span class="plabel">National ID</span>
+                            <span class="pvalue" id="pNationalId">—</span>
+                        </div>
+                        <div class="prow">
+                            <span class="plabel">Phone</span>
+                            <span class="pvalue" id="pPhone">—</span>
+                        </div>
+                        <div class="prow">
+                            <span class="plabel">Role</span>
+                            <span class="pvalue">
+                                <span class="status-badge badge-approved" id="pRole">Player</span>
+                            </span>
+                        </div>
+                        <div class="prow">
+                            <span class="plabel">Account Status</span>
+                            <span class="pvalue" id="pStatus">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<!-- Modal container (same pattern as admin/referee dashboards) -->
+<div id="playerModalContainer"></div>
+
+<script>
+    var API_BASE_URL = 'http://localhost:5000/api';
+    var LOCAL_REGS_KEY = 'skf_local_registrations';
+
+    // ── Auth guard ────────────────────────────────────────────────
+    (function checkAuth() {
+        var token   = localStorage.getItem('token');
+        var userStr = localStorage.getItem('user');
+
+        if (!token || !userStr) {
+            alert('Please login to access the Player dashboard.');
+            window.location.href = 'index.html';
+            return;
+        }
+
+        var user = JSON.parse(userStr);
+        var role = (user.role || '').toLowerCase();
+
+        var allowed = ['player', 'coach', 'club_admin'];
+        if (!allowed.includes(role)) {
+            alert('Access denied. This dashboard is for Players only.');
+            switch (role) {
+                case 'skf_admin':
+                case 'admin':
+                    window.location.href = 'admin-dashboard.html'; break;
+                case 'referee':
+                case 'referees_plus':
+                    window.location.href = 'referee-dashboard.html'; break;
+                default:
+                    window.location.href = 'index.html';
+            }
+            return;
+        }
+
+        init(user);
+    })();
+
+    function init(user) {
+        displayUserInfo(user);
+        loadProfile(user);
+        initMenu();
+        initMatchAnimation();
+        loadRegistrations();
+        loadUpcomingTournaments();
+    }
+
+    // ── Section switching ─────────────────────────────────────────
+    function showSection(name, evt) {
+        document.querySelectorAll('.dashboard-section').forEach(function(s) {
+            s.style.display = 'none';
+        });
+        document.querySelectorAll('.nav-link').forEach(function(l) {
+            l.classList.remove('active');
+        });
+
+        var sec = document.getElementById(name + '-section');
+        if (sec) sec.style.display = 'block';
+        if (evt && evt.target) evt.target.classList.add('active');
+
+        if (window.innerWidth <= 768) {
+            document.getElementById('dashboardNav').classList.remove('active');
+            document.getElementById('menuToggle').classList.remove('active');
+        }
+    }
+
+    // ── Menu toggle ───────────────────────────────────────────────
+    function initMenu() {
+        var toggle = document.getElementById('menuToggle');
+        var nav    = document.getElementById('dashboardNav');
+        toggle.addEventListener('click', function() {
             this.classList.toggle('active');
-            dashboardNav.classList.toggle('active');
+            nav.classList.toggle('active');
         });
-        
-        // Match Cards Animation
-        const cards = document.querySelectorAll('.match-card');
-        let current = 0;
-        
-        setInterval(() => {
-            // Remove current card
-            cards[current].classList.remove('active');
-            cards[current].classList.add('out');
-            
-            // Move to next
-            current = (current + 1) % cards.length;
-            
-            // Reset next card position instantly
-            setTimeout(() => {
-                cards.forEach((card, i) => {
-                    if (i !== current) card.classList.remove('out');
-                });
-                cards[current].classList.add('active');
-            }, 1000); // Wait for slide out transition to finish
-        }, 10000); // Every 10 seconds
-        
-        // Animate cards on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            const statCards = document.querySelectorAll('.stat-card');
-            const dashboardCards = document.querySelectorAll('.dashboard-card');
-            const tableContainers = document.querySelectorAll('.data-table-container');
-            
-            // Delay for each card to create staggered effect
-            setTimeout(() => {
-                statCards.forEach((card, index) => {
-                    setTimeout(() => {
-                        card.classList.add('loaded');
-                    }, index * 100);
-                });
-            }, 300);
-            
-            setTimeout(() => {
-                dashboardCards.forEach((card, index) => {
-                    setTimeout(() => {
-                        card.classList.add('loaded');
-                    }, index * 200);
-                });
-            }, 600);
-            
-            setTimeout(() => {
-                tableContainers.forEach((container) => {
-                    container.classList.add('loaded');
-                });
-            }, 800);
-        });
-    </script>
-    <script>
-        // Check authentication and role when page loads
-        document.addEventListener('DOMContentLoaded', function() {
-            const token = localStorage.getItem('token');
-            const userStr = localStorage.getItem('user');
-            
-            // Redirect to login if not authenticated
-            if (!token || !userStr) {
-                alert('Please login to access the dashboard.');
-                window.location.href = 'index.html';
-                return;
-            }
-            
-            const user = JSON.parse(userStr);
-            const userRole = user.role?.toLowerCase();
-            
-            // Verify user is a player - redirect if not
-            if (userRole !== 'player') {
-                alert('Access denied. This dashboard is for Players only.');
-                // Redirect to appropriate dashboard based on role
-                const role = userRole;
-                let dashboardUrl = 'index.html';
-                
-                switch(role) {
-                    case 'admin':
-                        dashboardUrl = 'admin-dashboard.html';
-                        break;
-                    case 'coach':
-                        dashboardUrl = 'player-dashboard.html';
-                        break;
-                    case 'referee':
-                        dashboardUrl = 'player-dashboard.html';
-                        break;
-                    case 'club_admin':
-                        dashboardUrl = 'player-dashboard.html';
-                        break;
-                    case 'referees_plus':
-                        dashboardUrl = 'player-dashboard.html';
-                        break;
-                    default:
-                        dashboardUrl = 'index.html';
+    }
+
+    // ── User display ──────────────────────────────────────────────
+    function displayUserInfo(user) {
+        var el = document.getElementById('userDisplay');
+        if (!el) return;
+        var label = formatRole(user.role);
+        el.textContent = user.fullName
+            ? 'Welcome, ' + user.fullName + ' (' + label + ')'
+            : label;
+    }
+
+    function formatRole(role) {
+        switch ((role || '').toLowerCase()) {
+            case 'player':     return 'Player';
+            case 'coach':      return 'Coach';
+            case 'club_admin': return 'Club Admin';
+            default:           return 'Player';
+        }
+    }
+
+    // ── Profile ───────────────────────────────────────────────────
+    function loadProfile(user) {
+        var name = user.fullName || user.full_name || '';
+        setText('pName',       name || '—');
+        setText('pEmail',      user.email || '—');
+        setText('pNationalId', user.nationalId || user.national_id || '—');
+        setText('pPhone',      user.phone || '—');
+        setText('pRole',       formatRole(user.role));
+        setText('pStatus',     user.isActive ? 'Active' : 'Pending Approval');
+
+        var av = document.getElementById('profileAvatar');
+        if (av && name) {
+            av.textContent = name.split(' ').slice(0, 2)
+                .map(function(w) { return w[0]; }).join('').toUpperCase();
+        }
+    }
+
+    function setText(id, val) {
+        var el = document.getElementById(id);
+        if (el) el.textContent = val;
+    }
+
+    // ── Load My Registrations ─────────────────────────────────────
+    async function loadRegistrations() {
+        var token  = localStorage.getItem('token');
+        var tbody  = document.getElementById('registrationsTableBody');
+        var ovRegs = document.getElementById('overviewRegs');
+        if (!tbody) return;
+
+        var empty = '<tr><td colspan="5"><div class="placeholder-box">' +
+            '<div class="ph-icon">📋</div>' +
+            '<p>No tournament registrations yet.</p>' +
+            '<p>Use the <strong>Upcoming Events</strong> section to register.</p>' +
+            '</div></td></tr>';
+
+        try {
+            var res = await fetch(API_BASE_URL + '/tournament/my-registrations', {
+                headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+            });
+
+            if (res.ok) {
+                var list = await res.json();
+                if (list && list.length > 0) {
+                    renderRegistrationsTable(tbody, list);
+                    renderOverviewRegs(ovRegs, list.slice(0, 3));
+                    return;
                 }
-                window.location.href = dashboardUrl;
-                return;
             }
-            
-            // Display user info
-            displayUserInfo();
-            
-            // Load player statistics and registrations
-            loadPlayerStats();
-            loadTournamentRegistrations();
+        } catch (e) { /* offline — fall through to local */ }
+
+        // LOCAL_TEST_MODE fallback
+        var local = getLocalRegs();
+        if (local.length > 0) {
+            renderRegistrationsTable(tbody, local);
+            renderOverviewRegs(ovRegs, local.slice(0, 3));
+        } else {
+            tbody.innerHTML = empty;
+        }
+    }
+
+    function renderRegistrationsTable(tbody, list) {
+        tbody.innerHTML = list.map(function(r) {
+            var cls = r.status === 'approved' ? 'badge-approved'
+                    : r.status === 'rejected' ? 'badge-loss'
+                    : 'badge-pending';
+            return '<tr>' +
+                '<td>' + esc(r.tournamentName || 'N/A') + '</td>' +
+                '<td>' + fmtDate(r.startDate) + '</td>' +
+                '<td>' + esc(r.categoryLabel || r.category || '—') + '</td>' +
+                '<td><span class="status-badge ' + cls + '">' +
+                    cap(r.status || 'pending') + '</span></td>' +
+                '<td>' + fmtDate(r.registeredOn || r.createdAt) + '</td>' +
+            '</tr>';
+        }).join('');
+    }
+
+    function renderOverviewRegs(container, list) {
+        if (!container || !list.length) return;
+        container.innerHTML = '<table class="data-table" style="margin-top:0;">' +
+            '<thead><tr><th>Tournament</th><th>Category</th><th>Status</th></tr></thead>' +
+            '<tbody>' + list.map(function(r) {
+                var cls = r.status === 'approved' ? 'badge-approved'
+                        : r.status === 'rejected' ? 'badge-loss'
+                        : 'badge-pending';
+                return '<tr>' +
+                    '<td>' + esc(r.tournamentName || 'N/A') + '</td>' +
+                    '<td>' + esc(r.categoryLabel || r.category || '—') + '</td>' +
+                    '<td><span class="status-badge ' + cls + '">' +
+                        cap(r.status || 'pending') + '</span></td>' +
+                '</tr>';
+            }).join('') + '</tbody></table>';
+    }
+
+    // ── Load open tournaments into Upcoming Events section ────────
+    // ── Load upcoming tournaments into Events section ─────────────
+    async function loadUpcomingTournaments() {
+        var grid = document.getElementById('eventsGrid');
+        if (!grid) return;
+
+        var all = [];
+
+        // Try API first
+        try {
+            var res = await fetch(API_BASE_URL + '/tournament');
+            if (res.ok) { all = await res.json(); }
+        } catch (e) { /* offline */ }
+
+        // Local fallback: tournaments saved by admin dashboard
+        if (!all.length) {
+            all = JSON.parse(localStorage.getItem('skf_local_tournaments') || '[]');
+        }
+
+        var now = new Date();
+        var upcoming = all.filter(function(t) {
+            var endDate = new Date(t.end_date || t.endDate || '2099-01-01');
+            return endDate >= now;
         });
-        
-        // Function to load player statistics
-        async function loadPlayerStats() {
-            const token = localStorage.getItem('token');
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            
-            if (!token || !user.id) {
-                // Use demo data if not authenticated
+        upcoming.sort(function(a, b) {
+            return new Date(a.start_date || a.startDate || 0) -
+                   new Date(b.start_date || b.startDate || 0);
+        });
+
+        renderUpcomingTournaments(grid, upcoming);
+        updateOverviewNextEvent(upcoming.length > 0 ? upcoming[0] : null);
+    }
+
+    function renderUpcomingTournaments(grid, list) {
+        if (!list || list.length === 0) {
+            grid.innerHTML =
+                '<div class="placeholder-box" style="grid-column:1/-1;">' +
+                '<div class="ph-icon">🏆</div>' +
+                '<p>No upcoming tournaments at the moment.</p>' +
+                '<p>Check back soon for new events.</p>' +
+                '</div>';
+            return;
+        }
+
+        grid.innerHTML = list.map(function(t) {
+            var status       = (t.status || '').toLowerCase();
+            var startDate    = t.start_date    || t.startDate;
+            var endDate      = t.end_date      || t.endDate;
+            var regOpen      = t.registration_open_date  || t.registrationOpenDate;
+            var regClose     = t.registration_close_date || t.registrationCloseDate;
+
+            // Status badge + CTA
+            // Registration is only truly open if the referee has confirmed the tournament
+            var refConfirmed = localStorage.getItem('skf_ref_confirmed_' + t.id) === 'true';
+            var badge, cta;
+            if (status === 'registration_open' && refConfirmed) {
+                badge = '<span class="status-badge badge-open">Registration Open</span>';
+                cta   = '<button class="btn" style="margin-top:10px;padding:7px 22px;font-size:13px;border-radius:20px;width:auto;" ' +
+                        'onclick="openRegisterModal(\'' + t.id + '\',\'' + esc(t.name) + '\')">' +
+                        'Register &rarr;</button>';
+            } else if (status === 'registration_open' && !refConfirmed) {
+                badge = '<span class="status-badge badge-pending">Awaiting Referee Setup</span>';
+                cta   = '<button class="btn" style="margin-top:10px;padding:7px 22px;font-size:13px;border-radius:20px;width:auto;opacity:.5;cursor:not-allowed;" disabled>' +
+                        'Not Ready Yet</button>';
+            } else if (status === 'draft') {
+                badge = '<span class="status-badge badge-pending">Coming Soon</span>';
+                cta   = '<button class="btn" style="margin-top:10px;padding:7px 22px;font-size:13px;border-radius:20px;width:auto;opacity:.5;cursor:not-allowed;" disabled>' +
+                        'Not Open Yet</button>';
+            } else {
+                badge = '<span class="status-badge badge-loss">Registration Closed</span>';
+                cta   = '<span class="btn" style="margin-top:10px;padding:7px 22px;font-size:13px;border-radius:20px;width:auto;opacity:.5;cursor:not-allowed;">Closed</span>';
+            }
+
+            // Registration window line
+            var regLine = '';
+            if (status === 'registration_open' && regClose) {
+                regLine = '<p>Registration closes: ' + fmtDate(regClose) + '</p>';
+            } else if (status === 'draft' && regOpen) {
+                regLine = '<p>Registration opens: ' + fmtDate(regOpen) + '</p>';
+            }
+
+            return '<div class="event-item">' +
+                '<div class="event-date">' + fmtShortDate(startDate) + '</div>' +
+                '<div class="event-details">' +
+                    '<h3>' + esc(t.name) + '</h3>' +
+                    '<p>Location: ' + esc(t.location || '—') + '</p>' +
+                    '<p>' + fmtDate(startDate) + (endDate ? ' &mdash; ' + fmtDate(endDate) : '') + '</p>' +
+                    regLine +
+                    '<p>' + badge + '</p>' +
+                '</div>' +
+                cta +
+            '</div>';
+        }).join('');
+    }
+
+    // Update the Overview card with the soonest upcoming tournament
+    function updateOverviewNextEvent(t) {
+        var el = document.getElementById('overviewNextEvent');
+        if (!el) return;
+
+        if (!t) {
+            el.innerHTML = '<p style="color:#888;font-size:14px;">No upcoming tournaments at the moment.</p>';
+            return;
+        }
+
+        var status = (t.status || '').toLowerCase();
+        var refConfirmed2 = localStorage.getItem('skf_ref_confirmed_' + t.id) === 'true';
+        var badge, cta;
+        if (status === 'registration_open' && refConfirmed2) {
+            badge = '<span class="status-badge badge-open">Registration Open</span>';
+            cta   = '<button class="btn" style="margin-top:10px;padding:7px 22px;font-size:13px;border-radius:20px;width:auto;" ' +
+                    'onclick="openRegisterModal(\'' + t.id + '\',\'' + esc(t.name) + '\')">' +
+                    'Register &rarr;</button>';
+        } else if (status === 'registration_open' && !refConfirmed2) {
+            badge = '<span class="status-badge badge-pending">Awaiting Referee Setup</span>';
+            cta   = '<a href="#" onclick="showSection(\'events\',event)" class="btn" style="margin-top:10px;padding:7px 22px;font-size:13px;border-radius:20px;width:auto;display:inline-block;opacity:.6;">View Details</a>';
+        } else if (status === 'draft') {
+            badge = '<span class="status-badge badge-pending">Coming Soon</span>';
+            cta   = '<a href="#" onclick="showSection(\'events\',event)" class="btn" style="margin-top:10px;padding:7px 22px;font-size:13px;border-radius:20px;width:auto;display:inline-block;">See All Events</a>';
+        } else {
+            badge = '<span class="status-badge badge-loss">Registration Closed</span>';
+            cta   = '<span class="btn" style="margin-top:10px;opacity:.5;cursor:not-allowed;">Closed</span>';
+        }
+
+        el.innerHTML =
+            '<div class="event-item">' +
+            '<div class="event-date">' + fmtShortDate(t.start_date || t.startDate) + '</div>' +
+            '<div class="event-details">' +
+                '<h3>' + esc(t.name) + '</h3>' +
+                '<p>Location: ' + esc(t.location || '—') + '</p>' +
+                '<p>' + badge + '</p>' +
+            '</div>' +
+            cta +
+            '</div>';
+    }
+
+    // ── Register modal ────────────────────────────────────────────
+    async function openRegisterModal(tournamentId, tournamentName) {
+        var mc = document.getElementById('playerModalContainer');
+        if (!mc) return;
+
+        mc.innerHTML =
+            '<div class="modal" style="display:block;position:fixed;top:0;left:0;width:100%;height:100%;' +
+                'background:rgba(0,0,0,.5);z-index:2000;display:flex;align-items:center;justify-content:center;">' +
+            '<div style="background:#fff;border-radius:12px;padding:30px;max-width:500px;width:90%;' +
+                'box-shadow:0 10px 40px rgba(0,0,0,.2);">' +
+                '<div style="display:flex;justify-content:space-between;align-items:center;' +
+                    'margin-bottom:20px;padding-bottom:15px;border-bottom:1px solid #eee;">' +
+                    '<h2 style="margin:0;color:#333;font-size:18px;">Register — ' + esc(tournamentName) + '</h2>' +
+                    '<span onclick="closePlayerModal()" style="cursor:pointer;font-size:22px;' +
+                        'color:#999;line-height:1;">&times;</span>' +
+                '</div>' +
+                '<div class="form-group" style="margin-bottom:16px;">' +
+                    '<label style="display:block;font-weight:bold;margin-bottom:6px;color:#555;">Category</label>' +
+                    '<select id="regCategorySelect" style="width:100%;padding:10px;border:1px solid #ddd;' +
+                        'border-radius:6px;font-size:14px;">' +
+                        '<option value="" disabled selected>Loading categories...</option>' +
+                    '</select>' +
+                '</div>' +
+                '<div class="form-group" style="margin-bottom:20px;">' +
+                    '<label style="display:block;font-weight:bold;margin-bottom:6px;color:#555;">' +
+                        'Notes (optional)</label>' +
+                    '<textarea id="regNotes" rows="3" style="width:100%;padding:10px;border:1px solid #ddd;' +
+                        'border-radius:6px;font-size:14px;resize:vertical;" placeholder="Any notes..."></textarea>' +
+                '</div>' +
+                '<div id="regMessage" style="margin-bottom:12px;font-size:13px;"></div>' +
+                '<div style="display:flex;gap:10px;justify-content:flex-end;">' +
+                    '<button onclick="closePlayerModal()" style="padding:10px 20px;border:1px solid #ddd;' +
+                        'border-radius:6px;background:#fff;cursor:pointer;">Cancel</button>' +
+                    '<button onclick="submitRegistration(\'' + tournamentId + '\',\'' + esc(tournamentName) + '\')" ' +
+                        'style="padding:10px 24px;background:#3a7d44;color:#fff;border:none;' +
+                        'border-radius:6px;font-weight:bold;cursor:pointer;">Confirm Registration</button>' +
+                '</div>' +
+            '</div></div>';
+
+        await loadCategoriesForModal(tournamentId);
+    }
+
+    async function loadCategoriesForModal(tournamentId) {
+        var sel = document.getElementById('regCategorySelect');
+        if (!sel) return;
+
+        var cats = [];
+
+        // Try API first
+        try {
+            var res = await fetch(API_BASE_URL + '/tournament/' + tournamentId + '/categories');
+            if (res.ok) { cats = await res.json(); }
+        } catch (e) { /* offline */ }
+
+        // Local fallback: categories saved by admin dashboard when they were created
+        if (!cats.length) {
+            cats = JSON.parse(localStorage.getItem('skf_local_cats_' + tournamentId) || '[]');
+        }
+
+        if (!cats.length) {
+            sel.innerHTML = '<option value="" disabled selected>No categories added to this tournament yet</option>';
+            return;
+        }
+
+        // Build option label with all details so player can pick the right one
+        sel.innerHTML = '<option value="" disabled selected>Select your category...</option>' +
+            cats.map(function(c) {
+                var discipline  = cap(c.discipline   || '');
+                var gender      = cap(c.gender       || '');
+                var ageGroup    = c.age_group    || c.ageGroup    || '';
+                var weightClass = c.weight_class || c.weightClass || '';
+                var fmt         = c.competition_format || c.competitionFormat || '';
+                var fmtLabel    = fmt === 'single_elimination' ? ' [Single Elim.]'
+                                : fmt === 'round_robin'        ? ' [Round Robin]' : '';
+                var parts = [discipline, gender, ageGroup, weightClass].filter(Boolean);
+                return '<option value="' + esc(c.id) + '">' + parts.join(' | ') + fmtLabel + '</option>';
+            }).join('');
+    }
+
+    async function submitRegistration(tournamentId, tournamentName) {
+        var sel   = document.getElementById('regCategorySelect');
+        var notes = document.getElementById('regNotes');
+        var msg   = document.getElementById('regMessage');
+
+        if (!sel || !sel.value) {
+            if (msg) { msg.style.color = '#c62828'; msg.textContent = 'Please select a category.'; }
+            return;
+        }
+
+        var categoryId    = sel.value;
+        var categoryLabel = sel.options[sel.selectedIndex].text;
+        var token         = localStorage.getItem('token');
+
+        try {
+            var res = await fetch(API_BASE_URL + '/tournament/' + tournamentId + '/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { 'Authorization': 'Bearer ' + token } : {})
+                },
+                body: JSON.stringify({
+                    categoryId: categoryId,
+                    notes: notes ? notes.value : ''
+                })
+            });
+
+            if (res.ok) {
+                if (msg) { msg.style.color = '#2e7d32'; msg.textContent = 'Registered successfully! Status: Pending.'; }
+                setTimeout(function() {
+                    closePlayerModal();
+                    loadRegistrations();
+                }, 1500);
                 return;
             }
-            
-            try {
-                // TODO: Fetch real statistics from API
-                // const response = await fetch(`${API_BASE_URL}/players/${user.id}/stats`, {
-                //     headers: {
-                //         'Authorization': `Bearer ${token}`
-                //     }
-                // });
-                // const stats = await response.json();
-                // Update stat cards with real data
-            } catch (error) {
-                console.error('Error loading player stats:', error);
-            }
+
+            var err = await res.json().catch(function() { return {}; });
+            if (msg) { msg.style.color = '#c62828'; msg.textContent = err.message || 'Registration failed.'; }
+            return;
+        } catch (e) { /* offline — save locally */ }
+
+        // LOCAL_TEST_MODE: save to localStorage
+        var user  = JSON.parse(localStorage.getItem('user') || '{}');
+        var regs  = getLocalRegs();
+        var exists = regs.find(function(r) {
+            return r.tournamentId === tournamentId && r.categoryId === categoryId;
+        });
+
+        if (exists) {
+            if (msg) { msg.style.color = '#c62828'; msg.textContent = 'You are already registered for this category.'; }
+            return;
         }
-        
-        // Function to load tournament registrations
-        async function loadTournamentRegistrations() {
-            const token = localStorage.getItem('token');
-            const user = JSON.parse(localStorage.getItem('user') || '{}');
-            const tbody = document.getElementById('registrationsTableBody');
-            
-            if (!token || !user.id || !tbody) {
-                return;
+
+        regs.push({
+            id:            'local-reg-' + Date.now(),
+            tournamentId:  tournamentId,
+            tournamentName: tournamentName,
+            categoryId:    categoryId,
+            categoryLabel: categoryLabel,
+            status:        'pending',
+            registeredOn:  new Date().toISOString()
+        });
+        localStorage.setItem(LOCAL_REGS_KEY, JSON.stringify(regs));
+
+        if (msg) { msg.style.color = '#2e7d32'; msg.textContent = 'Registered locally (offline mode). Status: Pending.'; }
+        setTimeout(function() {
+            closePlayerModal();
+            loadRegistrations();
+        }, 1500);
+    }
+
+    function closePlayerModal() {
+        var mc = document.getElementById('playerModalContainer');
+        if (mc) mc.innerHTML = '';
+    }
+
+    function getLocalRegs() {
+        try { return JSON.parse(localStorage.getItem(LOCAL_REGS_KEY) || '[]'); } catch { return []; }
+    }
+
+    // ── Match card animation ──────────────────────────────────────
+    function initMatchAnimation() {
+        document.querySelectorAll('.match-container').forEach(function(container) {
+            var cards = container.querySelectorAll('.match-card');
+            if (cards.length < 2) return;
+            var current = 0;
+
+            function updateDots(idx) {
+                cards.forEach(function(card, i) {
+                    var dots = card.querySelectorAll('.match-dot');
+                    dots.forEach(function(d, di) {
+                        d.classList.toggle('active', di === idx);
+                    });
+                });
             }
-            
-            try {
-                // TODO: Fetch real registrations from API
-                // const response = await fetch(`${API_BASE_URL}/tournaments/registrations`, {
-                //     headers: {
-                //         'Authorization': `Bearer ${token}`
-                //     }
-                // });
-                // const registrations = await response.json();
-                
-                // For now, show empty state or demo data
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" style="text-align: center; padding: 20px; color: #666;">
-                            No tournament registrations yet. <a href="tournament.html" style="color: #3a7d44;">Browse tournaments</a>
-                        </td>
-                    </tr>
-                `;
-            } catch (error) {
-                console.error('Error loading tournament registrations:', error);
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="6" style="text-align: center; padding: 20px; color: #d32f2f;">
-                            Error loading registrations. Please try again later.
-                        </td>
-                    </tr>
-                `;
-            }
+
+            setInterval(function() {
+                cards[current].classList.remove('active');
+                cards[current].classList.add('out');
+                var prev = current;
+                current = (current + 1) % cards.length;
+                updateDots(current);
+                setTimeout(function() {
+                    cards[prev].classList.remove('out');
+                    cards[current].classList.add('active');
+                }, 680);
+            }, 4000);
+        });
+    }
+
+    // ── Logout ────────────────────────────────────────────────────
+    // ── Rankings filter ───────────────────────────────────────────
+    var rankingsData = []; // will hold fetched rankings when backend is connected
+
+    function filterRankings() {
+        var ageGroup   = document.getElementById('rkAgeGroup').value.toLowerCase();
+        var discipline = document.getElementById('rkDiscipline').value.toLowerCase();
+        var gender     = document.getElementById('rkGender').value.toLowerCase();
+        var tbody      = document.getElementById('rankingsTableBody');
+
+        if (!rankingsData.length) {
+            // No data yet — just show the placeholder regardless of filters
+            tbody.innerHTML = '<tr><td colspan="7"><div class="placeholder-box"><div class="ph-icon">🏆</div><p>No rankings match your selection yet.</p><p>Compete in events to earn ranking points.</p></div></td></tr>';
+            return;
         }
-    </script>
+
+        var filtered = rankingsData.filter(function(r) {
+            return (!ageGroup   || (r.ageGroup   || '').toLowerCase() === ageGroup)
+                && (!discipline || (r.discipline || '').toLowerCase() === discipline)
+                && (!gender     || (r.gender     || '').toLowerCase() === gender);
+        });
+
+        if (!filtered.length) {
+            tbody.innerHTML = '<tr><td colspan="7"><div class="placeholder-box"><div class="ph-icon">🔍</div><p>No rankings match your selection.</p><p>Try different filters.</p></div></td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = filtered.map(function(r, i) {
+            return '<tr>'
+                + '<td>' + (i + 1) + '</td>'
+                + '<td>' + esc(r.playerName) + '</td>'
+                + '<td>' + esc(r.club || '—') + '</td>'
+                + '<td>' + esc(r.ageGroup || '—') + '</td>'
+                + '<td style="text-transform:capitalize;">' + esc(r.discipline || '—') + '</td>'
+                + '<td style="text-transform:capitalize;">' + esc(r.gender || '—') + '</td>'
+                + '<td><strong>' + esc(r.points || 0) + '</strong></td>'
+                + '</tr>';
+        }).join('');
+    }
+
+    function resetRankingFilters() {
+        document.getElementById('rkAgeGroup').value   = '';
+        document.getElementById('rkDiscipline').value = '';
+        document.getElementById('rkGender').value     = '';
+        filterRankings();
+    }
+
+    function doLogout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = 'index.html';
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────
+    function fmtDate(d) {
+        if (!d) return '—';
+        try {
+            return new Date(d).toLocaleDateString('en-SA', {
+                year:'numeric', month:'short', day:'numeric'
+            });
+        } catch(e) { return d; }
+    }
+    function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : ''; }
+    function esc(s) {
+        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function fmtShortDate(d) {
+        if (!d) return '—';
+        try {
+            return new Date(d).toLocaleDateString('en-SA', { month:'short', day:'numeric' });
+        } catch(e) { return d; }
+    }
+</script>
 </body>
 </html>

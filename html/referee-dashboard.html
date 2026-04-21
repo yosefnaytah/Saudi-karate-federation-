@@ -1,0 +1,1018 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Referee Dashboard - Saudi Karate Federation</title>
+    <link rel="stylesheet" href="dashboard.css">
+    <style>
+        .placeholder-box {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .placeholder-box .icon {
+            font-size: 52px;
+            margin-bottom: 16px;
+        }
+        .placeholder-box h3 {
+            font-size: 20px;
+            font-weight: bold;
+            color: #555;
+            margin: 0 0 10px;
+        }
+        .placeholder-box p {
+            font-size: 14px;
+            color: #888;
+            max-width: 420px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        .coming-soon-badge {
+            display: inline-block;
+            margin-top: 16px;
+            background: #e8f5e9;
+            color: #2e7d32;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 14px;
+            border-radius: 12px;
+            border: 1px solid #c8e6c9;
+        }
+        .discipline-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .discipline-kata    { background: #e3f2fd; color: #1565c0; }
+        .discipline-kumite  { background: #e8f5e9; color: #2e7d32; }
+        .status-pill {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-draft               { background: #e0e0e0; color: #555; }
+        .status-registration_open   { background: #c8e6c9; color: #2e7d32; }
+        .status-registration_closed { background: #ffcdd2; color: #c62828; }
+        /* competition format badges */
+        .format-badge { display:inline-block; padding:2px 10px; border-radius:10px; font-size:12px; font-weight:bold; }
+        .format-single { background:#e3f2fd; color:#1565c0; }
+        .format-round  { background:#f3e5f5; color:#6a1b9a; }
+        .format-none   { background:#f5f5f5; color:#999; }
+        /* format modal overlay */
+        .fmt-modal-overlay {
+            display:flex; position:fixed; inset:0;
+            background:rgba(0,0,0,.45); z-index:2000;
+            align-items:center; justify-content:center;
+        }
+        .fmt-modal-box {
+            background:#fff; border-radius:12px; padding:28px;
+            max-width:420px; width:90%;
+            box-shadow:0 10px 40px rgba(0,0,0,.2);
+        }
+        .fmt-modal-header {
+            display:flex; justify-content:space-between; align-items:center;
+            margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid #eee;
+        }
+        .fmt-modal-header h2 { margin:0; font-size:17px; color:#333; }
+        .fmt-modal-header span { cursor:pointer; font-size:22px; color:#999; line-height:1; }
+        .fmt-option {
+            display:flex; align-items:center; gap:12px;
+            padding:14px 16px; border:2px solid #e0e0e0; border-radius:8px;
+            margin-bottom:10px; cursor:pointer; transition:border-color .2s, background .2s;
+        }
+        .fmt-option:hover   { border-color:#3a7d44; background:#f9f9f9; }
+        .fmt-option.selected { border-color:#3a7d44; background:#e8f5e9; }
+        .fmt-option input   { accent-color:#3a7d44; width:16px; height:16px; cursor:pointer; }
+        .fmt-option-label   { font-size:14px; font-weight:bold; color:#333; }
+        .fmt-option-desc    { font-size:12px; color:#888; margin-top:2px; }
+    </style>
+</head>
+<body>
+<div class="dashboard-container">
+
+    <!-- Header -->
+    <header class="dashboard-header">
+        <div class="header-left">
+            <div class="header-logo">Saudi Karate Federation — Referee</div>
+        </div>
+        <div class="header-center"></div>
+        <div class="header-right">
+            <div class="user-role" id="userDisplay">Loading...</div>
+            <div class="vision-logo">
+                <p class="vision-title">VISION (رؤية)</p>
+                <p class="vision-year">2030</p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hamburger Toggle -->
+    <div class="menu-toggle" id="menuToggle">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+    </div>
+
+    <!-- Side Navigation -->
+    <nav class="dashboard-nav" id="dashboardNav">
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="#" class="nav-link active" onclick="showSection('overview', event)">Overview</a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="showSection('assigned-tournaments', event)">Assigned Tournaments</a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="showSection('assigned-categories', event)">Assigned Categories</a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="showSection('match-management', event)">Match Management</a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="showSection('draw-setup', event)">Draw Setup</a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="showSection('results-entry', event)">Results Entry</a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="showSection('profile', event)">Profile</a>
+            </li>
+            <li class="nav-item">
+                <a href="#" class="nav-link" onclick="logout()">Logout</a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="dashboard-content">
+
+        <!-- ── Overview ──────────────────────────────────── -->
+        <section id="overview-section" class="dashboard-section" style="display:block;">
+
+            <div class="stats-container">
+                <div class="stat-card">
+                    <div class="stat-value" id="statTournaments">—</div>
+                    <div class="stat-label">Assigned Tournaments</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="statCategories">—</div>
+                    <div class="stat-label">Assigned Categories</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">—</div>
+                    <div class="stat-label">Upcoming Matches</div>
+                </div>
+            </div>
+
+            <!-- Tournaments quick-view -->
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Assigned Tournaments</h2>
+                    <button class="btn" onclick="showSection('assigned-tournaments', event)">View All</button>
+                </div>
+                <div class="data-table-container loaded" id="overviewTournamentsContainer">
+                    <p style="color:#888;font-size:14px;padding:8px 0;">Loading...</p>
+                </div>
+            </div>
+
+            <!-- Categories quick-view -->
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Assigned Categories</h2>
+                    <button class="btn" onclick="showSection('assigned-categories', event)">View All</button>
+                </div>
+                <div class="data-table-container loaded" id="overviewCategoriesContainer">
+                    <p style="color:#888;font-size:14px;padding:8px 0;">Loading...</p>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- ── Assigned Tournaments ───────────────────────── -->
+        <section id="assigned-tournaments-section" class="dashboard-section" style="display:none;">
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Assigned Tournaments</h2>
+                    <span style="font-size:12px;color:#888;">Click "Manage" to set up categories, then open registration for players</span>
+                </div>
+                <div class="data-table-container loaded">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Tournament</th>
+                                <th>Location</th>
+                                <th>Start Date</th>
+                                <th>Status</th>
+                                <th>Registration</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tournamentsTableBody">
+                            <tr>
+                                <td colspan="6" style="text-align:center;padding:20px;color:#666;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Per-tournament category manager (shown when referee clicks Manage) -->
+            <div id="refCatManagerPanel" style="display:none;">
+                <div class="dashboard-card" style="border:2px solid #3a7d44;">
+                    <div class="dashboard-card-header">
+                        <h2 class="dashboard-card-title" id="refCatManagerTitle">Manage Categories</h2>
+                        <button onclick="closeRefCatManager()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;">&times;</button>
+                    </div>
+
+                    <!-- Add category form -->
+                    <div style="background:#f9f9f9;border-radius:8px;padding:16px;margin-bottom:20px;">
+                        <h3 style="margin:0 0 14px;font-size:14px;color:#333;font-weight:600;">Add Category</h3>
+                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;">
+                            <div>
+                                <label style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase;">Discipline</label>
+                                <select id="rcDiscipline" style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:6px;margin-top:4px;font-size:13px;">
+                                    <option value="">Select...</option>
+                                    <option value="kata">Kata</option>
+                                    <option value="kumite">Kumite</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase;">Gender</label>
+                                <select id="rcGender" style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:6px;margin-top:4px;font-size:13px;">
+                                    <option value="">Select...</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase;">Age Group</label>
+                                <select id="rcAgeGroup" style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:6px;margin-top:4px;font-size:13px;">
+                                    <option value="">Select...</option>
+                                    <option value="Under 12">Under 12</option>
+                                    <option value="Under 14">Under 14</option>
+                                    <option value="Under 16">Under 16</option>
+                                    <option value="Under 18">Under 18</option>
+                                    <option value="Under 21">Under 21</option>
+                                    <option value="Senior">Senior (+21)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase;">Weight Class</label>
+                                <select id="rcWeight" style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:6px;margin-top:4px;font-size:13px;">
+                                    <option value="">Select...</option>
+                                    <option value="-50kg">-50 kg</option>
+                                    <option value="-55kg">-55 kg</option>
+                                    <option value="-60kg">-60 kg</option>
+                                    <option value="-65kg">-65 kg</option>
+                                    <option value="-70kg">-70 kg</option>
+                                    <option value="-75kg">-75 kg</option>
+                                    <option value="-80kg">-80 kg</option>
+                                    <option value="-85kg">-85 kg</option>
+                                    <option value="+85kg">+85 kg</option>
+                                    <option value="Open">Open Weight</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase;">Format</label>
+                                <select id="rcFormat" style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:6px;margin-top:4px;font-size:13px;">
+                                    <option value="">Select...</option>
+                                    <option value="single_elimination">Single Elimination</option>
+                                    <option value="round_robin">Round Robin</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div style="margin-top:14px;display:flex;gap:10px;align-items:center;">
+                            <button onclick="refAddCategory()" style="padding:8px 24px;background:#3a7d44;color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:13px;">+ Add Category</button>
+                            <span id="rcMsg" style="font-size:13px;"></span>
+                        </div>
+                    </div>
+
+                    <!-- Categories table -->
+                    <div class="data-table-container loaded">
+                        <table class="data-table">
+                            <thead>
+                                <tr><th>Discipline</th><th>Gender</th><th>Age Group</th><th>Weight</th><th>Format</th><th>Remove</th></tr>
+                            </thead>
+                            <tbody id="refCatTableBody">
+                                <tr><td colspan="6" style="text-align:center;padding:16px;color:#888;">No categories added yet.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Open Registration button -->
+                    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #eee;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+                        <div>
+                            <div style="font-size:13px;font-weight:600;color:#333;">Ready to open registration for players?</div>
+                            <div style="font-size:12px;color:#888;margin-top:2px;">Make sure all categories are set before opening.</div>
+                        </div>
+                        <button id="refOpenRegBtn" onclick="refOpenRegistration()"
+                            style="padding:10px 28px;background:#2e7d44;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:14px;">
+                            ✅ Submit &amp; Open Registration
+                        </button>
+                    </div>
+                    <div id="refOpenRegMsg" style="margin-top:10px;font-size:13px;text-align:right;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Assigned Categories ────────────────────────── -->
+        <section id="assigned-categories-section" class="dashboard-section" style="display:none;">
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Assigned Categories</h2>
+                </div>
+                <div class="data-table-container loaded">
+                    <table class="data-table" id="categoriesFullTable">
+                        <thead>
+                            <tr>
+                                <th>Tournament</th>
+                                <th>Discipline</th>
+                                <th>Gender</th>
+                                <th>Age Group</th>
+                                <th>Weight Class</th>
+                                <th>Format</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categoriesTableBody">
+                            <tr>
+                                <td colspan="7" style="text-align:center;padding:20px;color:#666;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- Format modal mount point -->
+        <div id="formatModalContainer"></div>
+
+        <!-- ── Match Management (placeholder) ────────────── -->
+        <section id="match-management-section" class="dashboard-section" style="display:none;">
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Match Management</h2>
+                </div>
+                <div class="placeholder-box">
+                    <div class="icon">⚔️</div>
+                    <h3>Match Management</h3>
+                    <p>Match management tools will be available here once matches are assigned to you by the SKF Admin.</p>
+                    <span class="coming-soon-badge">Coming Soon</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Draw Setup (placeholder) ──────────────────── -->
+        <section id="draw-setup-section" class="dashboard-section" style="display:none;">
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Draw Setup</h2>
+                </div>
+                <div class="placeholder-box">
+                    <div class="icon">🎯</div>
+                    <h3>Draw Setup</h3>
+                    <p>Draw generation and bracket setup for assigned categories will be available here in a future update.</p>
+                    <span class="coming-soon-badge">Coming Soon</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Results Entry (placeholder) ──────────────── -->
+        <section id="results-entry-section" class="dashboard-section" style="display:none;">
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Results Entry</h2>
+                </div>
+                <div class="placeholder-box">
+                    <div class="icon">📋</div>
+                    <h3>Results Entry</h3>
+                    <p>Match results entry and scoring tools will be available here once match management is active.</p>
+                    <span class="coming-soon-badge">Coming Soon</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Profile ────────────────────────────────────── -->
+        <section id="profile-section" class="dashboard-section" style="display:none;">
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">My Profile</h2>
+                </div>
+                <div id="profileContent">
+                    <p style="color:#666;">Loading profile...</p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+</div>
+
+<script>
+    // ── Constants ─────────────────────────────────────────────────
+    const API_BASE_URL   = 'http://localhost:5000/api';
+    const ALLOWED_ROLES  = ['referee', 'referees_plus'];
+    const API_TIMEOUT_MS = 4000;
+    const LOCAL_TEST_MODE = true;
+
+    // ── Init ──────────────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+        checkRefereeAuth();
+        initMenu();
+        loadOverviewData();
+    });
+
+    // ── Logout ────────────────────────────────────────────────────
+    function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = 'index.html';
+    }
+
+    // ── Fetch with timeout ────────────────────────────────────────
+    function fetchWithTimeout(url, options) {
+        var controller = new AbortController();
+        var timer = setTimeout(function() { controller.abort(); }, API_TIMEOUT_MS);
+        return fetch(url, Object.assign({}, options || {}, { signal: controller.signal }))
+            .finally(function() { clearTimeout(timer); });
+    }
+
+    // ── Auth guard ────────────────────────────────────────────────
+    function checkRefereeAuth() {
+        var token   = localStorage.getItem('token');
+        var userStr = localStorage.getItem('user');
+        if (!token || !userStr) {
+            window.location.href = 'index.html';
+            return;
+        }
+        var user = JSON.parse(userStr);
+        var role = (user.role || '').toLowerCase();
+        if (!ALLOWED_ROLES.includes(role)) {
+            if (role === 'skf_admin' || role === 'admin') window.location.href = 'admin-dashboard.html';
+            else if (role === 'player') window.location.href = 'player-dashboard.html';
+            else window.location.href = 'index.html';
+            return;
+        }
+        var el = document.getElementById('userDisplay');
+        if (el) {
+            var label = role === 'referees_plus' ? 'Referee+' : 'Referee';
+            var name  = user.fullName || user.full_name || user.email || label;
+            el.textContent = 'Welcome, ' + name + ' (' + label + ')';
+        }
+    }
+
+    // ── Menu ──────────────────────────────────────────────────────
+    function initMenu() {
+        var toggle = document.getElementById('menuToggle');
+        var nav    = document.getElementById('dashboardNav');
+        if (toggle && nav) {
+            toggle.addEventListener('click', function () {
+                this.classList.toggle('active');
+                nav.classList.toggle('active');
+            });
+        }
+    }
+
+    // ── Section switching ─────────────────────────────────────────
+    function showSection(name, evt) {
+        document.querySelectorAll('.dashboard-section').forEach(function(s) { s.style.display = 'none'; });
+        document.querySelectorAll('.nav-link').forEach(function(l) { l.classList.remove('active'); });
+        var section = document.getElementById(name + '-section');
+        if (section) section.style.display = 'block';
+        if (evt && evt.target) evt.target.classList.add('active');
+        if (window.innerWidth <= 768) {
+            var nav = document.getElementById('dashboardNav');
+            var tog = document.getElementById('menuToggle');
+            if (nav) nav.classList.remove('active');
+            if (tog) tog.classList.remove('active');
+        }
+        if (name === 'assigned-tournaments') loadTournaments(false);
+        if (name === 'assigned-categories')  loadCategories(false);
+        if (name === 'profile')              loadProfile();
+        animateCards();
+    }
+
+    // ── Overview loader ───────────────────────────────────────────
+    async function loadOverviewData() {
+        await loadTournaments(true);
+        await loadCategories(true);
+        animateCards();
+    }
+
+    // ── Get current referee ID ────────────────────────────────────
+    function getMyId() {
+        var user = JSON.parse(localStorage.getItem('user') || '{}');
+        return user.id || '';
+    }
+
+    // ── Get my assigned tournaments from localStorage ──────────────
+    function getMyTournaments() {
+        var uid         = getMyId();
+        var assignments = JSON.parse(localStorage.getItem('skf_local_ref_assignments') || '[]');
+        var allT        = JSON.parse(localStorage.getItem('skf_local_tournaments') || '[]');
+        var mine        = assignments.filter(function(a) { return a.refereeId === uid; });
+
+        return mine.map(function(a) {
+            // Use embedded tournament object if present
+            if (a.tournament && a.tournament.id) return a.tournament;
+            // Otherwise look it up from the saved tournament list
+            return allT.find(function(t) { return t.id === a.tournamentId; }) || null;
+        }).filter(Boolean);
+    }
+
+    // ── Get categories for my tournaments ─────────────────────────
+    function getMyCategories() {
+        var uid = getMyId();
+        var assignments = JSON.parse(localStorage.getItem('skf_local_ref_assignments') || '[]');
+        var mine = assignments.filter(function(a) { return a.refereeId === uid; });
+        var allCats = [];
+        mine.forEach(function(a) {
+            var tournament = a.tournament;
+            if (!tournament || !tournament.id) return;
+            // Try skf_local_cats_{id} first (saved by admin dashboard)
+            var stored = JSON.parse(localStorage.getItem('skf_local_cats_' + tournament.id) || '[]');
+            // Also try the allCategoriesByTournament key saved by admin
+            if (!stored.length) {
+                stored = JSON.parse(localStorage.getItem('skf_cats_' + tournament.id) || '[]');
+            }
+            stored.forEach(function(c) {
+                allCats.push({
+                    id:               c.id,
+                    tournamentId:     tournament.id,
+                    tournamentName:   tournament.name,
+                    discipline:       c.discipline,
+                    gender:           c.gender,
+                    ageGroup:         c.age_group || c.ageGroup || '',
+                    weightClass:      c.weight_class || c.weightClass || '',
+                    competitionFormat: getLocalFormat(c.id) || c.competition_format || c.competitionFormat || ''
+                });
+            });
+        });
+        return allCats;
+    }
+
+    // ── Load tournaments ──────────────────────────────────────────
+    async function loadTournaments(forOverview) {
+        var token = localStorage.getItem('token');
+        var uid   = getMyId();
+        var tournaments = [];
+
+        if (!LOCAL_TEST_MODE) {
+            try {
+                var res = await fetchWithTimeout(API_BASE_URL + '/tournament/by-referee/' + uid, {
+                    headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+                });
+                if (res.ok) { tournaments = await res.json(); }
+            } catch(e) { /* fall through */ }
+        }
+
+        if (!tournaments.length) {
+            tournaments = getMyTournaments();
+        }
+
+        var statEl = document.getElementById('statTournaments');
+        if (statEl) statEl.textContent = tournaments.length;
+        renderTournaments(tournaments, forOverview);
+    }
+
+    // ── Load categories ───────────────────────────────────────────
+    async function loadCategories(forOverview) {
+        var token = localStorage.getItem('token');
+        var cats  = [];
+
+        if (!LOCAL_TEST_MODE) {
+            try {
+                var res = await fetchWithTimeout(API_BASE_URL + '/tournament/assigned-categories', {
+                    headers: token ? { 'Authorization': 'Bearer ' + token } : {}
+                });
+                if (res.ok) { cats = await res.json(); }
+            } catch(e) { /* fall through */ }
+        }
+
+        if (!cats.length) {
+            cats = getMyCategories();
+        }
+
+        // Merge saved formats
+        cats.forEach(function(c) {
+            if (!c.competitionFormat) {
+                var local = getLocalFormat(c.id);
+                if (local) c.competitionFormat = local;
+            }
+        });
+
+        var statEl = document.getElementById('statCategories');
+        if (statEl) statEl.textContent = cats.length;
+        renderCategories(cats, forOverview);
+    }
+
+    // ── Render tournaments ────────────────────────────────────────
+    // ── Referee category management state ────────────────────────
+    var _refCatTournamentId   = null;
+    var _refCatTournamentName = '';
+    var REF_CONFIRMED_KEY     = 'skf_ref_confirmed_';   // + tournamentId -> true
+
+    function isRefConfirmed(tid) {
+        return localStorage.getItem(REF_CONFIRMED_KEY + tid) === 'true';
+    }
+
+    function renderTournaments(list, forOverview) {
+        var emptyMsg = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#888;">No tournaments assigned yet. Ask the SKF Admin to assign you.</td></tr>';
+
+        var tbody = document.getElementById('tournamentsTableBody');
+        if (tbody) {
+            tbody.innerHTML = list.length === 0 ? emptyMsg : list.map(function(t) {
+                var start     = t.startDate || t.start_date;
+                var confirmed = isRefConfirmed(t.id);
+                var regStatus = confirmed
+                    ? '<span style="color:#2e7d44;font-weight:bold;font-size:12px;">&#10003; Open</span>'
+                    : '<span style="color:#999;font-size:12px;">Pending Setup</span>';
+                return '<tr>' +
+                    '<td><strong>' + esc(t.name || 'N/A') + '</strong></td>' +
+                    '<td>' + esc(t.location || 'N/A') + '</td>' +
+                    '<td>' + fmtDate(start) + '</td>' +
+                    '<td>' + statusPill(t.status) + '</td>' +
+                    '<td>' + regStatus + '</td>' +
+                    '<td><button class="btn" style="font-size:12px;padding:5px 14px;" ' +
+                        'onclick="openRefCatManager(\'' + t.id + '\',\'' + esc(t.name || '') + '\')">' +
+                        'Manage</button></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        var oc = document.getElementById('overviewTournamentsContainer');
+        if (!forOverview || !oc) return;
+        if (list.length === 0) {
+            oc.innerHTML = '<p style="color:#888;padding:8px 0;">No tournaments assigned yet.</p>';
+            return;
+        }
+        oc.innerHTML = '<table class="data-table"><thead><tr>' +
+            '<th>Tournament</th><th>Location</th><th>Start Date</th><th>Status</th>' +
+            '</tr></thead><tbody>' +
+            list.slice(0, 3).map(function(t) {
+                var start = t.startDate || t.start_date;
+                return '<tr>' +
+                    '<td><strong>' + esc(t.name || 'N/A') + '</strong></td>' +
+                    '<td>' + esc(t.location || 'N/A') + '</td>' +
+                    '<td>' + fmtDate(start) + '</td>' +
+                    '<td>' + statusPill(t.status) + '</td>' +
+                    '</tr>';
+            }).join('') + '</tbody></table>';
+    }
+
+    // ── Render categories ─────────────────────────────────────────
+    function renderCategories(list, forOverview) {
+        var emptyMsg = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#888;">No categories assigned yet.</td></tr>';
+
+        var tbody = document.getElementById('categoriesTableBody');
+        if (tbody) {
+            tbody.innerHTML = list.length === 0 ? emptyMsg : list.map(function(c, idx) {
+                var fmt = c.competitionFormat || c.competition_format || '';
+                return '<tr>' +
+                    '<td>' + esc(c.tournamentName || 'N/A') + '</td>' +
+                    '<td>' + disciplineBadge(c.discipline) + '</td>' +
+                    '<td style="text-transform:capitalize;">' + esc(c.gender || 'N/A') + '</td>' +
+                    '<td>' + esc(c.ageGroup || c.age_group || 'N/A') + '</td>' +
+                    '<td>' + esc(c.weightClass || c.weight_class || 'N/A') + '</td>' +
+                    '<td>' + formatBadge(fmt) + '</td>' +
+                    '<td><button class="btn" style="font-size:12px;padding:5px 12px;" ' +
+                        'data-tid="' + esc(c.tournamentId) + '" ' +
+                        'data-cid="' + esc(c.id) + '" ' +
+                        'data-tname="' + esc(c.tournamentName || '') + '" ' +
+                        'data-cdesc="' + esc((c.discipline||'') + ' / ' + (c.gender||'') + ' / ' + (c.ageGroup||c.age_group||'')) + '" ' +
+                        'data-fmt="' + esc(fmt) + '" ' +
+                        'onclick="handleSetFormat(this)">Set Format</button></td>' +
+                    '</tr>';
+            }).join('');
+        }
+
+        var oc = document.getElementById('overviewCategoriesContainer');
+        if (!forOverview || !oc) return;
+        if (list.length === 0) {
+            oc.innerHTML = '<p style="color:#888;padding:8px 0;">No categories assigned yet.</p>';
+            return;
+        }
+        oc.innerHTML = '<table class="data-table"><thead><tr>' +
+            '<th>Tournament</th><th>Discipline</th><th>Gender</th><th>Age Group</th><th>Format</th>' +
+            '</tr></thead><tbody>' +
+            list.slice(0, 3).map(function(c) {
+                var fmt = c.competitionFormat || c.competition_format || '';
+                return '<tr>' +
+                    '<td>' + esc(c.tournamentName || 'N/A') + '</td>' +
+                    '<td>' + disciplineBadge(c.discipline) + '</td>' +
+                    '<td style="text-transform:capitalize;">' + esc(c.gender || 'N/A') + '</td>' +
+                    '<td>' + esc(c.ageGroup || c.age_group || 'N/A') + '</td>' +
+                    '<td>' + formatBadge(fmt) + '</td>' +
+                    '</tr>';
+            }).join('') + '</tbody></table>';
+    }
+
+    // ── Set Format handler (uses data attributes — no string escaping issues) ──
+    function handleSetFormat(btn) {
+        var tId   = btn.getAttribute('data-tid');
+        var cId   = btn.getAttribute('data-cid');
+        var tName = btn.getAttribute('data-tname');
+        var cDesc = btn.getAttribute('data-cdesc');
+        var fmt   = btn.getAttribute('data-fmt');
+        openFormatModal(tId, cId, tName, cDesc, fmt);
+    }
+
+    // ── Format modal ──────────────────────────────────────────────
+    function openFormatModal(tournamentId, categoryId, tournamentName, categoryDesc, currentFormat) {
+        var mc = document.getElementById('formatModalContainer');
+        if (!mc) return;
+        var opts = [
+            { value: 'single_elimination', label: 'Single Elimination', desc: 'Lose once and you are out. Best for determining a clear champion.' },
+            { value: 'round_robin',        label: 'Round Robin',        desc: 'Every participant plays against every other participant once.' }
+        ];
+        var optsHtml = opts.map(function(o) {
+            var sel = o.value === currentFormat ? ' selected' : '';
+            var chk = o.value === currentFormat ? ' checked' : '';
+            return '<label class="fmt-option' + sel + '" onclick="selectFormat(this)">' +
+                '<input type="radio" name="fmt" value="' + o.value + '"' + chk + '>' +
+                '<div><div class="fmt-option-label">' + o.label + '</div>' +
+                '<div class="fmt-option-desc">' + o.desc + '</div></div>' +
+                '</label>';
+        }).join('');
+
+        mc.innerHTML =
+            '<div class="fmt-modal-overlay" onclick="if(event.target===this)closeFormatModal()">' +
+            '<div class="fmt-modal-box">' +
+                '<div class="fmt-modal-header">' +
+                    '<h2>Set Format &mdash; ' + esc(tournamentName) + '</h2>' +
+                    '<span onclick="closeFormatModal()" style="cursor:pointer;font-size:22px;">&times;</span>' +
+                '</div>' +
+                '<p style="font-size:13px;color:#666;margin:0 0 16px;">' + esc(categoryDesc) + '</p>' +
+                optsHtml +
+                '<div id="fmtMsg" style="font-size:13px;min-height:18px;margin-bottom:10px;"></div>' +
+                '<div style="display:flex;gap:10px;justify-content:flex-end;">' +
+                    '<button onclick="closeFormatModal()" style="padding:10px 18px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;">Cancel</button>' +
+                    '<button id="fmtSaveBtn" data-tid="' + esc(tournamentId) + '" data-cid="' + esc(categoryId) + '" ' +
+                        'onclick="saveFormat(this)" ' +
+                        'style="padding:10px 22px;background:#3a7d44;color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Save</button>' +
+                '</div>' +
+            '</div></div>';
+    }
+
+    function selectFormat(label) {
+        document.querySelectorAll('.fmt-option').forEach(function(el) { el.classList.remove('selected'); });
+        label.classList.add('selected');
+        var radio = label.querySelector('input[type=radio]');
+        if (radio) radio.checked = true;
+    }
+
+    async function saveFormat(btn) {
+        var tournamentId = btn.getAttribute('data-tid');
+        var categoryId   = btn.getAttribute('data-cid');
+        var selected = document.querySelector('.fmt-option.selected input[type=radio]');
+        var msg = document.getElementById('fmtMsg');
+        if (!selected || !selected.value) {
+            if (msg) { msg.style.color = '#c62828'; msg.textContent = 'Please select a format first.'; }
+            return;
+        }
+        var fmt   = selected.value;
+        var token = localStorage.getItem('token');
+
+        // Always save locally immediately
+        storeLocalFormat(categoryId, fmt);
+
+        if (!LOCAL_TEST_MODE) {
+            try {
+                var res = await fetchWithTimeout(
+                    API_BASE_URL + '/tournament/' + tournamentId + '/categories/' + categoryId + '/format',
+                    { method: 'PATCH', headers: Object.assign({'Content-Type':'application/json'}, token ? {'Authorization':'Bearer '+token} : {}), body: JSON.stringify({ format: fmt }) }
+                );
+                if (res.ok) {
+                    if (msg) { msg.style.color = '#2e7d32'; msg.textContent = 'Saved!'; }
+                    setTimeout(function() { closeFormatModal(); loadCategories(false); loadCategories(true); }, 800);
+                    return;
+                }
+            } catch(e) { /* fall through to local */ }
+        }
+
+        if (msg) { msg.style.color = '#e65100'; msg.textContent = 'Saved locally.'; }
+        setTimeout(function() { closeFormatModal(); loadCategories(false); loadCategories(true); }, 800);
+    }
+
+    function closeFormatModal() {
+        var mc = document.getElementById('formatModalContainer');
+        if (mc) mc.innerHTML = '';
+    }
+
+    function storeLocalFormat(categoryId, fmt) {
+        var stored = JSON.parse(localStorage.getItem('skf_local_category_formats') || '{}');
+        stored[categoryId] = fmt;
+        localStorage.setItem('skf_local_category_formats', JSON.stringify(stored));
+    }
+
+    function getLocalFormat(categoryId) {
+        var stored = JSON.parse(localStorage.getItem('skf_local_category_formats') || '{}');
+        return stored[categoryId] || '';
+    }
+
+    // ── Profile ───────────────────────────────────────────────────
+    function loadProfile() {
+        var user = JSON.parse(localStorage.getItem('user') || '{}');
+        var el   = document.getElementById('profileContent');
+        if (!el) return;
+        var roleLabel = (user.role || '').toLowerCase() === 'referees_plus' ? 'Referee+' : 'Referee';
+        el.innerHTML =
+            '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:15px;">' +
+            row('Full Name', user.fullName || user.full_name || 'N/A') +
+            row('Email',     user.email    || 'N/A') +
+            row('Role',      roleLabel) +
+            row('ID',        user.id       || 'N/A') +
+            '</div>';
+    }
+    function row(label, val) {
+        return '<div style="padding:12px;background:#f9f9f9;border-radius:6px;">' +
+            '<strong style="color:#3a7d44;">' + label + ':</strong> ' + esc(String(val)) + '</div>';
+    }
+
+    // ── Utilities ─────────────────────────────────────────────────
+    function esc(s) {
+        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+    }
+    function fmtDate(iso) {
+        if (!iso) return 'N/A';
+        try { return new Date(iso).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }); }
+        catch(e) { return iso; }
+    }
+    function statusPill(s) {
+        return '<span class="status-pill status-' + (s||'') + '">' + ({draft:'Draft',registration_open:'Reg. Open',registration_closed:'Reg. Closed'}[s]||s||'N/A') + '</span>';
+    }
+    function disciplineBadge(d) {
+        var cls = d === 'kata' ? 'discipline-kata' : 'discipline-kumite';
+        return '<span class="discipline-badge ' + cls + '">' + (d ? d.charAt(0).toUpperCase()+d.slice(1) : 'N/A') + '</span>';
+    }
+    function formatBadge(fmt) {
+        if (fmt === 'single_elimination') return '<span class="format-badge format-single">Single Elimination</span>';
+        if (fmt === 'round_robin')        return '<span class="format-badge format-round">Round Robin</span>';
+        return '<span class="format-badge format-none">Not Set</span>';
+    }
+
+    // ─────────────────────────────────────────────────────────────
+    // Referee Category Manager
+    // ─────────────────────────────────────────────────────────────
+    function openRefCatManager(tournamentId, tournamentName) {
+        _refCatTournamentId   = tournamentId;
+        _refCatTournamentName = tournamentName;
+        document.getElementById('refCatManagerTitle').textContent = 'Manage Categories: ' + tournamentName;
+        document.getElementById('refCatManagerPanel').style.display = 'block';
+        document.getElementById('refOpenRegMsg').textContent = '';
+        // Load existing cats from localStorage
+        _renderRefCatTable();
+        // Update Open Reg button label
+        var confirmed = isRefConfirmed(tournamentId);
+        var btn = document.getElementById('refOpenRegBtn');
+        if (confirmed) {
+            btn.textContent = 'Registration Already Open';
+            btn.style.background = '#888';
+            btn.disabled = true;
+        } else {
+            btn.innerHTML = 'Submit &amp; Open Registration';
+            btn.style.background = '#2e7d44';
+            btn.disabled = false;
+        }
+        // scroll into view
+        document.getElementById('refCatManagerPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function closeRefCatManager() {
+        document.getElementById('refCatManagerPanel').style.display = 'none';
+        _refCatTournamentId   = null;
+        _refCatTournamentName = '';
+    }
+
+    function _getRefCats() {
+        try {
+            return JSON.parse(localStorage.getItem('skf_local_cats_' + _refCatTournamentId) || '[]');
+        } catch(e) { return []; }
+    }
+
+    function _saveRefCats(cats) {
+        localStorage.setItem('skf_local_cats_' + _refCatTournamentId, JSON.stringify(cats));
+    }
+
+    function _renderRefCatTable() {
+        var cats = _getRefCats();
+        var tbody = document.getElementById('refCatTableBody');
+        if (!tbody) return;
+        if (cats.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:#888;">No categories added yet.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = cats.map(function(c, i) {
+            var fmt = c.competition_format || c.competitionFormat || '';
+            var fmtLabel = fmt === 'single_elimination' ? 'Single Elim.' : fmt === 'round_robin' ? 'Round Robin' : '—';
+            return '<tr>' +
+                '<td>' + disciplineBadge(c.discipline) + '</td>' +
+                '<td style="text-transform:capitalize;">' + esc(c.gender || '') + '</td>' +
+                '<td>' + esc(c.age_group || c.ageGroup || '') + '</td>' +
+                '<td>' + esc(c.weight_class || c.weightClass || '') + '</td>' +
+                '<td>' + fmtLabel + '</td>' +
+                '<td><button onclick="refRemoveCategory(' + i + ')" style="background:#c0392b;color:#fff;border:none;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:12px;">Remove</button></td>' +
+                '</tr>';
+        }).join('');
+    }
+
+    function refAddCategory() {
+        var discipline = document.getElementById('rcDiscipline').value;
+        var gender     = document.getElementById('rcGender').value;
+        var ageGroup   = document.getElementById('rcAgeGroup').value;
+        var weight     = document.getElementById('rcWeight').value;
+        var format     = document.getElementById('rcFormat').value;
+        var msg        = document.getElementById('rcMsg');
+
+        if (!discipline || !gender || !ageGroup || !weight) {
+            msg.style.color = '#c0392b';
+            msg.textContent = 'Please fill in Discipline, Gender, Age Group, and Weight.';
+            return;
+        }
+
+        var cats = _getRefCats();
+        // Check duplicate
+        var dup = cats.find(function(c) {
+            return (c.discipline === discipline) && (c.gender === gender) &&
+                   ((c.age_group||c.ageGroup) === ageGroup) && ((c.weight_class||c.weightClass) === weight);
+        });
+        if (dup) {
+            msg.style.color = '#c0392b';
+            msg.textContent = 'This category already exists.';
+            return;
+        }
+
+        cats.push({
+            id: 'local_' + Date.now(),
+            tournament_id: _refCatTournamentId,
+            discipline: discipline,
+            gender: gender,
+            age_group: ageGroup,
+            weight_class: weight,
+            competition_format: format || null
+        });
+        _saveRefCats(cats);
+        _renderRefCatTable();
+
+        // Reset form
+        ['rcDiscipline','rcGender','rcAgeGroup','rcWeight','rcFormat'].forEach(function(id) {
+            document.getElementById(id).value = '';
+        });
+        msg.style.color = '#2e7d44';
+        msg.textContent = 'Category added!';
+        setTimeout(function() { msg.textContent = ''; }, 2000);
+    }
+
+    function refRemoveCategory(index) {
+        var cats = _getRefCats();
+        cats.splice(index, 1);
+        _saveRefCats(cats);
+        _renderRefCatTable();
+    }
+
+    function refOpenRegistration() {
+        if (!_refCatTournamentId) return;
+        var cats = _getRefCats();
+        var msgEl = document.getElementById('refOpenRegMsg');
+        if (cats.length === 0) {
+            msgEl.style.color = '#c0392b';
+            msgEl.textContent = 'Add at least one category before opening registration.';
+            return;
+        }
+        // Mark as confirmed in localStorage
+        localStorage.setItem(REF_CONFIRMED_KEY + _refCatTournamentId, 'true');
+        // Also update tournament status in skf_local_tournaments
+        try {
+            var ts = JSON.parse(localStorage.getItem('skf_local_tournaments') || '[]');
+            ts = ts.map(function(t) {
+                if (t.id === _refCatTournamentId) {
+                    t.status = 'registration_open';
+                    t.refConfirmed = true;
+                }
+                return t;
+            });
+            localStorage.setItem('skf_local_tournaments', JSON.stringify(ts));
+        } catch(e) {}
+
+        msgEl.style.color = '#2e7d44';
+        msgEl.textContent = 'Registration is now OPEN for players!';
+        var btn = document.getElementById('refOpenRegBtn');
+        btn.textContent = 'Registration Already Open';
+        btn.style.background = '#888';
+        btn.disabled = true;
+        // Refresh tournament table
+        loadTournaments(false);
+    }
+
+    function animateCards() {
+        ['.stat-card','.dashboard-card','.data-table-container'].forEach(function(sel) {
+            document.querySelectorAll(sel).forEach(function(el,i) {
+                setTimeout(function() { el.classList.add('loaded'); }, i * 80);
+            });
+        });
+    }
+</script>
+</body>
+</html>

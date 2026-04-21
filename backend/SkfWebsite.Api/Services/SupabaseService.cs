@@ -144,6 +144,164 @@ public class SupabaseService : ISupabaseService
         return result.Models.First();
     }
 
+    public async Task<Tournament> UpdateTournament(string id, Tournament tournament)
+    {
+        var client = await GetClient();
+        tournament.UpdatedAt = DateTime.UtcNow;
+
+        var result = await client
+            .From<Tournament>()
+            .Where(x => x.Id == id)
+            .Update(tournament);
+
+        return result.Models.First();
+    }
+
+    public async Task<List<TournamentReferee>> GetRefereesByTournament(string tournamentId)
+    {
+        var client = await GetClient();
+        var result = await client
+            .From<TournamentReferee>()
+            .Where(x => x.TournamentId == tournamentId)
+            .Get();
+        return result.Models;
+    }
+
+    public async Task<List<Tournament>> GetTournamentsByReferee(string refereeId)
+    {
+        var client = await GetClient();
+        var assignments = await client
+            .From<TournamentReferee>()
+            .Where(x => x.RefereeId == refereeId)
+            .Get();
+
+        var ids = assignments.Models.Select(a => a.TournamentId).ToHashSet();
+        if (!ids.Any()) return new List<Tournament>();
+
+        var allTournaments = await client.From<Tournament>().Where(x => x.IsActive == true).Get();
+        return allTournaments.Models.Where(t => ids.Contains(t.Id)).ToList();
+    }
+
+    public async Task<TournamentReferee> AssignRefereeToTournament(string tournamentId, string refereeId)
+    {
+        var client = await GetClient();
+        var assignment = new TournamentReferee
+        {
+            Id = Guid.NewGuid().ToString(),
+            TournamentId = tournamentId,
+            RefereeId = refereeId,
+            AssignedAt = DateTime.UtcNow
+        };
+        var result = await client.From<TournamentReferee>().Insert(assignment);
+        return result.Models.First();
+    }
+
+    public async Task RemoveRefereeFromTournament(string tournamentId, string refereeId)
+    {
+        var client = await GetClient();
+        var existing = await client
+            .From<TournamentReferee>()
+            .Where(x => x.TournamentId == tournamentId)
+            .Where(x => x.RefereeId == refereeId)
+            .Get();
+
+        if (existing.Models.Any())
+        {
+            await client
+                .From<TournamentReferee>()
+                .Where(x => x.Id == existing.Models.First().Id)
+                .Delete();
+        }
+    }
+
+    public async Task<List<User>> GetRefereeUsers()
+    {
+        var client = await GetClient();
+        var result = await client.From<User>().Get();
+        return result.Models
+            .Where(u => u.Role == "referee" || u.Role == "referees_plus")
+            .ToList();
+    }
+
+    public async Task<List<TournamentCategory>> GetCategoriesByTournament(string tournamentId)
+    {
+        var client = await GetClient();
+        var result = await client
+            .From<TournamentCategory>()
+            .Where(x => x.TournamentId == tournamentId)
+            .Order(x => x.CreatedAt, Ordering.Ascending)
+            .Get();
+
+        return result.Models;
+    }
+
+    public async Task<TournamentCategory> CreateCategory(TournamentCategory category)
+    {
+        var client = await GetClient();
+        category.Id = Guid.NewGuid().ToString();
+        category.CreatedAt = DateTime.UtcNow;
+        category.UpdatedAt = DateTime.UtcNow;
+
+        var result = await client
+            .From<TournamentCategory>()
+            .Insert(category);
+
+        return result.Models.First();
+    }
+
+    public async Task<TournamentCategory> UpdateCategory(string categoryId, TournamentCategory category)
+    {
+        var client = await GetClient();
+        category.UpdatedAt = DateTime.UtcNow;
+
+        var result = await client
+            .From<TournamentCategory>()
+            .Where(x => x.Id == categoryId)
+            .Update(category);
+
+        return result.Models.First();
+    }
+
+    public async Task<TournamentCategory> SetCategoryFormat(string categoryId, string format)
+    {
+        var client = await GetClient();
+
+        var existing = (await client
+            .From<TournamentCategory>()
+            .Where(x => x.Id == categoryId)
+            .Get()).Models.FirstOrDefault()
+            ?? throw new Exception("Category not found.");
+
+        existing.CompetitionFormat = format;
+        existing.UpdatedAt = DateTime.UtcNow;
+
+        var result = await client
+            .From<TournamentCategory>()
+            .Where(x => x.Id == categoryId)
+            .Update(existing);
+
+        return result.Models.First();
+    }
+
+    public async Task DeleteCategory(string categoryId)
+    {
+        var client = await GetClient();
+        await client
+            .From<TournamentCategory>()
+            .Where(x => x.Id == categoryId)
+            .Delete();
+    }
+
+    public async Task<List<TournamentRegistration>> GetRegistrationsByUser(string userId)
+    {
+        var client = await GetClient();
+        var result = await client
+            .From<TournamentRegistration>()
+            .Where(x => x.UserId == userId)
+            .Get();
+        return result.Models;
+    }
+
     public async Task<List<TournamentRegistration>> GetTournamentRegistrations(string tournamentId)
     {
         var client = await GetClient();

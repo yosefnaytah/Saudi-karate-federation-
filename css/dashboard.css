@@ -446,6 +446,15 @@
     transition: all 0.3s ease;
 }
 
+.event-item .btn,
+.event-item a.btn {
+    align-self: flex-start;
+    padding: 7px 22px;
+    font-size: 13px;
+    border-radius: 20px;
+    width: auto;
+}
+
 .event-item:hover {
     transform: translateY(-5px);
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);

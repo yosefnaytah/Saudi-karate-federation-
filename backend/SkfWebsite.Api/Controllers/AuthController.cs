@@ -25,6 +25,7 @@ public class AuthController : ControllerBase
             var normalizedRole = (request.Role ?? string.Empty).Trim().ToLower();
             var allowedPublicRoles = new HashSet<string>
             {
+                "skf_admin",
                 "player",
                 "coach",
                 "referee",

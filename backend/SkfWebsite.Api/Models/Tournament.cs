@@ -25,13 +25,16 @@ public class Tournament : BaseModel
     public string Location { get; set; } = string.Empty;
 
     [Column("status")]
-    public string Status { get; set; } = string.Empty; // upcoming, live, completed, cancelled
+    public string Status { get; set; } = "draft"; // draft, registration_open, registration_closed
+
+    [Column("registration_open_date")]
+    public DateTime RegistrationOpenDate { get; set; }
+
+    [Column("registration_close_date")]
+    public DateTime RegistrationCloseDate { get; set; }
 
     [Column("max_participants")]
     public int? MaxParticipants { get; set; }
-
-    [Column("registration_deadline")]
-    public DateTime RegistrationDeadline { get; set; }
 
     [Column("entry_fee")]
     public decimal? EntryFee { get; set; }
@@ -51,8 +54,7 @@ public class Tournament : BaseModel
 
 public enum TournamentStatus
 {
-    Upcoming,
-    Live,
-    Completed,
-    Cancelled
+    Draft,               // draft
+    RegistrationOpen,    // registration_open
+    RegistrationClosed   // registration_closed
 }

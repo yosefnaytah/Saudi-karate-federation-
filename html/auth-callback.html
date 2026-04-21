@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirming email…</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: system-ui, sans-serif; display: flex; align-items: center; justify-content: center;
+               min-height: 100vh; margin: 0; background: #f5f5f5; color: #333; }
+        .box { background: #fff; padding: 28px 36px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,.08);
+               text-align: center; max-width: 420px; }
+        .err { color: #c0392b; margin-top: 12px; font-size: 14px; }
+        .ok { color: #2e7d44; margin-top: 12px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h2 style="margin:0 0 8px;">Saudi Karate Federation</h2>
+        <p id="msg">Confirming your email…</p>
+        <p id="detail" class="err" style="display:none;"></p>
+    </div>
+    <script>
+        (function () {
+            var SUPABASE_URL  = 'https://uqlpxdphikmmpdsuojil.supabase.co';
+            var SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxbHB4ZHBoaWttbXBkc3VvamlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3OTI5NDEsImV4cCI6MjA4NjM2ODk0MX0.03xQ8ltwZm_TTEAHDOHocfFKG2j_PHmL1Lzt2t-aFJU';
+
+            var msg = document.getElementById('msg');
+            var detail = document.getElementById('detail');
+
+            function fail(t) {
+                msg.textContent = 'Could not confirm email';
+                detail.style.display = 'block';
+                detail.textContent = t || 'Unknown error';
+            }
+
+            if (typeof supabase === 'undefined') {
+                fail('Supabase library failed to load. Check your internet connection.');
+                return;
+            }
+
+            var client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+                auth: {
+                    detectSessionInUrl: true,
+                    flowType: 'pkce'
+                }
+            });
+
+            var href = window.location.href;
+
+            if (href.indexOf('code=') !== -1) {
+                client.auth.exchangeCodeForSession(href).then(function (res) {
+                    if (res.error) {
+                        fail(res.error.message);
+                        return;
+                    }
+                    msg.textContent = 'Email confirmed!';
+                    detail.className = 'ok';
+                    detail.style.display = 'block';
+                    detail.textContent = 'Redirecting to login…';
+                    setTimeout(function () {
+                        window.location.replace('index.html?email_confirmed=1');
+                    }, 1500);
+                });
+                return;
+            }
+
+            client.auth.getSession().then(function (res) {
+                if (res.data && res.data.session) {
+                    msg.textContent = 'Email confirmed!';
+                    detail.className = 'ok';
+                    detail.style.display = 'block';
+                    detail.textContent = 'Redirecting to login…';
+                    setTimeout(function () {
+                        window.location.replace('index.html?email_confirmed=1');
+                    }, 1000);
+                    return;
+                }
+                fail('No confirmation code in this link. Use the same PC where Live Server runs (not phone), and add this exact callback URL in Supabase → Authentication → URL Configuration → Redirect URLs.');
+            });
+        })();
+    </script>
+</body>
+</html>
