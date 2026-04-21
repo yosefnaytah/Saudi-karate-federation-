@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coach Dashboard - Saudi Karate Federation</title>
+    <!-- Link to your CSS files here -->
+    <link rel="stylesheet" href="dashboard.css">
+    <script src="auth.js" defer></script>
+</head>
+
+<body>
+    <div class="dashboard-container">
+        <!-- Updated Header -->
+        <header class="dashboard-header">
+            <!-- Left: Tournaments -->
+            <div class="header-left">
+            </div>
+
+            <!-- Center: SKF2030 -->
+            <div class="header-center">
+                <a href="land.html"><img src="skf2030.png" alt="SKF2030" style="height: 60px; object-fit: contain;"></a>
+            </div>
+
+            <!-- Right: Menu -->
+            <div class="header-right">
+                <div class="user-role" id="userDisplay">Loading...</div>
+
+                <!-- Menu Toggle Button inside header right -->
+                <div class="menu-toggle" id="menuToggle">
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                    <span class="bar"></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Menu (slides from right) -->
+        <nav class="dashboard-nav" id="dashboardNav">
+            <ul class="nav-menu">
+                <li class="nav-item">
+                    <a href="#" class="nav-link"
+                        style="color: #ff4444; font-weight: bold; background-color: rgba(255,0,0,0.1);"
+                        onclick="document.getElementById('menuToggle').click(); return false;">&times; Close Menu</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#profile" class="nav-link">Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#player-management" class="nav-link">Player Management</a>
+                </li>
+                <li class="nav-item">
+                    <a href="transfers.html" class="nav-link">Transfer Market</a>
+                </li>
+                <li class="nav-item">
+                    <a href="tournament.html" class="nav-link">Tournaments</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#live-matches" class="nav-link">Live Matches</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#leaderboards" class="nav-link">Leaderboards</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#technical-support" class="nav-link">Technical Support</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="logout()">Logout</a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <main class="dashboard-content" style="max-width: 90%; margin: 0 auto; width: 100%;">
+
+            <!-- Upcoming Tournaments with Animation -->
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Upcoming Tournaments</h2>
+                </div>
+                <div class="match-container"
+                    style="display: flex; gap: 20px; overflow-x: auto; padding: 10px 0 20px 0; margin: 0; height: auto; position: relative; box-sizing: border-box; width: 100%;">
+                    <!-- Tournament 1 -->
+                    <div class="match-card"
+                        style="position: relative; transform: none; left: auto; top: auto; opacity: 1; animation: none; flex: 0 0 auto; width: 280px; box-sizing: border-box; margin: 0;">
+                        <p><strong>Tournament 1</strong></p>
+                        <p>Location: Jeddah</p>
+                        <p>Date: <span id="t1-date"></span></p>
+                        <a href="tournament.html" class="btn btn-primary"
+                            style="margin-top: 15px; font-size: 14px; padding: 5px 15px;">Tournament Details</a>
+                    </div>
+                    <!-- Tournament 2 -->
+                    <div class="match-card"
+                        style="position: relative; transform: none; left: auto; top: auto; opacity: 1; animation: none; flex: 0 0 auto; width: 280px; box-sizing: border-box; margin: 0;">
+                        <p><strong>Tournament 2</strong></p>
+                        <p>Location: Riyadh</p>
+                        <p>Date: <span id="t2-date"></span></p>
+                        <a href="tournament.html" class="btn btn-primary"
+                            style="margin-top: 15px; font-size: 14px; padding: 5px 15px;">Tournament Details</a>
+                    </div>
+                    <!-- Tournament 3 -->
+                    <div class="match-card"
+                        style="position: relative; transform: none; left: auto; top: auto; opacity: 1; animation: none; flex: 0 0 auto; width: 280px; box-sizing: border-box; margin: 0;">
+                        <p><strong>Tournament 3</strong></p>
+                        <p>Location: Dammam</p>
+                        <p>Date: Oct 25, 2026</p>
+                        <a href="tournament.html" class="btn btn-primary"
+                            style="margin-top: 15px; font-size: 14px; padding: 5px 15px;">Tournament Details</a>
+                    </div>
+                    <!-- Tournament 4 -->
+                    <div class="match-card"
+                        style="position: relative; transform: none; left: auto; top: auto; opacity: 1; animation: none; flex: 0 0 auto; width: 280px; box-sizing: border-box; margin: 0;">
+                        <p><strong>Tournament 4</strong></p>
+                        <p>Location: Mecca</p>
+                        <p>Date: Nov 12, 2026</p>
+                        <a href="tournament.html" class="btn btn-primary"
+                            style="margin-top: 15px; font-size: 14px; padding: 5px 15px;">Tournament Details</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo Players List -->
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">My Players</h2>
+                </div>
+
+                <div class="data-table-container">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Player Name</th>
+                                <th>Belt Level</th>
+                                <th>Closest Tournament Date</th>
+                                <th>Winrate</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Khalid Al-Mutairi</td>
+                                <td>Brown Belt (1st Kyu)</td>
+                                <td><span class="player-date"></span></td>
+                                <td style="font-weight: bold; color: #2e8b57;">78%</td>
+                                <td><a href="#player-details" class="btn"
+                                        style="padding: 5px 10px; font-size: 14px;">Details</a></td>
+                            </tr>
+                            <tr>
+                                <td>Ahmed Al-Salem</td>
+                                <td>Blue Belt (5th Kyu)</td>
+                                <td><span class="player-date"></span></td>
+                                <td style="font-weight: bold; color: #2e8b57;">62%</td>
+                                <td><a href="#player-details" class="btn"
+                                        style="padding: 5px 10px; font-size: 14px;">Details</a></td>
+                            </tr>
+                            <tr>
+                                <td>Fatima Al-Harbi</td>
+                                <td>Green Belt (4th Kyu)</td>
+                                <td><span class="player-date"></span></td>
+                                <td style="font-weight: bold; color: #2e8b57;">85%</td>
+                                <td><a href="#player-details" class="btn"
+                                        style="padding: 5px 10px; font-size: 14px;">Details</a></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Toggle Navigation Menu
+        const menuToggle = document.getElementById('menuToggle');
+        const dashboardNav = document.getElementById('dashboardNav');
+
+        menuToggle.addEventListener('click', function () {
+            this.classList.toggle('active');
+            dashboardNav.classList.toggle('active');
+        });
+
+        // Randomly generate future dates
+        function generateRandomFutureDate() {
+            const start = new Date();
+            const end = new Date(start.getFullYear() + 1, 11, 31);
+            const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+
+
+        // Random Date Generator for 2026
+        function getRandomDate2026() {
+            const start = new Date(2026, 0, 1);
+            const end = new Date(2026, 11, 31);
+            const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        // Set Random Dates for Tournaments
+        document.getElementById('t1-date').textContent = getRandomDate2026();
+        document.getElementById('t2-date').textContent = getRandomDate2026();
+
+        // Set Random Dates for Players
+        const playerDates = document.querySelectorAll('.player-date');
+        playerDates.forEach(el => {
+            el.textContent = getRandomDate2026();
+        });
+
+        // Animate cards on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            const dashboardCards = document.querySelectorAll('.dashboard-card');
+            const tableContainers = document.querySelectorAll('.data-table-container');
+
+            setTimeout(() => {
+                dashboardCards.forEach((card, index) => {
+                    setTimeout(() => {
+                        card.classList.add('loaded');
+                    }, index * 200);
+                });
+            }, 300);
+
+            setTimeout(() => {
+                tableContainers.forEach((container) => {
+                    container.classList.add('loaded');
+                });
+            }, 500);
+        });
+    </script>
+    <script>
+        // Check authentication and role when page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            const userStr = localStorage.getItem('user');
+
+            if (userStr) {
+                const user = JSON.parse(userStr);
+
+                if (typeof displayUserInfo === 'function') {
+                    displayUserInfo();
+                } else {
+                    document.getElementById('userDisplay').textContent = user.name + ' (Coach)';
+                }
+            } else {
+                document.getElementById('userDisplay').textContent = 'Demo Coach (Coach)';
+            }
+        });
+    </script>
+    <!-- Footer -->
+    <footer class="footer">
+        <!-- Footer -->
+        <footer class="footer">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">الاتحاد السعودي للكاراتيه</div>
+                    <p>تعزيز التميز في الكاراتيه في جميع أنحاء المملكة العربية السعودية</p>
+                    <div class="social-icons">
+                        <a href="https://www.snapchat.com/add/skf2034" class="social-icon">SN</a>
+                        <a href="https://x.com/skf2034" class="social-icon">X</a>
+                        <a href="https://www.instagram.com/skf2034" class="social-icon">IG</a>
+                        <a href="https://www.youtube.com/@skf2034" class="social-icon">YT</a>
+                    </div>
+                </div>
+
+                <div class="footer-section">
+                    <h3 class="footer-title">روابط سريعة</h3>
+                    <ul class="footer-links">
+                        <li><a href="#">الرئيسية</a></li>
+                        <li><a href="about.html">عن الاتحاد</a></li>
+                        <li><a href="#">البطولات</a></li>
+                        <li><a href="media-center.html">المركز الإعلامي</a></li>
+                        <li><a href="REGISTER.html">التسجيل</a></li>
+                        <li><a href="contact.html">اتصل بنا</a></li>
+                    </ul>
+                </div>
+
+                <div class="footer-section">
+                    <h3 class="footer-title">تواصل معنا</h3>
+                    <p>العنوان: الرياض، المملكة العربية السعودية</p>
+                    <p>البريد الإلكتروني: info@skf.sa</p>
+                    <p>الهاتف: +966114803710 </p>
+
+                    <!-- Team information for assignment requirement -->
+                    <div class="team-info">
+                        <p><strong>فريق التطوير / Development Team</strong></p>
+                        <p>Name: Yosef Naytah | ID:2143380 | Email: yosef.h.naytah@gmail.com</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="copyright">
+                © 2025 الاتحاد السعودي للكاراتيه - جميع الحقوق محفوظة
+            </div>
+        </footer>
+    </footer>
+</body>
+
+</html>
