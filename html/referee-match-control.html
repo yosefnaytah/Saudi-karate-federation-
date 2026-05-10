@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Control — SKF Referee</title>
+    <link rel="stylesheet" href="dashboard.css?v=20260503">
+    <style>
+        body { background: #f0f4f0; }
+        .rmc-content { padding: 20px; max-width: 1100px; margin: 0 auto; }
+        .rmc-breadcrumb { font-size:12px; color:rgba(255,255,255,0.8); margin-bottom:2px; }
+        .rmc-page-title { font-size:20px; font-weight:700; color:#fff; margin:0; }
+
+        /* ── Match header info strip ── */
+        .rmc-info-strip { display:flex; gap:10px; flex-wrap:wrap; align-items:center; background:#fff; padding:10px 16px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,.07); margin-bottom:16px; font-size:12px; color:#555; }
+        .rmc-info-strip strong { color:#1b5e20; }
+        .rmc-info-strip .divider { color:#ccc; }
+
+        /* ── Main arena ── */
+        .rmc-arena { display:grid; grid-template-columns:1fr 260px 1fr; gap:16px; align-items:start; }
+        @media(max-width:768px){ .rmc-arena { grid-template-columns:1fr; } }
+
+        /* ── Fighter card ── */
+        .rmc-fighter-card { border-radius:14px; overflow:hidden; box-shadow:0 4px 16px rgba(0,0,0,.1); }
+        .rmc-fighter-card.red { border-top:5px solid #e53935; }
+        .rmc-fighter-card.blue { border-top:5px solid #1565c0; }
+        .rmc-fighter-header { padding:14px 16px 10px; display:flex; align-items:center; gap:12px; }
+        .rmc-fighter-header.red { background:linear-gradient(135deg,#ffebee,#fff); }
+        .rmc-fighter-header.blue { background:linear-gradient(135deg,#e3f2fd,#fff); }
+        .rmc-fighter-img { width:72px; height:72px; border-radius:50%; object-fit:cover; flex-shrink:0; border:3px solid; }
+        .rmc-fighter-img.red { border-color:#e53935; }
+        .rmc-fighter-img.blue { border-color:#1565c0; }
+        .rmc-fighter-img-placeholder { width:72px; height:72px; border-radius:50%; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:800; border:3px solid; }
+        .rmc-fighter-img-placeholder.red { border-color:#e53935; background:#ffebee; }
+        .rmc-fighter-img-placeholder.blue { border-color:#1565c0; background:#e3f2fd; }
+        .rmc-fighter-label { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.08em; }
+        .rmc-fighter-label.red { color:#e53935; }
+        .rmc-fighter-label.blue { color:#1565c0; }
+        .rmc-fighter-name { font-size:15px; font-weight:700; color:#1b1b1b; margin:2px 0; }
+        .rmc-fighter-club { font-size:11px; color:#888; }
+
+        /* Score section */
+        .rmc-score-section { background:#fff; padding:16px; display:flex; flex-direction:column; align-items:center; gap:10px; }
+        .rmc-score-display { font-size:52px; font-weight:800; line-height:1; }
+        .rmc-score-display.red { color:#e53935; }
+        .rmc-score-display.blue { color:#1565c0; }
+        .rmc-score-btns { display:flex; gap:8px; }
+        .rmc-score-btn { width:42px; height:42px; border:none; border-radius:50%; font-size:22px; font-weight:700; cursor:pointer; transition:transform .1s, box-shadow .1s; box-shadow:0 2px 6px rgba(0,0,0,.1); }
+        .rmc-score-btn:active { transform:scale(.93); }
+        .rmc-score-btn.plus-red { background:#e53935; color:#fff; }
+        .rmc-score-btn.plus-red:hover { background:#c62828; }
+        .rmc-score-btn.minus-red { background:#ffcdd2; color:#c62828; }
+        .rmc-score-btn.minus-red:hover { background:#ef9a9a; }
+        .rmc-score-btn.plus-blue { background:#1565c0; color:#fff; }
+        .rmc-score-btn.plus-blue:hover { background:#0d47a1; }
+        .rmc-score-btn.minus-blue { background:#bbdefb; color:#1565c0; }
+        .rmc-score-btn.minus-blue:hover { background:#90caf9; }
+
+        /* Penalties — 5 slots each */
+        .rmc-penalties { padding:12px 16px; background:#fff; border-top:1px solid #f0f0f0; }
+        .rmc-pen-title { font-size:11px; font-weight:700; text-transform:uppercase; color:#888; margin-bottom:8px; letter-spacing:.05em; }
+        .rmc-pen-slots { display:flex; gap:6px; }
+        .rmc-pen-slot { width:30px; height:30px; border-radius:6px; border:2px solid #e0e0e0; cursor:pointer; transition:background .15s, border-color .15s; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; color:#ccc; }
+        .rmc-pen-slot.active.red { background:#e53935; border-color:#c62828; color:#fff; }
+        .rmc-pen-slot.active.blue { background:#1565c0; border-color:#0d47a1; color:#fff; }
+        .rmc-pen-slot:hover { border-color:#aaa; }
+        .rmc-warn-table-wrap { padding:10px 16px 14px; background:#fafafa; border-top:1px solid #eee; }
+        .rmc-warn-table-caption { font-size:10px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:.06em;margin-bottom:8px; }
+        table.rmc-warn-table { width:100%; border-collapse:collapse; font-size:12px; text-align:center; }
+        table.rmc-warn-table th, table.rmc-warn-table td { border:1px solid #e0e0e0; padding:6px 4px; }
+        table.rmc-warn-table th { background:#f0f0f0; font-weight:700; color:#555; }
+        table.rmc-warn-table td.on.red { background:#ffcdd2; color:#b71c1c; font-weight:800; }
+        table.rmc-warn-table td.on.blue { background:#bbdefb; color:#0d47a1; font-weight:800; }
+        .rmc-senshu-badge { display:none; font-size:11px;font-weight:800;letter-spacing:0.12em;margin-bottom:6px;text-align:center; }
+        .rmc-fighter-card.red .rmc-senshu-badge { color:#ad1457; }
+        .rmc-fighter-card.blue .rmc-senshu-badge { color:#283593; }
+
+        /* ── Centre panel (timer + controls) ── */
+        .rmc-centre { display:flex; flex-direction:column; gap:12px; align-items:center; }
+        .rmc-timer-card { background:#fff; border-radius:14px; box-shadow:0 4px 16px rgba(0,0,0,.08); padding:20px 24px; text-align:center; width:100%; box-sizing:border-box; }
+        .rmc-round-label { font-size:11px; font-weight:700; color:#888; letter-spacing:.08em; margin-bottom:6px; }
+        .rmc-timer-display { font-size:54px; font-weight:800; color:#1b1b1b; letter-spacing:.04em; line-height:1; margin:4px 0; font-variant-numeric:tabular-nums; }
+        .rmc-timer-display.running { color:#2e7d32; }
+        .rmc-timer-display.paused { color:#e65100; }
+        .rmc-live-badge { display:inline-block; padding:3px 10px; background:#e3f2fd; color:#1565c0; border-radius:999px; font-size:11px; font-weight:700; margin-top:4px; }
+        .rmc-live-badge.live { background:#e8f5e9; color:#2e7d32; animation:pulseLive 1.5s infinite; }
+        @keyframes pulseLive { 0%,100%{opacity:1;} 50%{opacity:.6;} }
+        .rmc-ctrl-btns { display:flex; gap:8px; margin-top:14px; flex-wrap:wrap; justify-content:center; }
+        .rmc-ctrl-btn { padding:10px 18px; border:none; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; transition:background .15s, transform .1s; }
+        .rmc-ctrl-btn:active { transform:scale(.96); }
+        .rmc-ctrl-btn.start { background:#2e7d32; color:#fff; }
+        .rmc-ctrl-btn.start:hover { background:#1b5e20; }
+        .rmc-ctrl-btn.pause { background:#e65100; color:#fff; }
+        .rmc-ctrl-btn.pause:hover { background:#bf360c; }
+        .rmc-ctrl-btn.end { background:#333; color:#fff; }
+        .rmc-ctrl-btn.end:hover { background:#111; }
+        .rmc-ctrl-btn:disabled { opacity:.45; cursor:not-allowed; }
+
+        /* Winner selection */
+        .rmc-winner-card { background:#fff; border-radius:14px; box-shadow:0 4px 16px rgba(0,0,0,.08); padding:16px 20px; width:100%; box-sizing:border-box; text-align:center; }
+        .rmc-winner-title { font-size:12px; font-weight:700; color:#555; margin-bottom:10px; text-transform:uppercase; letter-spacing:.06em; }
+        .rmc-winner-btns { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; }
+        .rmc-winner-btn { padding:10px 20px; border:2px solid; border-radius:8px; font-size:13px; font-weight:700; cursor:pointer; transition:background .15s, color .15s; }
+        .rmc-winner-btn.red-win { border-color:#e53935; color:#e53935; background:#fff; }
+        .rmc-winner-btn.red-win:hover, .rmc-winner-btn.red-win.selected { background:#e53935; color:#fff; }
+        .rmc-winner-btn.blue-win { border-color:#1565c0; color:#1565c0; background:#fff; }
+        .rmc-winner-btn.blue-win:hover, .rmc-winner-btn.blue-win.selected { background:#1565c0; color:#fff; }
+        .rmc-winner-btn.draw { border-color:#555; color:#555; background:#fff; }
+        .rmc-winner-btn.draw:hover, .rmc-winner-btn.draw.selected { background:#555; color:#fff; }
+
+        /* Match log */
+        .rmc-log-card { background:#fff; border-radius:14px; box-shadow:0 4px 16px rgba(0,0,0,.08); padding:14px 18px; margin-top:16px; }
+        .rmc-log-title { font-size:12px; font-weight:700; color:#555; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; }
+        .rmc-log-list { max-height:160px; overflow-y:auto; font-size:12px; color:#444; }
+        .rmc-log-entry { display:flex; gap:8px; padding:4px 0; border-bottom:1px solid #f5f5f5; }
+        .rmc-log-time { color:#aaa; min-width:38px; }
+        .rmc-log-event { flex:1; }
+
+        /* Actions + notes bottom bar */
+        .rmc-bottom-bar { display:flex; gap:12px; align-items:flex-start; flex-wrap:wrap; margin-top:16px; }
+        .rmc-notes { flex:1; min-width:200px; }
+        .rmc-notes textarea { width:100%; padding:10px 12px; border:1px solid #ddd; border-radius:8px; font-size:12px; resize:vertical; min-height:60px; box-sizing:border-box; }
+        .rmc-save-btn { padding:12px 24px; background:#2e7d32; border:none; border-radius:8px; color:#fff; font-size:14px; font-weight:700; cursor:pointer; }
+        .rmc-save-btn:hover { background:#1b5e20; }
+        .rmc-save-btn:disabled { opacity:.45; cursor:not-allowed; }
+
+        /* Action icons (Hajime, Mate, Yame etc) */
+        .rmc-actions-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+        .rmc-action-chip { padding:6px 12px; border:1px solid #ddd; border-radius:999px; font-size:12px; cursor:pointer; background:#fafafa; transition:background .15s; }
+        .rmc-action-chip:hover { background:#e8f5e9; border-color:#a5d6a7; }
+
+        /* Status message */
+        .rmc-status { padding:10px 16px; font-size:13px; font-weight:600; border-radius:8px; margin-bottom:14px; display:none; }
+        .rmc-status.success { background:#e8f5e9; color:#2e7d32; display:block; }
+        .rmc-status.error { background:#ffebee; color:#c62828; display:block; }
+        .rmc-status.info { background:#e3f2fd; color:#1565c0; display:block; }
+        .rmc-hub { background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.07); padding:16px 18px; margin-bottom:18px; }
+        .rmc-hub h2 { margin:0 0 12px; font-size:1rem; color:#1b5e20; }
+        .rmc-hub-bar { display:flex; flex-wrap:wrap; gap:12px; align-items:flex-end; margin-bottom:12px; }
+        .rmc-hub-bar label { display:flex; flex-direction:column; gap:4px; font-size:11px; font-weight:600; color:#555; }
+        .rmc-hub-select { padding:8px 10px; border:1px solid #ddd; border-radius:8px; font-size:13px; min-width:200px; background:#fafafa; }
+        .rmc-hub-table-wrap { overflow-x:auto; margin-top:8px; }
+        table.rmc-hub-table { width:100%; border-collapse:collapse; font-size:13px; }
+        table.rmc-hub-table th, table.rmc-hub-table td { border:1px solid #e0e0e0; padding:8px 10px; text-align:left; }
+        table.rmc-hub-table th { background:#f5f5f5; }
+        .rmc-hub-start { padding:6px 12px; background:#2e7d32; color:#fff; border:none; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; }
+        .rmc-hub-start:disabled { opacity:.45; cursor:not-allowed; }
+        .rmc-hub-open { padding:6px 12px; background:#1565c0; color:#fff; border:none; border-radius:6px; font-size:12px; font-weight:700; cursor:pointer; }
+        .rmc-hub-note { font-size:12px; color:#666; margin-top:8px; }
+        .dashboard-container .menu-toggle { z-index:2100; }
+        .dashboard-container .dashboard-nav.active { z-index:2000; }
+        .rmc-next-bar { background:#e8f5e9; border:1px solid #a5d6a7; border-radius:10px; padding:12px 16px; margin-top:14px; display:none; }
+        .rmc-next-bar h3 { margin:0 0 8px; font-size:13px; color:#1b5e20; }
+        .rmc-next-match-btn { padding:10px 20px; background:#2e7d32; border:none; border-radius:8px; color:#fff; font-size:13px; font-weight:700; cursor:pointer; margin-right:8px; }
+        .rmc-next-match-btn:hover { background:#1b5e20; }
+
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js?v=20260503"></script>
+    <script src="skf-role-layout.js?v=20260506"></script>
+    <script src="skf-realtime-matches.js?v=20260506"></script>
+</head>
+<body>
+<div class="dashboard-container">
+    <header class="dashboard-header">
+        <div class="header-left">
+            <img src="full badge.png" alt="Saudi Karate Federation" class="header-badge">
+            <div class="header-fed-name">
+                <span class="header-fed-ar">الاتحاد السعودي للكاراتيه</span>
+                <span class="header-fed-en">Saudi Karate Federation</span>
+            </div>
+            <div>
+                <div class="rmc-breadcrumb">Referee &rsaquo; Bracket &rsaquo; Match Control</div>
+                <div class="rmc-page-title">Match Control</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="user-role" id="userDisplay">Loading...</div>
+            <div class="vision-logo">
+                <p class="vision-title">VISION (رؤية)</p>
+                <p class="vision-year">2030</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="menu-toggle" id="menuToggle">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </div>
+
+    <nav class="dashboard-nav" id="dashboardNav">
+        <ul class="nav-menu"></ul>
+    </nav>
+
+    <main class="dashboard-content">
+        <div class="rmc-content">
+            <div id="rmcStatus" class="rmc-status"></div>
+
+            <div class="rmc-hub" id="rmcHub">
+                <h2>Matches in this category</h2>
+                <p class="rmc-hub-note">After bracket setup, all scheduled bouts appear here. Use <strong>Start</strong> to operate a bout on the panel below. Scores and status update live during active matches.</p>
+                <div class="rmc-hub-bar">
+                    <label>Tournament
+                        <select class="rmc-hub-select" id="rmcTournamentSelect" onchange="rmcOnTournamentChange()"></select>
+                    </label>
+                    <label>Category
+                        <select class="rmc-hub-select" id="rmcCategorySelect" onchange="rmcOnCategoryChange()"></select>
+                    </label>
+                    <span id="rmcRealtimeBadge" style="font-size:11px;color:#2e7d32;font-weight:600;align-self:center;display:none;">● Live sync</span>
+                    <button type="button" class="rmc-hub-open" style="align-self:flex-end;" onclick="rmcOpenCrowdDisplayWindow()" title="Opens a clean scoreboard for a second monitor or projector">Crowd display</button>
+                </div>
+                <div class="rmc-hub-table-wrap" id="rmcHubTableWrap">
+                    <p style="color:#888;font-size:13px;margin:0;">Select a tournament and category.</p>
+                </div>
+            </div>
+
+            <!-- Info strip -->
+            <div class="rmc-info-strip" id="rmcInfoStrip">
+                <span>Loading match...</span>
+            </div>
+
+            <!-- Main arena -->
+            <div class="rmc-arena" id="rmcArena">
+
+                <!-- Red fighter (left) -->
+                <div class="rmc-fighter-card red" id="rmcRedCard">
+                    <div class="rmc-fighter-header red">
+                        <div class="rmc-fighter-img-placeholder red" id="rmcRedImgWrap"></div>
+                        <div>
+                            <div class="rmc-fighter-label red">RED</div>
+                            <div class="rmc-fighter-name" id="rmcRedName">—</div>
+                            <div class="rmc-fighter-club" id="rmcRedClub"></div>
+                        </div>
+                    </div>
+                    <div class="rmc-score-section">
+                        <div class="rmc-senshu-badge" id="rmcRedSenshu" title="First valid score — senshu (先取)">SENSHU</div>
+                        <div class="rmc-score-display red" id="rmcRedScore">0</div>
+                        <div class="rmc-score-btns">
+                            <button class="rmc-score-btn minus-red" onclick="adjustScore('red',-1)">&#8722;</button>
+                            <button class="rmc-score-btn plus-red" onclick="adjustScore('red',1)">&#43;</button>
+                        </div>
+                    </div>
+                    <div class="rmc-penalties">
+                        <div class="rmc-pen-title">Warnings / penalties (C1–C5)</div>
+                        <div class="rmc-pen-slots" id="rmcRedPenSlots">
+                            <div class="rmc-pen-slot" id="rmcRedPen1" onclick="togglePenalty('red',1)">C1</div>
+                            <div class="rmc-pen-slot" id="rmcRedPen2" onclick="togglePenalty('red',2)">C2</div>
+                            <div class="rmc-pen-slot" id="rmcRedPen3" onclick="togglePenalty('red',3)">C3</div>
+                            <div class="rmc-pen-slot" id="rmcRedPen4" onclick="togglePenalty('red',4)">C4</div>
+                            <div class="rmc-pen-slot" id="rmcRedPen5" onclick="togglePenalty('red',5)">C5</div>
+                        </div>
+                    </div>
+                    <div class="rmc-warn-table-wrap">
+                        <div class="rmc-warn-table-caption">Warning grid (red)</div>
+                        <table class="rmc-warn-table" aria-label="Red warnings"><thead><tr><th>C1</th><th>C2</th><th>C3</th><th>C4</th><th>C5</th></tr></thead><tbody><tr id="rmcRedWarnRow"></tr></tbody></table>
+                    </div>
+                </div>
+
+                <!-- Centre (timer + controls) -->
+                <div class="rmc-centre">
+                    <div class="rmc-timer-card">
+                        <div class="rmc-round-label" id="rmcRoundLabel">Round 1 / 3</div>
+                        <div class="rmc-timer-display" id="rmcTimerDisplay">03:00</div>
+                        <div class="rmc-live-badge" id="rmcLiveBadge">READY</div>
+                        <div class="rmc-ctrl-btns">
+                            <button class="rmc-ctrl-btn start" id="rmcStartBtn" onclick="startTimer()">Start</button>
+                            <button class="rmc-ctrl-btn pause" id="rmcPauseBtn" onclick="pauseTimer()" disabled>Pause</button>
+                            <button class="rmc-ctrl-btn end" id="rmcEndBtn" onclick="endMatch()">End Match</button>
+                        </div>
+                    </div>
+                    <div class="rmc-winner-card">
+                        <div class="rmc-winner-title">Select Winner</div>
+                        <div class="rmc-winner-btns">
+                            <button class="rmc-winner-btn red-win" id="rmcWinRed" onclick="selectWinner('red')">Red</button>
+                            <button class="rmc-winner-btn draw" id="rmcWinDraw" onclick="selectWinner('draw')">Draw</button>
+                            <button class="rmc-winner-btn blue-win" id="rmcWinBlue" onclick="selectWinner('blue')">Blue</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Blue fighter (right) -->
+                <div class="rmc-fighter-card blue" id="rmcBlueCard">
+                    <div class="rmc-fighter-header blue" style="flex-direction:row-reverse;text-align:right;">
+                        <div class="rmc-fighter-img-placeholder blue" id="rmcBlueImgWrap"></div>
+                        <div>
+                            <div class="rmc-fighter-label blue">BLUE</div>
+                            <div class="rmc-fighter-name" id="rmcBlueName">—</div>
+                            <div class="rmc-fighter-club" id="rmcBlueClub"></div>
+                        </div>
+                    </div>
+                    <div class="rmc-score-section">
+                        <div class="rmc-senshu-badge" id="rmcBlueSenshu" title="First valid score — senshu (先取)">SENSHU</div>
+                        <div class="rmc-score-display blue" id="rmcBlueScore">0</div>
+                        <div class="rmc-score-btns">
+                            <button class="rmc-score-btn minus-blue" onclick="adjustScore('blue',-1)">&#8722;</button>
+                            <button class="rmc-score-btn plus-blue" onclick="adjustScore('blue',1)">&#43;</button>
+                        </div>
+                    </div>
+                    <div class="rmc-penalties">
+                        <div class="rmc-pen-title">Warnings / penalties (C1–C5)</div>
+                        <div class="rmc-pen-slots" id="rmcBluePenSlots">
+                            <div class="rmc-pen-slot" id="rmcBluePen1" onclick="togglePenalty('blue',1)">C1</div>
+                            <div class="rmc-pen-slot" id="rmcBluePen2" onclick="togglePenalty('blue',2)">C2</div>
+                            <div class="rmc-pen-slot" id="rmcBluePen3" onclick="togglePenalty('blue',3)">C3</div>
+                            <div class="rmc-pen-slot" id="rmcBluePen4" onclick="togglePenalty('blue',4)">C4</div>
+                            <div class="rmc-pen-slot" id="rmcBluePen5" onclick="togglePenalty('blue',5)">C5</div>
+                        </div>
+                    </div>
+                    <div class="rmc-warn-table-wrap">
+                        <div class="rmc-warn-table-caption">Warning grid (blue)</div>
+                        <table class="rmc-warn-table" aria-label="Blue warnings"><thead><tr><th>C1</th><th>C2</th><th>C3</th><th>C4</th><th>C5</th></tr></thead><tbody><tr id="rmcBlueWarnRow"></tr></tbody></table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Match log + notes + actions -->
+            <div class="rmc-log-card">
+                <div class="rmc-log-title">
+                    <span>Match Log</span>
+                    <button onclick="clearLog()" style="background:none;border:none;font-size:11px;color:#aaa;cursor:pointer;">Clear</button>
+                </div>
+                <div class="rmc-log-list" id="rmcLogList"><div style="color:#ccc;">Match not started yet.</div></div>
+            </div>
+
+            <!-- Actions row -->
+            <div class="rmc-actions-row">
+                <div class="rmc-action-chip" onclick="logAction('Hajime (Start)')">Hajime</div>
+                <div class="rmc-action-chip" onclick="logAction('Mate (Stop)')">Mate</div>
+                <div class="rmc-action-chip" onclick="logAction('Yame (End)')">Yame</div>
+                <div class="rmc-action-chip" onclick="logAction('Reset Scores'); resetScores()">Reset scores</div>
+                <div class="rmc-action-chip" onclick="logAction('Reset Penalties'); resetPenalties()">Reset penalties</div>
+            </div>
+
+            <!-- Bottom bar: notes + save -->
+            <div class="rmc-bottom-bar">
+                <div class="rmc-notes">
+                    <textarea id="rmcNotes" placeholder="Referee notes (optional)..."></textarea>
+                </div>
+                <button class="rmc-save-btn" id="rmcSaveBtn" onclick="saveResult()">Save Result</button>
+                <button style="padding:12px 16px;background:#546e7a;border:none;border-radius:8px;color:#fff;font-size:13px;font-weight:600;cursor:pointer;" onclick="window.location.href='referee-bracket.html'">Back to Bracket</button>
+            </div>
+
+            <!-- Next match bar (appears after saving a completed result) -->
+            <div class="rmc-next-bar" id="rmcNextBar">
+                <h3>Next scheduled match</h3>
+                <div id="rmcNextBarContent"></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+var RMC_SB_URL  = 'https://uqlpxdphikmmpdsuojil.supabase.co';
+var RMC_SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxbHB4ZHBoaWttbXBkc3VvamlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3OTI5NDEsImV4cCI6MjA4NjM2ODk0MX0.03xQ8ltwZm_TTEAHDOHocfFKG2j_PHmL1Lzt2t-aFJU';
+
+// ── State ──
+var _rmcSb = null;
+var _rmcMatch = null;
+var _rmcRedPlayer = null;
+var _rmcBluePlayer = null;
+var _rmcScores = { red: 0, blue: 0 };
+var _rmcSenshu = null; // 'red' | 'blue' — first score (WKF senshu / 先取), tie-break if draw at time
+var _rmcPenalties = { red: [false,false,false,false,false], blue: [false,false,false,false,false] };
+var _rmcWinner = null; // 'red' | 'blue' | 'draw'
+var _rmcTimerSec = 180; // 3 min default
+var _rmcTimerRunning = false;
+var _rmcTimerInterval = null;
+var _rmcMatchStarted = false;
+var _rmcLogEntries = [];
+var _rmcRefRole = '';
+var _rmcRefUserId = null;
+var _rmcHubCategories = [];
+var _rmcHubUserNames = {}; // id -> display name from hub table (fallback when match panel queries return empty)
+var _rmcRtUnsub = null;
+var _rmcRtDebounce = null;
+var _rmcCrowdPopup = null;
+var RMC_CROWD_LS_KEY = 'skf_crowd_state_v1';
+var RMC_CROWD_BC_NAME = 'skf-crowd-match-v1';
+var _rmcCrowdBc = null;
+var _rmcCrowdTournamentName = '';
+var _rmcCrowdCategoryLabel = '';
+var _rmcLastCrowdPayload = null;
+
+function rmcUnsubscribeRealtime() {
+    if (_rmcRtUnsub) { try { _rmcRtUnsub.unsubscribe(); } catch (e) {} _rmcRtUnsub = null; }
+}
+
+function rmcSubscribeRealtimeHub(tournamentId) {
+    rmcUnsubscribeRealtime();
+    if (!tournamentId || typeof SKFMatchRealtime === 'undefined') return;
+    var sb = rmcSb();
+    if (!sb) return;
+    _rmcRtUnsub = SKFMatchRealtime.subscribeTournamentMatches(sb, tournamentId, function () {
+        clearTimeout(_rmcRtDebounce);
+        _rmcRtDebounce = setTimeout(function () { rmcRefreshAfterRemoteChange(); }, 320);
+    });
+    var b = document.getElementById('rmcRealtimeBadge');
+    if (b) b.style.display = 'inline';
+}
+
+async function rmcRefreshAfterRemoteChange() {
+    var tid = document.getElementById('rmcTournamentSelect') && document.getElementById('rmcTournamentSelect').value;
+    var cid = document.getElementById('rmcCategorySelect') && document.getElementById('rmcCategorySelect').value;
+    if (tid && cid) await rmcRenderHubTable(tid, cid);
+    var mid = localStorage.getItem('skf_ref_match_id');
+    if (mid) await loadMatch();
+}
+
+async function rmcLoadTournamentsIntoSelect() {
+    await skfRefreshToken(RMC_SB_URL, RMC_SB_ANON);
+    var sb = rmcSb();
+    var sel = document.getElementById('rmcTournamentSelect');
+    if (!sb || !sel) return;
+    var list = [];
+    if (_rmcRefRole === 'referees_plus' || _rmcRefRole === 'skf_admin' || _rmcRefRole === 'admin') {
+        var q = await sb.from('tournaments').select('id,name').eq('is_active', true).order('start_date', { ascending: false });
+        if (!q.error && q.data) list = q.data;
+    } else if (_rmcRefRole === 'referee' && _rmcRefUserId) {
+        var r = await sb.from('tournament_referees').select('tournament_id').eq('referee_id', _rmcRefUserId);
+        if (!r.error && r.data) {
+            var tids = [];
+            r.data.forEach(function (row) { if (row.tournament_id && tids.indexOf(row.tournament_id) < 0) tids.push(row.tournament_id); });
+            if (tids.length) {
+                var tq = await sb.from('tournaments').select('id,name').in('id', tids).eq('is_active', true).order('start_date', { ascending: false });
+                if (!tq.error && tq.data) list = tq.data;
+            }
+        }
+    }
+    var saved = localStorage.getItem('skf_ref_tournament_id');
+    sel.innerHTML = '<option value="">— Select tournament —</option>' + list.map(function (x) {
+        return '<option value="' + escHtml(x.id) + '">' + escHtml(x.name || 'Event') + '</option>';
+    }).join('');
+    if (saved && list.some(function (t) { return String(t.id) === String(saved); })) sel.value = saved;
+    else if (list.length === 1) sel.value = list[0].id;
+}
+
+async function rmcOnTournamentChange() {
+    var tid = document.getElementById('rmcTournamentSelect').value;
+    var catSel = document.getElementById('rmcCategorySelect');
+    var wrap = document.getElementById('rmcHubTableWrap');
+    if (!tid) {
+        if (catSel) catSel.innerHTML = '<option value="">— Select category —</option>';
+        if (wrap) wrap.innerHTML = '<p style="color:#888;font-size:13px;margin:0;">Select a tournament.</p>';
+        rmcUnsubscribeRealtime();
+        var b = document.getElementById('rmcRealtimeBadge');
+        if (b) b.style.display = 'none';
+        return;
+    }
+    localStorage.setItem('skf_ref_tournament_id', tid);
+    await skfRefreshToken(RMC_SB_URL, RMC_SB_ANON);
+    var sb = rmcSb();
+    if (!sb || !catSel) return;
+    var cq = await sb.from('tournament_categories').select('id,discipline,gender,age_group,weight_class,event_type,age_category,is_team_event').eq('tournament_id', tid).order('discipline');
+    _rmcHubCategories = (!cq.error && cq.data) ? cq.data : [];
+    catSel.innerHTML = '<option value="">— Select category —</option>' + _rmcHubCategories.map(function (c) {
+        var lab = (c.gender || '') + ' ' + (c.age_category || c.age_group || '') + ' ' + (c.event_type || c.discipline || '');
+        return '<option value="' + escHtml(c.id) + '">' + escHtml(String(lab).trim() || c.id) + '</option>';
+    }).join('');
+    var savedCat = localStorage.getItem('skf_ref_category_id');
+    if (savedCat && _rmcHubCategories.some(function (c) { return String(c.id) === String(savedCat); })) catSel.value = savedCat;
+    else if (_rmcHubCategories.length === 1) catSel.value = _rmcHubCategories[0].id;
+    rmcSubscribeRealtimeHub(tid);
+    await rmcOnCategoryChange();
+}
+
+async function rmcOnCategoryChange() {
+    var tid = document.getElementById('rmcTournamentSelect').value;
+    var cid = document.getElementById('rmcCategorySelect').value;
+    if (!cid || !tid) return;
+    localStorage.setItem('skf_ref_category_id', cid);
+    await rmcRenderHubTable(tid, cid);
+}
+
+function rmcNameForUser(sbRowCache, uid) {
+    if (!uid) return '—';
+    return sbRowCache[String(uid)] || 'Athlete';
+}
+
+async function rmcRenderHubTable(tid, cid) {
+    var wrap = document.getElementById('rmcHubTableWrap');
+    if (!wrap) return;
+    await skfRefreshToken(RMC_SB_URL, RMC_SB_ANON);
+    var sb = rmcSb();
+    if (!sb) { wrap.innerHTML = '<p style="color:#c62828;">Not signed in.</p>'; return; }
+    var mq = await sb.from('tournament_matches')
+        .select('id,round_number,bracket_position,status,red_user_id,blue_user_id,winner_user_id,red_score,blue_score')
+        .eq('tournament_id', tid).eq('category_id', cid)
+        .order('round_number', { ascending: true }).order('bracket_position', { ascending: true });
+    if (mq.error) {
+        wrap.innerHTML = '<p style="color:#c62828;">Could not load matches.</p>';
+        return;
+    }
+    var rows = mq.data || [];
+    if (!rows.length) {
+        wrap.innerHTML = '<p style="color:#888;">No matches for this category yet. Complete bracket setup first.</p>';
+        return;
+    }
+    var ids = [];
+    rows.forEach(function (m) {
+        if (m.red_user_id && ids.indexOf(m.red_user_id) < 0) ids.push(m.red_user_id);
+        if (m.blue_user_id && ids.indexOf(m.blue_user_id) < 0) ids.push(m.blue_user_id);
+    });
+    var umap = {};
+    if (ids.length) {
+        var uq = await sb.from('users').select('id,full_name,email').in('id', ids);
+        if (!uq.error && uq.data) uq.data.forEach(function (u) {
+            var n = (u.full_name && u.full_name.trim()) || (u.email && u.email.trim()) || 'Athlete';
+            umap[String(u.id)] = n;
+        });
+    }
+    _rmcHubUserNames = umap;
+    var html = '<table class="rmc-hub-table"><thead><tr><th>Rd</th><th>#</th><th>Red</th><th>Blue</th><th>Score</th><th>Status</th><th></th></tr></thead><tbody>';
+    rows.forEach(function (m) {
+        var st = String(m.status || '').toLowerCase();
+        var rN = escHtml(String(m.round_number));
+        var bN = escHtml(String(m.bracket_position));
+        var redN = escHtml(rmcNameForUser(umap, m.red_user_id));
+        var bluN = escHtml(rmcNameForUser(umap, m.blue_user_id));
+        var sc = (m.red_score != null || m.blue_score != null) ? escHtml(String(m.red_score)) + '–' + escHtml(String(m.blue_score)) : '—';
+        var btn = '';
+        var canStart = st === 'scheduled' && m.red_user_id && m.blue_user_id;
+        if (st === 'completed' || st === 'walkover') {
+            btn = '<button type="button" class="rmc-hub-open" onclick="rmcSelectMatchForControl(\'' + escHtml(m.id) + '\',false)">View</button>';
+        } else if (st === 'live' || st === 'paused') {
+            btn = '<button type="button" class="rmc-hub-open" onclick="rmcSelectMatchForControl(\'' + escHtml(m.id) + '\',false)">Continue</button>';
+        } else if (canStart) {
+            btn = '<button type="button" class="rmc-hub-start" onclick="rmcSelectMatchForControl(\'' + escHtml(m.id) + '\',true)">Start</button>';
+        } else {
+            btn = '<button type="button" class="rmc-hub-start" disabled title="Assign both athletes first">Start</button>';
+        }
+        html += '<tr><td>' + rN + '</td><td>' + bN + '</td><td>' + redN + '</td><td>' + bluN + '</td><td>' + sc + '</td><td>' + escHtml(st) + '</td><td>' + btn + '</td></tr>';
+    });
+    html += '</tbody></table>';
+    wrap.innerHTML = html;
+}
+
+async function rmcSelectMatchForControl(matchId, openCrowd) {
+    localStorage.setItem('skf_ref_match_id', matchId);
+    await loadMatch();
+    if (openCrowd) rmcOpenCrowdDisplayWindow();
+    var el = document.getElementById('rmcArena');
+    if (el) try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { el.scrollIntoView(); }
+}
+
+async function rmcInitHub() {
+    await rmcLoadTournamentsIntoSelect();
+    var tid = document.getElementById('rmcTournamentSelect').value;
+    if (tid) {
+        await rmcOnTournamentChange();
+    } else {
+        document.getElementById('rmcHubTableWrap').innerHTML = '<p style="color:#888;">No tournaments in scope. SKF Admin must assign you or mark events active.</p>';
+    }
+}
+
+
+// Refresh the JWT from Supabase's own session before every data load.
+// This is the same pattern as referee-dashboard.html (refreshRefJwtFromSupabaseAuth).
+async function skfRefreshToken(sbUrl, sbAnon) {
+    try {
+        if (typeof supabase === 'undefined') return;
+        var tok = localStorage.getItem('token') || '';
+        if (!tok || tok.indexOf('local-token') === 0) return;
+        var sb = supabase.createClient(sbUrl, sbAnon, {
+            auth: { persistSession: true, storage: localStorage, autoRefreshToken: true, detectSessionInUrl: false }
+        });
+        var r1 = await sb.auth.getSession();
+        var sess = r1.data && r1.data.session;
+        if (!sess) return;
+        var expMs = sess.expires_at ? sess.expires_at * 1000 : 0;
+        if (!expMs || expMs < Date.now() + 120000) {
+            var r2 = await sb.auth.refreshSession();
+            if (r2.data && r2.data.session) sess = r2.data.session;
+        }
+        if (sess && sess.access_token) localStorage.setItem('token', sess.access_token);
+    } catch (e) { console.warn('[SKF] token refresh error:', e); }
+}
+
+
+function rmcSb() {
+    var tok = localStorage.getItem('token');
+    if (!tok) return null;
+    return supabase.createClient(RMC_SB_URL, RMC_SB_ANON, {
+        global: { headers: { Authorization: 'Bearer ' + tok } },
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    });
+}
+
+function escHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function escAttr(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+function rmcResolvedProfileUrl(raw) {
+    if (raw == null || raw === '') return null;
+    var base = String(RMC_SB_URL || (typeof window !== 'undefined' && window.SKF_SUPABASE_URL) || '').replace(/\/$/, '');
+    var out = (typeof skfResolveAvatarUrl === 'function')
+        ? skfResolveAvatarUrl(raw, base || undefined)
+        : '';
+    if (out) return out;
+    var u = String(raw).trim();
+    return u || null;
+}
+
+function showStatus(msg, type) {
+    var el = document.getElementById('rmcStatus');
+    el.textContent = msg; el.className = 'rmc-status ' + type;
+    if (type === 'success') setTimeout(function(){ el.className = 'rmc-status'; }, 4000);
+}
+
+async function rmcPersistMatchStatus(status, patch) {
+    if (!_rmcMatch || !_rmcMatch.id) return;
+    try {
+        await skfRefreshToken(RMC_SB_URL, RMC_SB_ANON);
+        var sb = rmcSb();
+        if (!sb) return;
+        var u = Object.assign({ status: String(status) }, patch || {});
+        var r = await sb.from('tournament_matches').update(u).eq('id', _rmcMatch.id);
+        if (r.error) console.warn('[RMC] persist status', r.error);
+        else {
+            _rmcMatch.status = status;
+            if (patch) {
+                for (var k in patch) {
+                    if (Object.prototype.hasOwnProperty.call(patch, k)) {
+                        _rmcMatch[k] = patch[k];
+                    }
+                }
+            }
+        }
+    } catch (e) { console.warn('[RMC] persist', e); }
+}
+
+
+function rmcFighterPhotoUrl(player) {
+    if (!player) return '';
+    if (typeof skfAvatarRawFromRow === 'function') {
+        var z = skfAvatarRawFromRow(player);
+        if (z) return z;
+    }
+    var u = player.profile_image_url || player.avatar_url || player.profile_photo_url;
+    return u && String(u).trim() ? String(u).trim() : '';
+}
+
+function rmcFighterInitial(player, assigned) {
+    if (!assigned) return '…';
+    var n = player && ((player.full_name && String(player.full_name).trim()) || (player.email && String(player.email).trim())) || '';
+    if (n) return n.charAt(0).toUpperCase();
+    return '?';
+}
+
+function rmcFighterImgFallback(img, side) {
+    var id = img.id || ('rmc' + side.charAt(0).toUpperCase() + side.slice(1) + 'ImgWrap');
+    var ph = '<div class="rmc-fighter-img-placeholder ' + side + '" id="' + id + '">?</div>';
+    try { img.outerHTML = ph; } catch (e) {}
+}
+
+function rmcMergeHubDisplayName(uid, side) {
+    if (!uid) return;
+    var hubNm = _rmcHubUserNames[String(uid)];
+    if (!hubNm || hubNm === 'Athlete') return;
+    if (side === 'red') {
+        if (!_rmcRedPlayer) {
+            _rmcRedPlayer = { id: uid, full_name: hubNm, email: null, club_name: null, profile_image_url: null, profile_photo_url: null };
+        } else {
+            var hasR = (_rmcRedPlayer.full_name && String(_rmcRedPlayer.full_name).trim()) || (_rmcRedPlayer.email && String(_rmcRedPlayer.email).trim());
+            if (!hasR) _rmcRedPlayer.full_name = hubNm;
+        }
+    } else {
+        if (!_rmcBluePlayer) {
+            _rmcBluePlayer = { id: uid, full_name: hubNm, email: null, club_name: null, profile_image_url: null, profile_photo_url: null };
+        } else {
+            var hasB = (_rmcBluePlayer.full_name && String(_rmcBluePlayer.full_name).trim()) || (_rmcBluePlayer.email && String(_rmcBluePlayer.email).trim());
+            if (!hasB) _rmcBluePlayer.full_name = hubNm;
+        }
+    }
+}
+
+function rmcQuickPaintFightersFromHub(qdata) {
+    rmcMergeHubDisplayName(qdata.red_user_id, 'red');
+    rmcMergeHubDisplayName(qdata.blue_user_id, 'blue');
+    renderFighter('red', _rmcRedPlayer, !!qdata.red_user_id);
+    renderFighter('blue', _rmcBluePlayer, !!qdata.blue_user_id);
+}
+
+function rmcSyncCrowdDisplay() {
+    try {
+        var strip = document.getElementById('rmcInfoStrip');
+        var tn = (_rmcCrowdTournamentName || '').trim();
+        if (!tn && strip && strip.querySelector && strip.querySelector('span[style*=\"#2e7d32\"]')) {
+            tn = (strip.querySelector('span[style*=\"#2e7d32\"]').textContent || '').trim();
+        }
+        var rd = document.getElementById('rmcRedName');
+        var bd = document.getElementById('rmcBlueName');
+        var rc = document.getElementById('rmcRedClub');
+        var bc = document.getElementById('rmcBlueClub');
+        var timerEl = document.getElementById('rmcTimerDisplay');
+        var badgeEl = document.getElementById('rmcLiveBadge');
+        var roundEl = document.getElementById('rmcRoundLabel');
+        function rmcDisplayName(player, nameEl) {
+            if (player) {
+                var dn = (player.full_name && String(player.full_name).trim()) || (player.email && String(player.email).trim());
+                if (dn) return dn;
+            }
+            return nameEl ? nameEl.textContent : '—';
+        }
+        var pay = {
+            v: 1,
+            t: Date.now(),
+            matchId: (_rmcMatch && _rmcMatch.id) || null,
+            tournamentName: tn,
+            categoryLine: (_rmcCrowdCategoryLabel || '').trim(),
+            roundLabel: roundEl ? roundEl.textContent : '',
+            red: {
+                name: rmcDisplayName(_rmcRedPlayer, rd),
+                club: (_rmcRedPlayer && _rmcRedPlayer.club_name) ? String(_rmcRedPlayer.club_name).trim() : (rc ? rc.textContent : ''),
+                photo: (function() { var u = rmcFighterPhotoUrl(_rmcRedPlayer); return u ? (rmcResolvedProfileUrl(u) || u) : ''; })(),
+                score: _rmcScores.red
+            },
+            blue: {
+                name: rmcDisplayName(_rmcBluePlayer, bd),
+                club: (_rmcBluePlayer && _rmcBluePlayer.club_name) ? String(_rmcBluePlayer.club_name).trim() : (bc ? bc.textContent : ''),
+                photo: (function() { var u = rmcFighterPhotoUrl(_rmcBluePlayer); return u ? (rmcResolvedProfileUrl(u) || u) : ''; })(),
+                score: _rmcScores.blue
+            },
+            redPenalties: _rmcPenalties.red.slice(),
+            bluePenalties: _rmcPenalties.blue.slice(),
+            timerText: timerEl ? timerEl.textContent : '03:00',
+            phase: badgeEl ? badgeEl.textContent : 'READY',
+            winner: _rmcWinner || null,
+            senshu: _rmcSenshu,
+            storageBase: String(RMC_SB_URL || '').replace(/\/$/, '')
+        };
+        var payload = JSON.stringify(pay);
+        localStorage.setItem(RMC_CROWD_LS_KEY, payload);
+        _rmcLastCrowdPayload = pay;
+        try {
+            if (typeof BroadcastChannel !== 'undefined') {
+                if (!_rmcCrowdBc) _rmcCrowdBc = new BroadcastChannel(RMC_CROWD_BC_NAME);
+                _rmcCrowdBc.postMessage(pay);
+            }
+        } catch (eBc) { console.warn('[RMC] crowd BroadcastChannel', eBc); }
+        try {
+            if (_rmcCrowdPopup && !_rmcCrowdPopup.closed) {
+                _rmcCrowdPopup.postMessage({ skfCrowd: 1, payload: pay }, '*');
+            }
+        } catch (ePm) { console.warn('[RMC] crowd postMessage', ePm); }
+    } catch (e) { console.warn('[RMC] crowd sync', e); }
+}
+
+function rmcOpenCrowdDisplayWindow() {
+    rmcSyncCrowdDisplay();
+    var url = new URL('referee-match-display.html', window.location.href).href;
+    try {
+        if (_rmcCrowdPopup && !_rmcCrowdPopup.closed) {
+            if (_rmcLastCrowdPayload) {
+                try { _rmcCrowdPopup.postMessage({ skfCrowd: 1, payload: _rmcLastCrowdPayload }, '*'); } catch (e0) { /* ignore */ }
+            }
+            _rmcCrowdPopup.focus();
+            return;
+        }
+        _rmcCrowdPopup = window.open(url, 'skfCrowdDisplay', 'width=1280,height=720,scrollbars=yes');
+        if (!_rmcCrowdPopup) {
+            showStatus('Allow pop-ups for this site to open the crowd display, or open referee-match-display.html manually.', 'info');
+        }
+    } catch (e) {
+        console.warn(e);
+        showStatus('Open referee-match-display.html in a new tab for the crowd screen.', 'info');
+    }
+}
+
+// ── Load match ──
+async function loadMatch() {
+    await skfRefreshToken(RMC_SB_URL, RMC_SB_ANON);
+    var matchId = localStorage.getItem('skf_ref_match_id');
+    var stripEl = document.getElementById('rmcInfoStrip');
+    if (!matchId) {
+        showStatus('Select a bout in the table above (Start) or open one from the bracket view.', 'info');
+        if (stripEl) stripEl.innerHTML = '<span>Choose a match from the list above.</span>';
+        return;
+    }
+    var sb = rmcSb();
+    if (!sb) {
+        showStatus('Sign in required — refresh the page or open Match Control from the dashboard after signing in.', 'error');
+        if (stripEl) stripEl.innerHTML = '<span style="color:#c62828;">Sign in required — cannot load bout.</span>';
+        return;
+    }
+    _rmcRedPlayer = null;
+    _rmcBluePlayer = null;
+    _rmcSenshu = null;
+    // Omit loser_user_id so this works before phase17 is applied on older DBs.
+    var q = await sb.from('tournament_matches')
+        .select('id,round_number,bracket_position,status,red_user_id,blue_user_id,winner_user_id,red_score,blue_score,mat_label,scheduled_start,category_id,tournament_id')
+        .eq('id', matchId).maybeSingle();
+    if (q.error) {
+        console.error('[RMC]', q.error);
+        var det = (q.error && (q.error.message || q.error.details)) ? String(q.error.message || q.error.details) : '';
+        showStatus('Unable to load this match.' + (det ? ' ' + det : '') + ' Try again or refresh.', 'error');
+        if (stripEl) stripEl.innerHTML = '<span style="color:#c62828;">Could not load this bout from the server.</span>';
+        return;
+    }
+    if (!q.data) {
+        showStatus('This bout is not available (it may have been removed when the draw was regenerated). Pick a match from the table above.', 'info');
+        try { localStorage.removeItem('skf_ref_match_id'); } catch (e2) {}
+        if (stripEl) stripEl.innerHTML = '<span>Choose a match from the list above.</span>';
+        renderFighter('red', null, false);
+        renderFighter('blue', null, false);
+        return;
+    }
+    _rmcMatch = q.data;
+
+    // Restore existing scores if match already has data
+    _rmcScores.red = q.data.red_score || 0;
+    _rmcScores.blue = q.data.blue_score || 0;
+    rmcInferSenshuFromLoadedScores();
+    updateScoreDisplay();
+
+    // Same names as the schedule table (hub cache) — paint immediately so UI is never stuck on “Loading…”.
+    rmcQuickPaintFightersFromHub(q.data);
+    if (stripEl) {
+        var rn0 = q.data.round_number != null ? ('Round ' + q.data.round_number) : '';
+        var bp0 = q.data.bracket_position != null ? ('#' + q.data.bracket_position) : '';
+        stripEl.innerHTML = '<span>' + escHtml([rn0, bp0].filter(Boolean).join(' · ') || 'Bout') + '</span>';
+    }
+    var tEarly = document.getElementById('rmcTournamentSelect');
+    if (tEarly && tEarly.selectedIndex >= 0 && tEarly.options[tEarly.selectedIndex]) {
+        _rmcCrowdTournamentName = (tEarly.options[tEarly.selectedIndex].textContent || '').trim();
+    }
+    _rmcCrowdCategoryLabel = '';
+    rmcSyncCrowdDisplay();
+
+    // Load players — prefer SECURITY DEFINER RPC (phase18); then users (hub-safe columns first)
+    var ids = [q.data.red_user_id, q.data.blue_user_id].filter(Boolean);
+    var rpcPack = null;
+    try {
+        var ar = await sb.rpc('referee_fetch_match_athletes', { p_match_id: q.data.id });
+        if (!ar.error && ar.data != null) {
+            if (typeof ar.data === 'string') {
+                try { rpcPack = JSON.parse(ar.data); } catch (e2) { rpcPack = null; }
+            } else if (typeof ar.data === 'object') {
+                rpcPack = ar.data;
+            }
+        } else if (ar.error) {
+            console.warn('[RMC] referee_fetch_match_athletes — run database/phase18_referee_match_fetch_athletes.sql if missing:', ar.error);
+        }
+    } catch (e) { console.warn('[RMC] referee_fetch_match_athletes', e); }
+
+    function rmcApplyAthleteJson(slot, row) {
+        if (!row || typeof row !== 'object') return;
+        var o = {
+            id: row.id,
+            full_name: row.full_name,
+            email: row.email,
+            club_name: row.club_name,
+            profile_image_url: row.profile_image_url || null,
+            profile_photo_url: row.profile_photo_url || null,
+            avatar_url: row.avatar_url || null
+        };
+        if (slot === 'red') _rmcRedPlayer = o;
+        else _rmcBluePlayer = o;
+    }
+
+    if (rpcPack) {
+        if (rpcPack.red) rmcApplyAthleteJson('red', rpcPack.red);
+        if (rpcPack.blue) rmcApplyAthleteJson('blue', rpcPack.blue);
+    }
+
+    if (ids.length && (!_rmcRedPlayer || !_rmcBluePlayer)) {
+        var pq = await sb.from('users').select('id,full_name,email').in('id', ids);
+        if (pq.error) {
+            console.error('[RMC] users select (hub)', pq.error);
+            var needNames = (q.data.red_user_id && !_rmcRedPlayer) || (q.data.blue_user_id && !_rmcBluePlayer);
+            if (needNames) {
+                showStatus('Could not load athlete profiles. Please verify your tournament assignment or contact SKF support.', 'error');
+            }
+        } else if (pq.data) {
+            pq.data.forEach(function(p) {
+                var pid = String(p.id);
+                if (q.data.red_user_id && pid === String(q.data.red_user_id)) _rmcRedPlayer = p;
+                if (q.data.blue_user_id && pid === String(q.data.blue_user_id)) _rmcBluePlayer = p;
+            });
+        }
+        var enrichTries = ['id,profile_image_url,profile_photo_url,club_name', 'id,profile_image_url,club_name', 'id,profile_image_url'];
+        for (var ei = 0; ei < enrichTries.length; ei++) {
+            var pe = await sb.from('users').select(enrichTries[ei]).in('id', ids);
+            if (!pe.error && pe.data && pe.data.length) {
+                pe.data.forEach(function(ex) {
+                    var pid = String(ex.id);
+                    var tgt = null;
+                    if (q.data.red_user_id && pid === String(q.data.red_user_id)) tgt = _rmcRedPlayer;
+                    else if (q.data.blue_user_id && pid === String(q.data.blue_user_id)) tgt = _rmcBluePlayer;
+                    if (!tgt) return;
+                    if (ex.club_name != null && String(ex.club_name).trim()) tgt.club_name = ex.club_name;
+                    if (ex.profile_image_url) tgt.profile_image_url = ex.profile_image_url;
+                    if (ex.profile_photo_url) tgt.profile_photo_url = ex.profile_photo_url;
+                });
+                break;
+            }
+        }
+        if ((!_rmcRedPlayer && q.data.red_user_id) || (!_rmcBluePlayer && q.data.blue_user_id)) {
+            if (q.data.red_user_id && !_rmcRedPlayer) {
+                var r1 = await sb.from('users').select('id,full_name,email').eq('id', q.data.red_user_id).maybeSingle();
+                if (!r1.error && r1.data) _rmcRedPlayer = r1.data;
+            }
+            if (q.data.blue_user_id && !_rmcBluePlayer) {
+                var r2 = await sb.from('users').select('id,full_name,email').eq('id', q.data.blue_user_id).maybeSingle();
+                if (!r2.error && r2.data) _rmcBluePlayer = r2.data;
+            }
+        }
+        var avq = await sb.from('profiles').select('user_id,avatar_url').in('user_id', ids);
+        if (!avq.error && avq.data) {
+            avq.data.forEach(function(av) {
+                if (!av.avatar_url) return;
+                var auid = String(av.user_id);
+                if (_rmcRedPlayer  && String(_rmcRedPlayer.id)  === auid && !rmcFighterPhotoUrl(_rmcRedPlayer)) {
+                    _rmcRedPlayer.profile_image_url  = av.avatar_url;
+                }
+                if (_rmcBluePlayer && String(_rmcBluePlayer.id) === auid && !rmcFighterPhotoUrl(_rmcBluePlayer)) {
+                    _rmcBluePlayer.profile_image_url = av.avatar_url;
+                }
+            });
+        }
+        var missingPhoto = ids.filter(function(uid) {
+            var pl = String(uid) === String(q.data.red_user_id) ? _rmcRedPlayer : _rmcBluePlayer;
+            return pl && !rmcFighterPhotoUrl(pl);
+        });
+        if (missingPhoto.length) {
+            var rpc = await sb.rpc('bracket_setup_fetch_avatars', { p_user_ids: missingPhoto });
+            if (!rpc.error && rpc.data) {
+                var list = Array.isArray(rpc.data) ? rpc.data : [rpc.data];
+                list.forEach(function(row) {
+                    if (!row || !row.user_id || !row.avatar_url) return;
+                    var ru = String(row.user_id);
+                    if (_rmcRedPlayer  && String(_rmcRedPlayer.id)  === ru) _rmcRedPlayer.profile_image_url  = row.avatar_url;
+                    if (_rmcBluePlayer && String(_rmcBluePlayer.id) === ru) _rmcBluePlayer.profile_image_url = row.avatar_url;
+                });
+            }
+        }
+        if ((!_rmcRedPlayer && q.data.red_user_id) || (!_rmcBluePlayer && q.data.blue_user_id)) {
+            try {
+                var br = await sb.rpc('bracket_setup_fetch_users_for_ids', { p_user_ids: ids });
+                if (!br.error && br.data) {
+                    var brows = Array.isArray(br.data) ? br.data : [br.data];
+                    brows.forEach(function(p) {
+                        if (!p || !p.id) return;
+                        var pid = String(p.id);
+                        if (q.data.red_user_id && pid === String(q.data.red_user_id) && !_rmcRedPlayer) _rmcRedPlayer = p;
+                        if (q.data.blue_user_id && pid === String(q.data.blue_user_id) && !_rmcBluePlayer) _rmcBluePlayer = p;
+                    });
+                } else if (br.error) {
+                    console.warn('[RMC] bracket_setup_fetch_users_for_ids — run phase12 SQL if missing:', br.error);
+                }
+            } catch (e3) { console.warn('[RMC] bracket_setup_fetch_users_for_ids', e3); }
+        }
+    }
+
+    rmcMergeHubDisplayName(q.data.red_user_id, 'red');
+    rmcMergeHubDisplayName(q.data.blue_user_id, 'blue');
+
+    // Render player headers (photos may have loaded above)
+    renderFighter('red', _rmcRedPlayer, !!q.data.red_user_id);
+    renderFighter('blue', _rmcBluePlayer, !!q.data.blue_user_id);
+
+    // Info strip
+    var catId = q.data.category_id;
+    var catLabel = '';
+    if (catId) {
+        var cq = await sb.from('tournament_categories').select('event_type,age_category,gender,weight_class,discipline,age_group').eq('id', catId).maybeSingle();
+        if (!cq.error && cq.data) {
+            var c = cq.data;
+            var ev = (c.event_type || c.discipline || '').toLowerCase();
+            var age = c.age_category || c.age_group || '';
+            var g = (c.gender || '').charAt(0).toUpperCase();
+            catLabel = (g ? g + ' ' : '') + (age ? age + ' ' : '');
+            if (ev === 'kumite') catLabel += 'Kumite' + (c.weight_class ? ' ' + c.weight_class : '');
+            else if (ev.indexOf('kata') !== -1) catLabel += 'Kata';
+            else catLabel += ev;
+        }
+    }
+    _rmcCrowdCategoryLabel = catLabel;
+    function rmcRoundName(rn) {
+        if (!rn) return '';
+        var n = parseInt(rn, 10);
+        if (n >= 90) return 'Final';
+        if (n >= 80) return 'Semi-final';
+        if (n >= 70) return 'Quarter-final';
+        return 'Round ' + rn;
+    }
+    function rmcStatusLabel(s) {
+        var m = { scheduled:'Upcoming', pending:'Upcoming', in_progress:'In Progress', live:'Live', paused:'Paused', completed:'Completed' };
+        return m[String(s||'').toLowerCase()] || String(s||'').replace(/_/g,' ');
+    }
+    function rmcStatusColor(s) {
+        var c = { in_progress:'#1565c0', live:'#e53935', paused:'#e65100', completed:'#2e7d32' };
+        return c[String(s||'').toLowerCase()] || '#888';
+    }
+    var roundName   = rmcRoundName(q.data.round_number);
+    var statusLabel = rmcStatusLabel(q.data.status);
+    var statusColor = rmcStatusColor(q.data.status);
+
+    // Fetch tournament name
+    var tname = '';
+    if (q.data.tournament_id) {
+        var tq = await sb.from('tournaments').select('name').eq('id', q.data.tournament_id).maybeSingle();
+        if (!tq.error && tq.data && tq.data.name) tname = tq.data.name;
+    }
+    if (tname) _rmcCrowdTournamentName = tname;
+
+    document.getElementById('rmcInfoStrip').innerHTML =
+        (tname ? '<span style="font-weight:600;color:#2e7d32;">' + escHtml(tname) + '</span><span class="divider">|</span>' : '')
+        + (roundName ? '<span>' + escHtml(roundName) + '</span>' : '<span>Match #' + escHtml(String(q.data.bracket_position||'')) + '</span>')
+        + (q.data.mat_label ? '<span class="divider">|</span><span>Tatami ' + escHtml(String(q.data.mat_label)) + '</span>' : '')
+        + (catLabel ? '<span class="divider">|</span><span>' + escHtml(catLabel) + '</span>' : '')
+        + '<span class="divider">|</span><span style="font-weight:700;color:' + statusColor + ';">' + escHtml(statusLabel) + '</span>'
+        + '<button type="button" onclick="rmcOpenCrowdDisplayWindow()" style="margin-left:auto;padding:5px 12px;background:#1565c0;color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;">Crowd display</button>'
+        + '<button onclick="window.location.href=\'referee-bracket.html\'" style="margin-left:8px;padding:5px 12px;background:#f5f5f5;border:1px solid #ddd;border-radius:6px;font-size:11px;cursor:pointer;">&larr; Bracket</button>';
+
+    document.getElementById('rmcRoundLabel').textContent = roundName || 'Match';
+
+    // If already completed show winner
+    if (q.data.winner_user_id) {
+        var winSide = q.data.winner_user_id === q.data.red_user_id ? 'red' : (q.data.winner_user_id === q.data.blue_user_id ? 'blue' : 'draw');
+        selectWinner(winSide);
+    }
+
+    var done = String(q.data.status || '').toLowerCase() === 'completed';
+    if (done) {
+        var sBtn = document.getElementById('rmcStartBtn');
+        var pBtn = document.getElementById('rmcPauseBtn');
+        var eBtn = document.getElementById('rmcEndBtn');
+        var sv = document.getElementById('rmcSaveBtn');
+        if (sBtn) sBtn.disabled = true;
+        if (pBtn) pBtn.disabled = true;
+        if (eBtn) eBtn.disabled = true;
+        if (sv) sv.disabled = true;
+    }
+    var stEl = document.getElementById('rmcStatus');
+    if (stEl) { stEl.className = 'rmc-status'; stEl.textContent = ''; }
+    rmcRenderWarnGrids();
+    rmcSyncCrowdDisplay();
+}
+
+function renderFighter(side, player, assigned) {
+    var c = cap(side);
+    var nameEl = document.getElementById('rmc' + c + 'Name');
+    var clubEl = document.getElementById('rmc' + c + 'Club');
+    var imgId = 'rmc' + c + 'ImgWrap';
+    var imgWrap = document.getElementById(imgId);
+    if (nameEl) {
+        if (!assigned) nameEl.textContent = 'To be determined';
+        else if (!player) nameEl.textContent = 'Participant';
+        else {
+            var dn = (player.full_name && String(player.full_name).trim()) || (player.email && String(player.email).trim());
+            nameEl.textContent = dn || 'Participant';
+        }
+    }
+    if (clubEl) clubEl.textContent = (player && player.club_name) ? String(player.club_name).trim() : '';
+    var photoUrl = assigned && player ? rmcFighterPhotoUrl(player) : '';
+    var glyph = rmcFighterInitial(player, assigned);
+    if (imgWrap) {
+        if (photoUrl) {
+            var resolved = rmcResolvedProfileUrl(photoUrl) || photoUrl;
+            imgWrap.outerHTML = '<img class="rmc-fighter-img ' + side + '" id="' + imgId + '" src="' + escAttr(resolved) + '" alt="" referrerpolicy="no-referrer" onerror="rmcFighterImgFallback(this,\'' + side + '\')">';
+        } else {
+            imgWrap.outerHTML = '<div class="rmc-fighter-img-placeholder ' + side + '" id="' + imgId + '">' + escHtml(glyph) + '</div>';
+        }
+    }
+}
+
+function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+function rmcInferSenshuFromLoadedScores() {
+    _rmcSenshu = null;
+    var r = _rmcScores.red || 0;
+    var b = _rmcScores.blue || 0;
+    if (r > 0 && b === 0) _rmcSenshu = 'red';
+    else if (b > 0 && r === 0) _rmcSenshu = 'blue';
+}
+
+function rmcUpdateSenshuUi() {
+    var rs = document.getElementById('rmcRedSenshu');
+    var bs = document.getElementById('rmcBlueSenshu');
+    if (rs) rs.style.display = _rmcSenshu === 'red' ? 'block' : 'none';
+    if (bs) bs.style.display = _rmcSenshu === 'blue' ? 'block' : 'none';
+}
+
+function rmcRenderWarnGrids() {
+    function fillRow(side) {
+        var id = side === 'red' ? 'rmcRedWarnRow' : 'rmcBlueWarnRow';
+        var tr = document.getElementById(id);
+        if (!tr) return;
+        var flags = _rmcPenalties[side];
+        var html = '';
+        for (var i = 0; i < 5; i++) {
+            if (flags[i]) {
+                html += '<td class="on ' + side + '">C' + (i + 1) + '</td>';
+            } else {
+                html += '<td>·</td>';
+            }
+        }
+        tr.innerHTML = html;
+    }
+    fillRow('red');
+    fillRow('blue');
+}
+
+// ── Score ──
+function adjustScore(side, delta) {
+    var prevR = _rmcScores.red || 0;
+    var prevB = _rmcScores.blue || 0;
+    _rmcScores[side] = Math.max(0, (_rmcScores[side] || 0) + delta);
+    if (_rmcSenshu == null && prevR === 0 && prevB === 0) {
+        if (_rmcScores.red > 0 && _rmcScores.blue === 0) _rmcSenshu = 'red';
+        else if (_rmcScores.blue > 0 && _rmcScores.red === 0) _rmcSenshu = 'blue';
+    }
+    if ((_rmcScores.red || 0) === 0 && (_rmcScores.blue || 0) === 0) _rmcSenshu = null;
+    updateScoreDisplay();
+    logAction((delta > 0 ? '+' : '') + delta + ' Point (' + cap(side) + ')');
+}
+function updateScoreDisplay() {
+    document.getElementById('rmcRedScore').textContent = _rmcScores.red;
+    document.getElementById('rmcBlueScore').textContent = _rmcScores.blue;
+    rmcUpdateSenshuUi();
+    rmcSyncCrowdDisplay();
+}
+function resetScores() {
+    _rmcSenshu = null;
+    _rmcScores.red = 0;
+    _rmcScores.blue = 0;
+    updateScoreDisplay();
+}
+
+// ── Penalties ──
+function togglePenalty(side, num) {
+    var idx = num - 1;
+    _rmcPenalties[side][idx] = !_rmcPenalties[side][idx];
+    var el = document.getElementById('rmc' + cap(side) + 'Pen' + num);
+    if (el) {
+        el.classList.toggle('active');
+        el.classList.toggle(side);
+    }
+    logAction((side === 'red' ? 'Red' : 'Blue') + ' C' + num + ' penalty ' + (_rmcPenalties[side][idx] ? 'given' : 'removed'));
+    rmcRenderWarnGrids();
+    rmcSyncCrowdDisplay();
+}
+function resetPenalties() {
+    ['red','blue'].forEach(function(side) {
+        for (var i = 1; i <= 5; i++) {
+            _rmcPenalties[side][i-1] = false;
+            var el = document.getElementById('rmc' + cap(side) + 'Pen' + i);
+            if (el) { el.classList.remove('active'); el.classList.remove(side); }
+        }
+    });
+    rmcRenderWarnGrids();
+    rmcSyncCrowdDisplay();
+}
+
+// ── Timer ──
+function formatTime(sec) {
+    var m = Math.floor(sec / 60);
+    var s = sec % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+}
+function startTimer() {
+    if (_rmcTimerRunning) return;
+    if (_rmcMatch && String(_rmcMatch.status || '').toLowerCase() === 'completed') return;
+    _rmcTimerRunning = true;
+    _rmcMatchStarted = true;
+    document.getElementById('rmcStartBtn').disabled = true;
+    document.getElementById('rmcPauseBtn').disabled = false;
+    document.getElementById('rmcTimerDisplay').className = 'rmc-timer-display running';
+    document.getElementById('rmcLiveBadge').className = 'rmc-live-badge live';
+    document.getElementById('rmcLiveBadge').textContent = 'LIVE';
+    logAction('Match started — Hajime');
+    rmcSyncCrowdDisplay();
+    rmcPersistMatchStatus('live');
+    _rmcTimerInterval = setInterval(function() {
+        if (_rmcTimerSec > 0) {
+            _rmcTimerSec--;
+            document.getElementById('rmcTimerDisplay').textContent = formatTime(_rmcTimerSec);
+            rmcSyncCrowdDisplay();
+        } else {
+            clearInterval(_rmcTimerInterval);
+            _rmcTimerRunning = false;
+            document.getElementById('rmcTimerDisplay').className = 'rmc-timer-display';
+            document.getElementById('rmcLiveBadge').textContent = 'TIME';
+            document.getElementById('rmcLiveBadge').className = 'rmc-live-badge';
+            document.getElementById('rmcStartBtn').disabled = false;
+            document.getElementById('rmcPauseBtn').disabled = true;
+            logAction('Time up!');
+            rmcSyncCrowdDisplay();
+        }
+    }, 1000);
+}
+function pauseTimer() {
+    if (!_rmcTimerRunning) return;
+    clearInterval(_rmcTimerInterval);
+    _rmcTimerRunning = false;
+    document.getElementById('rmcStartBtn').disabled = false;
+    document.getElementById('rmcPauseBtn').disabled = true;
+    document.getElementById('rmcTimerDisplay').className = 'rmc-timer-display paused';
+    document.getElementById('rmcLiveBadge').className = 'rmc-live-badge';
+    document.getElementById('rmcLiveBadge').textContent = 'PAUSED';
+    logAction('Match paused — Mate');
+    rmcSyncCrowdDisplay();
+    rmcPersistMatchStatus('paused');
+}
+function endMatch() {
+    if (_rmcTimerRunning) pauseTimer();
+    document.getElementById('rmcTimerDisplay').className = 'rmc-timer-display';
+    document.getElementById('rmcLiveBadge').textContent = 'ENDED';
+    document.getElementById('rmcStartBtn').disabled = true;
+    document.getElementById('rmcPauseBtn').disabled = true;
+    logAction('Match ended — Yame');
+    rmcSyncCrowdDisplay();
+    rmcPersistMatchStatus('paused');
+}
+
+// ── Winner ──
+function selectWinner(side) {
+    _rmcWinner = side;
+    ['red','blue','draw'].forEach(function(s) {
+        var btnId = s === 'red' ? 'rmcWinRed' : (s === 'blue' ? 'rmcWinBlue' : 'rmcWinDraw');
+        var btn = document.getElementById(btnId);
+        if (btn) { btn.classList.toggle('selected', s === side); }
+    });
+    logAction('Winner selected: ' + cap(side));
+    rmcSyncCrowdDisplay();
+}
+
+// ── Match log ──
+function logAction(text) {
+    var elapsed = 180 - _rmcTimerSec;
+    var m = Math.floor(elapsed / 60), s = elapsed % 60;
+    var ts = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+    _rmcLogEntries.unshift({ ts: ts, text: text });
+    var html = _rmcLogEntries.slice(0, 30).map(function(e) {
+        return '<div class="rmc-log-entry"><span class="rmc-log-time">' + escHtml(e.ts) + '</span><span class="rmc-log-event">' + escHtml(e.text) + '</span></div>';
+    }).join('');
+    document.getElementById('rmcLogList').innerHTML = html;
+}
+function clearLog() { _rmcLogEntries = []; document.getElementById('rmcLogList').innerHTML = '<div style="color:#ccc;">Log cleared.</div>'; }
+
+// ── Save result to Supabase ──
+async function saveResult() {
+    if (!_rmcMatch) { showStatus('No match loaded.', 'error'); return; }
+    await skfRefreshToken(RMC_SB_URL, RMC_SB_ANON);
+    var sb = rmcSb();
+    var btn = document.getElementById('rmcSaveBtn');
+    btn.disabled = true; btn.textContent = 'Saving...';
+
+    var winnerId = null;
+    if (_rmcWinner === 'red' && _rmcMatch.red_user_id) winnerId = _rmcMatch.red_user_id;
+    else if (_rmcWinner === 'blue' && _rmcMatch.blue_user_id) winnerId = _rmcMatch.blue_user_id;
+
+    var update = {
+        red_score: _rmcScores.red,
+        blue_score: _rmcScores.blue
+    };
+
+    if (_rmcWinner === 'draw') {
+        update.status = 'completed';
+        update.winner_user_id = null;
+    } else if (_rmcWinner === 'red' || _rmcWinner === 'blue') {
+        update.status = 'completed';
+        update.winner_user_id = winnerId;
+    } else {
+        update.status = 'live';
+    }
+
+    var r = await sb.from('tournament_matches').update(update).eq('id', _rmcMatch.id);
+    btn.disabled = false; btn.textContent = 'Save Result';
+    if (r.error) { showStatus('Error: ' + r.error.message, 'error'); return; }
+
+    // ── Auto-advance winner to next bracket slot ──
+    if (update.status === 'completed' && winnerId) {
+        try {
+            var adv = await sb.rpc('skf_force_advance_winner', { p_match_id: _rmcMatch.id });
+            if (adv.error) {
+                console.warn('[RMC] advance RPC error:', adv.error);
+                showStatus('Result saved. Bracket advance had an issue — check manually. Error: ' + adv.error.message, 'info');
+            } else {
+                var res = adv.data;
+                if (res && res.ok) {
+                    showStatus('Result saved — winner advanced to ' + (res.method === 'computed' ? res.winner_slot + ' slot (computed)' : 'next match') + '. Bracket updates live.', 'success');
+                } else {
+                    var why = (res && res.error) || 'unknown';
+                    if (why === 'next_match_not_found') {
+                        showStatus('Result saved — this was the Final match. No further bracket slot to fill.', 'success');
+                    } else {
+                        showStatus('Result saved. Auto-advance: ' + why, 'info');
+                    }
+                }
+            }
+        } catch (e) {
+            console.warn('[RMC] advance RPC exception:', e);
+            showStatus('Result saved successfully.', 'info');
+        }
+    } else if (update.status === 'completed') {
+        showStatus('Result saved (draw — no winner to advance). Bracket updates live.', 'success');
+    } else {
+        showStatus('Match score updated.', 'success');
+    }
+
+    await rmcRefreshAfterRemoteChange();
+
+    // ── Show next scheduled match button ──
+    if (update.status === 'completed') {
+        await rmcShowNextMatchBar();
+    }
+}
+
+async function rmcShowNextMatchBar() {
+    var bar = document.getElementById('rmcNextBar');
+    var content = document.getElementById('rmcNextBarContent');
+    if (!bar || !content) return;
+    var tid = _rmcMatch && _rmcMatch.tournament_id;
+    var cid = _rmcMatch && _rmcMatch.category_id;
+    if (!tid || !cid) return;
+    await skfRefreshToken(RMC_SB_URL, RMC_SB_ANON);
+    var sb = rmcSb();
+    if (!sb) return;
+    var nq = await sb.from('tournament_matches')
+        .select('id,round_number,bracket_position,red_user_id,blue_user_id,status')
+        .eq('tournament_id', tid).eq('category_id', cid)
+        .eq('status', 'scheduled')
+        .order('round_number', { ascending: true })
+        .order('bracket_position', { ascending: true })
+        .limit(5);
+    if (nq.error || !nq.data || !nq.data.length) { bar.style.display = 'none'; return; }
+    var available = nq.data.filter(function(m) { return m.red_user_id && m.blue_user_id; });
+    if (!available.length) { bar.style.display = 'none'; return; }
+    // Collect names
+    var ids = [];
+    available.forEach(function(m) {
+        if (m.red_user_id && ids.indexOf(m.red_user_id) < 0) ids.push(m.red_user_id);
+        if (m.blue_user_id && ids.indexOf(m.blue_user_id) < 0) ids.push(m.blue_user_id);
+    });
+    var nm = {};
+    if (ids.length) {
+        var uq = await sb.from('users').select('id,full_name,email').in('id', ids);
+        if (!uq.error && uq.data) uq.data.forEach(function(u) {
+            nm[String(u.id)] = (u.full_name && u.full_name.trim()) || (u.email && u.email.trim()) || 'Athlete';
+        });
+    }
+    var html = available.slice(0, 3).map(function(m) {
+        var rn = m.red_user_id ? (nm[String(m.red_user_id)] || 'Red') : 'TBD';
+        var bn = m.blue_user_id ? (nm[String(m.blue_user_id)] || 'Blue') : 'TBD';
+        var lbl = 'Rd ' + escHtml(String(m.round_number)) + ' #' + escHtml(String(m.bracket_position)) + ': ' + escHtml(rn) + ' vs ' + escHtml(bn);
+        return '<button class="rmc-next-match-btn" onclick="rmcSelectMatchForControl(\'' + escAttr(m.id) + '\',true);document.getElementById(\'rmcNextBar\').style.display=\'none\';">' + lbl + '</button>';
+    }).join('');
+    content.innerHTML = html + '<p style="margin:8px 0 0;font-size:11px;color:#555;">Click a bout above to load it as the next match on this panel.</p>';
+    bar.style.display = 'block';
+}
+
+// ── Menu + init ──
+document.addEventListener('DOMContentLoaded', async function() {
+    var mt = document.getElementById('menuToggle');
+    var nav = document.getElementById('dashboardNav');
+    if (mt && nav) mt.addEventListener('click', function() { this.classList.toggle('active'); nav.classList.toggle('active'); });
+
+    document.getElementById('rmcTimerDisplay').textContent = formatTime(_rmcTimerSec);
+
+    await skfRefreshToken(RMC_SB_URL, RMC_SB_ANON);
+    if (typeof SKFRoleLayout !== 'undefined' && !SKFRoleLayout.initRefereePage('match-control')) return;
+    try {
+        var user = JSON.parse(localStorage.getItem('user') || '{}');
+        var nr = (typeof SKFRoleLayout !== 'undefined') ? SKFRoleLayout.normalizeRole(user.role) : '';
+        _rmcRefRole = nr;
+        _rmcRefUserId = user.id || null;
+        var el = document.getElementById('userDisplay');
+        if (el) {
+            var who = user.fullName || user.email || 'Referee';
+            el.textContent = 'Welcome, ' + who + (nr === 'referees_plus' ? ' (Referee+)' : ' (Referee)');
+        }
+        await rmcInitHub();
+        await loadMatch();
+    } catch (e) {
+        console.error(e);
+        window.location.href = 'index.html';
+    }
+});
+</script>
+</body>
+</html>

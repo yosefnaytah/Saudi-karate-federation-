@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bracket Setup — SKF Referee+</title>
+    <link rel="stylesheet" href="dashboard.css?v=20260505">
+    <style>
+        .rbs-content { padding: 24px 20px; }
+        .rbs-breadcrumb { font-size: 12px; color: rgba(255,255,255,0.8); margin-bottom: 2px; }
+        .rbs-page-title { font-size: 22px; font-weight: 700; color: #fff; margin: 0; }
+
+        /* Top bar */
+        .rbs-topbar { display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap; margin-bottom:22px; background:#fff; padding:14px 18px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.07); }
+        .rbs-topbar label { display:flex; flex-direction:column; gap:4px; font-size:12px; font-weight:600; color:#555; }
+        .rbs-select { padding:9px 12px; border:1px solid #ddd; border-radius:8px; font-size:13px; min-width:180px; background:#fafafa; color:#1a1a1a; }
+        .rbs-back-btn { padding:9px 16px; background:#f5f5f5; border:1px solid #ddd; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; color:#333; }
+        .rbs-back-btn:hover { background:#ebebeb; }
+
+        /* Two-column layout */
+        .rbs-layout { display:grid; grid-template-columns: 260px 1fr; gap:16px; align-items:start; }
+        @media(max-width:700px){ .rbs-layout { grid-template-columns:1fr; } }
+
+        /* Player pool (left panel) */
+        .rbs-pool-panel { background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.07); overflow:hidden; }
+        .rbs-panel-header { padding:14px 16px; background:#f5f5f5; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; }
+        .rbs-panel-header h3 { margin:0; font-size:14px; color:#1b5e20; font-weight:700; }
+        .rbs-pool-search { width:100%; padding:8px 12px; border:1px solid #e0e0e0; border-radius:6px; font-size:12px; margin:10px 0; box-sizing:border-box; }
+        .rbs-pool-list { max-height:480px; overflow-y:auto; padding:8px; }
+        .rbs-player-tile {
+            display:flex; align-items:center; gap:8px; padding:9px 10px; border-radius:8px;
+            cursor:pointer; transition:background .15s; margin-bottom:4px; border:1.5px solid #f0f0f0;
+        }
+        .rbs-player-tile:hover { background:#e8f5e9; border-color:#a5d6a7; }
+        .rbs-player-tile.assigned { opacity:.45; cursor:not-allowed; background:#fafafa; }
+        .rbs-player-img { width:32px; height:32px; border-radius:50%; object-fit:cover; flex-shrink:0; background:#e8f5e9; display:flex; align-items:center; justify-content:center; font-size:14px; }
+        .rbs-player-name { font-size:12px; font-weight:700; color:#1b1b1b; }
+        .rbs-player-club { font-size:10px; color:#888; }
+
+        /* Bracket slots (right panel) */
+        .rbs-bracket-panel { background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.07); overflow:auto; }
+        .rbs-bracket-header { padding:14px 16px; background:#f5f5f5; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
+        .rbs-bracket-header h3 { margin:0; font-size:14px; color:#1b5e20; font-weight:700; }
+        .rbs-action-bar { display:flex; gap:8px; flex-wrap:wrap; padding:12px 16px; border-bottom:1px solid #f0f0f0; }
+        .rbs-btn { padding:9px 16px; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; transition:background .2s; }
+        .rbs-btn-primary { background:#2e7d32; color:#fff; }
+        .rbs-btn-primary:hover { background:#1b5e20; }
+        .rbs-btn-danger { background:#c62828; color:#fff; }
+        .rbs-btn-danger:hover { background:#b71c1c; }
+        .rbs-btn-secondary { background:#f5f5f5; color:#333; border:1px solid #ddd; }
+        .rbs-btn-secondary:hover { background:#ebebeb; }
+        .rbs-btn:disabled { opacity:.5; cursor:not-allowed; }
+
+        /* Rounds view */
+        .rbs-rounds-wrap { padding:16px; overflow-x:auto; }
+        .rbs-rounds { display:flex; gap:0; }
+        .rbs-round-col { min-width:200px; }
+        .rbs-round-title { font-size:11px; font-weight:700; text-transform:uppercase; color:#2e7d32; text-align:center; padding:6px 0 12px; letter-spacing:.05em; }
+        .rbs-match-box { margin-bottom:8px; margin-left:8px; margin-right:8px; }
+        .rbs-slot-box { border:1.5px dashed #ccc; border-radius:8px; overflow:hidden; }
+        .rbs-slot-box.has-players { border-style:solid; border-color:#a5d6a7; }
+        .rbs-slot {
+            display:flex; align-items:center; gap:8px; padding:8px 10px; min-height:44px;
+            cursor:pointer; transition:background .15s; border-bottom:1px solid #f0f0f0;
+        }
+        .rbs-slot:last-child { border-bottom:none; }
+        .rbs-slot:hover { background:#f1f8e9; }
+        .rbs-slot.filled { background:#fafafa; cursor:pointer; }
+        .rbs-slot.filled:hover { background:#f5f5f5; }
+        .rbs-slot-label { font-size:11px; color:#aaa; font-style:italic; }
+        .rbs-slot-name { font-size:12px; font-weight:700; color:#1b1b1b; }
+        .rbs-slot-club { font-size:10px; color:#888; }
+        .rbs-slot-remove { margin-left:auto; background:none; border:none; color:#e53935; font-size:14px; cursor:pointer; padding:2px 6px; border-radius:4px; flex-shrink:0; }
+        .rbs-slot-remove:hover { background:#ffebee; }
+        .rbs-match-num { font-size:10px; color:#bbb; text-align:center; padding:3px 0; background:#fafafa; border-bottom:1px solid #f0f0f0; }
+
+        /* Status message */
+        .rbs-status { padding:10px 16px; font-size:13px; font-weight:600; border-radius:8px; margin:12px 0; display:none; }
+        .rbs-status.success { background:#e8f5e9; color:#2e7d32; display:block; }
+        .rbs-status.error { background:#ffebee; color:#c62828; display:block; }
+        .rbs-status.info { background:#e3f2fd; color:#1565c0; display:block; }
+
+        /* Empty state */
+        .rbs-empty { text-align:center; padding:40px 20px; color:#888; font-size:13px; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="skf-bracket-engine.js?v=20260504"></script>
+    <script src="skf-role-layout.js?v=20260506"></script>
+    <script src="auth.js?v=20260505" defer></script>
+</head>
+<body>
+<div class="dashboard-container">
+    <header class="dashboard-header">
+        <div class="header-left">
+            <img src="full badge.png" alt="Saudi Karate Federation" class="header-badge">
+            <div class="header-fed-name">
+                <span class="header-fed-ar">الاتحاد السعودي للكاراتيه</span>
+                <span class="header-fed-en">Saudi Karate Federation</span>
+            </div>
+            <div>
+                <div class="rbs-breadcrumb">Referee &rsaquo; Tournaments &rsaquo; Bracket &rsaquo; Setup</div>
+                <div class="rbs-page-title">Bracket Management</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="user-role" id="userDisplay">Loading...</div>
+            <div class="vision-logo">
+                <p class="vision-title">VISION (رؤية)</p>
+                <p class="vision-year">2030</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="menu-toggle" id="menuToggle">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </div>
+
+    <nav class="dashboard-nav" id="dashboardNav">
+        <ul class="nav-menu"></ul>
+    </nav>
+
+    <main class="dashboard-content">
+        <div class="rbs-content">
+            <!-- Top selector bar -->
+            <div class="rbs-topbar">
+                <button class="rbs-back-btn" onclick="window.location.href='referee-bracket.html'">&larr; Back</button>
+                <label>Tournament
+                    <select class="rbs-select" id="rbsTournamentSelect" onchange="onTournamentChange()"><option value="">Loading tournaments…</option></select>
+                </label>
+                <label>Category
+                    <select class="rbs-select" id="rbsCategorySelect" onchange="onCategoryChange()" disabled><option value="">Select a tournament first</option></select>
+                </label>
+                <label>Format
+                    <select class="rbs-select" id="rbsFormatSelect" onchange="onFormatChange()">
+                        <option value="knockout">Knockout</option>
+                        <option value="league">Round Robin</option>
+                    </select>
+                </label>
+                <label id="rbsSizeLabelWrap">Bracket Size
+                    <select class="rbs-select" id="rbsSizeSelect" onchange="onSizeChange()" style="min-width:160px;">
+                        <option value="auto">Auto (from registrations)</option>
+                        <option value="4">4 Players &mdash; Round 1 + Final</option>
+                        <option value="8">8 Players &mdash; + Semi-final</option>
+                        <option value="16">16 Players &mdash; + Quarter-final</option>
+                        <option value="32">32 Players &mdash; + Round 2</option>
+                        <option value="64">64 Players &mdash; + Round 1</option>
+                        <option value="128">128 Players &mdash; Round of 128</option>
+                    </select>
+                </label>
+                <label id="rbsRRSizeLabelWrap" style="display:none;">Group Size
+                    <select class="rbs-select" id="rbsRRSizeSelect" onchange="onRRSizeChange()" style="min-width:160px;">
+                        <option value="auto">Auto (all approved players)</option>
+                        <option value="4">4 Players &mdash; 6 matches</option>
+                        <option value="5">5 Players &mdash; 10 matches</option>
+                        <option value="6">6 Players &mdash; 15 matches</option>
+                        <option value="8">8 Players &mdash; 28 matches</option>
+                        <option value="9">9 Players &mdash; 36 matches</option>
+                        <option value="10">10 Players &mdash; 45 matches</option>
+                    </select>
+                </label>
+            </div>
+            <!-- Bracket Size Info Banner (shown when a size is selected) -->
+            <div id="rbsSizeInfoBanner" style="display:none;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:10px;padding:12px 16px;margin-bottom:12px;font-size:13px;color:#1b5e20;line-height:1.5;">
+                <strong id="rbsSizeInfoTitle"></strong><br>
+                <span id="rbsSizeInfoBody"></span>
+            </div>
+
+            <div id="rbsStatus" class="rbs-status"></div>
+
+            <div id="rbsPageHint" class="rbs-page-hint" style="display:block;background:#fff;border-radius:12px;padding:18px 20px;margin-bottom:16px;box-shadow:0 2px 8px rgba(0,0,0,.07);font-size:14px;color:#555;line-height:1.5;">
+                <strong style="color:#1b5e20;">Getting started</strong><br>
+                Pick a tournament and category below. The player pool and bracket grid appear here after a category is selected.
+            </div>
+
+            <div class="rbs-layout" id="rbsLayout" style="display:none;">
+                <!-- Left: Player pool -->
+                <div class="rbs-pool-panel">
+                    <div class="rbs-panel-header">
+                        <h3>Registered Players</h3>
+                        <span id="rbsPoolCount" style="font-size:11px;color:#888;">0 players</span>
+                    </div>
+                    <div style="padding:0 10px;">
+                        <input type="search" class="rbs-pool-search" id="rbsPoolSearch" placeholder="Search players..." oninput="renderPool()">
+                    </div>
+                    <div class="rbs-pool-list" id="rbsPoolList"></div>
+                </div>
+
+                <!-- Right: Bracket slots -->
+                <div class="rbs-bracket-panel">
+                    <div class="rbs-bracket-header">
+                        <h3 id="rbsBracketTitle">Bracket Slots</h3>
+                        <div style="display:flex;gap:6px;">
+                            <button class="rbs-btn rbs-btn-secondary" onclick="viewBracket()">View Bracket</button>
+                        </div>
+                    </div>
+                    <div class="rbs-action-bar">
+                        <button class="rbs-btn rbs-btn-primary" id="rbsAutoSeedBtn" onclick="autoSeed()">Auto Seed</button>
+                        <button class="rbs-btn rbs-btn-primary" id="rbsGenerateBtn" onclick="onGenerateClick()">Generate Bracket</button>
+                        <button class="rbs-btn rbs-btn-danger" id="rbsClearBtn" onclick="clearAllSlots()">Clear All</button>
+                        <button class="rbs-btn rbs-btn-secondary" id="rbsSaveBtn" onclick="saveBracket()">Save &amp; Publish</button>
+                    </div>
+                    <!-- Mismatch warning: shown when registered players > bracket slots -->
+                    <div id="rbsMismatchBanner" style="display:none;margin:0 16px 12px;padding:10px 14px;background:#fff3e0;border:1px solid #ffb74d;border-radius:8px;font-size:12px;color:#e65100;line-height:1.5;"></div>
+                    <div id="rbsBracketSlots" class="rbs-rounds-wrap">
+                        <div class="rbs-empty">Select a category to set up the bracket.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Player picker modal -->
+<div id="rbsPickerModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:3000;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:14px;width:340px;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 8px 32px rgba(0,0,0,.25);">
+        <div style="padding:14px 18px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:center;">
+            <h3 style="margin:0;font-size:15px;color:#1b5e20;">Assign Player</h3>
+            <button onclick="closePicker()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#555;">&times;</button>
+        </div>
+        <div style="padding:10px 14px;">
+            <input type="search" id="rbsPickerSearch" placeholder="Search players..." style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:13px;box-sizing:border-box;" oninput="filterPickerList()">
+        </div>
+        <div id="rbsPickerList" style="overflow-y:auto;flex:1;padding:0 8px 10px;"></div>
+        <div style="padding:10px 14px;border-top:1px solid #eee;">
+            <input type="text" id="rbsPickerManual" placeholder="Or type name manually and press Enter" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;font-size:12px;box-sizing:border-box;" onkeydown="onManualEntry(event)">
+        </div>
+    </div>
+</div>
+
+<script>
+var RBS_SB_URL  = 'https://uqlpxdphikmmpdsuojil.supabase.co';
+var RBS_SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxbHB4ZHBoaWttbXBkc3VvamlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3OTI5NDEsImV4cCI6MjA4NjM2ODk0MX0.03xQ8ltwZm_TTEAHDOHocfFKG2j_PHmL1Lzt2t-aFJU';
+
+var _rbsSb = null;
+var _rbsPlayers = [];      // approved registered players for current category
+var _rbsSlots  = [];       // {round, match, slot(1 or 2), playerId, playerName, playerClub, playerImg}
+var _rbsMatches = [];      // existing matches from DB
+var _rbsPickerTarget = null; // {round, match, slot}
+var _rbsCategories = [];
+var _rbsRealtimeChannel = null; // Supabase realtime channel for live match updates
+var _rbsRole = '';
+var _rbsRefRole = '';
+var _rbsRefUserId = null;
+
+// Refresh the JWT from Supabase's own session before every data load.
+// This is the same pattern as referee-dashboard.html (refreshRefJwtFromSupabaseAuth).
+async function skfRefreshToken(sbUrl, sbAnon) {
+    try {
+        if (typeof supabase === 'undefined') return;
+        var tok = localStorage.getItem('token') || '';
+        if (!tok || tok.indexOf('local-token') === 0) return;
+        var sb = supabase.createClient(sbUrl, sbAnon, {
+            auth: { persistSession: true, storage: localStorage, autoRefreshToken: true, detectSessionInUrl: false }
+        });
+        var r1 = await sb.auth.getSession();
+        var sess = r1.data && r1.data.session;
+        if (!sess) return;
+        var expMs = sess.expires_at ? sess.expires_at * 1000 : 0;
+        if (!expMs || expMs < Date.now() + 120000) {
+            var r2 = await sb.auth.refreshSession();
+            if (r2.data && r2.data.session) sess = r2.data.session;
+        }
+        if (sess && sess.access_token) localStorage.setItem('token', sess.access_token);
+    } catch (e) { console.warn('[SKF] token refresh error:', e); }
+}
+
+
+function rbsSb() {
+    if (typeof supabase === 'undefined') {
+        console.error('[RBS] Supabase SDK not loaded from CDN. Check network / adblock.');
+        return null;
+    }
+    var tok = localStorage.getItem('token');
+    if (!tok) return null;
+    return supabase.createClient(RBS_SB_URL, RBS_SB_ANON, {
+        global: { headers: { Authorization: 'Bearer ' + tok } },
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    });
+}
+
+function escHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function rbsWkfGenderLabel(g) {
+    var s = String(g || '').toLowerCase();
+    if (s === 'male') return 'Male';
+    if (s === 'female') return 'Female';
+    return g || '—';
+}
+function rbsWkfAgeCategoryLabel(a) {
+    var s = String(a || '').toLowerCase();
+    if (s === 'cadet') return 'Cadet';
+    if (s === 'junior') return 'Junior';
+    if (s === 'u21' || s === 'under 21' || s === 'under21') return 'U21';
+    if (s === 'senior') return 'Senior';
+    return a || '—';
+}
+function rbsWkfEventTypeLabel(ev) {
+    var s = String(ev || '').toLowerCase();
+    if (s === 'kumite') return 'Kumite';
+    if (s === 'kata_individual' || s === 'kata') return 'Kata';
+    if (s === 'kata_team' || s === 'team_kata') return 'Team Kata';
+    return ev || 'Event';
+}
+function rbsCategoryLabelFromRow(c) {
+    if (!c) return 'Category';
+    var ev = String(c.event_type || '').toLowerCase();
+    if (!ev) ev = (String(c.discipline || '').toLowerCase() === 'kumite') ? 'kumite' : 'kata_individual';
+    if (String(c.is_team_event).toLowerCase() === 'true') ev = 'kata_team';
+    var isKumite = ev === 'kumite';
+    var base = rbsWkfGenderLabel(c.gender) + ' ' + rbsWkfAgeCategoryLabel(c.age_category || c.age_group) + ' ' + rbsWkfEventTypeLabel(ev);
+    if (isKumite && c.weight_class) base += ' ' + String(c.weight_class);
+    return base;
+}
+
+
+function showStatus(msg, type) {
+    var el = document.getElementById('rbsStatus');
+    el.textContent = msg; el.className = 'rbs-status ' + type; el.style.display = 'block';
+    if (type === 'success') setTimeout(function(){ el.style.display = 'none'; }, 4000);
+}
+
+/** After draw is published or generated, open Match Control for the same tournament/category. */
+function rbsNavigateToMatchControlSoon() {
+    var selT = document.getElementById('rbsTournamentSelect');
+    var selC = document.getElementById('rbsCategorySelect');
+    var tid = selT && selT.value;
+    var catId = selC && selC.value;
+    setTimeout(function () {
+        try {
+            if (tid) localStorage.setItem('skf_ref_tournament_id', tid);
+            if (catId) localStorage.setItem('skf_ref_category_id', catId);
+            localStorage.removeItem('skf_ref_match_id');
+        } catch (e) {}
+        window.location.href = 'referee-match-control.html';
+    }, 750);
+}
+
+function rbsClubNameFromUserRow(u) {
+    if (!u) return '';
+    var cn = (u.club_name && String(u.club_name).trim()) ? String(u.club_name).trim() : '';
+    if (cn) return cn;
+    var c = u.clubs;
+    if (Array.isArray(c)) c = c[0];
+    if (c && c.name && String(c.name).trim()) return String(c.name).trim();
+    return '';
+}
+
+/** Best available face photo URL from users row (+ optional profiles join). */
+function rbsPrimaryPhotoFromUserRow(u) {
+    if (!u) return null;
+    if (typeof skfAvatarRawFromRow === 'function') {
+        var s = skfAvatarRawFromRow(u);
+        if (s) return s;
+    }
+    var a = u.profile_image_url || u.profile_photo_url;
+    if (a && String(a).trim()) return String(a).trim();
+    var pr = u.profiles;
+    if (Array.isArray(pr)) pr = pr[0];
+    if (pr && pr.avatar_url && String(pr.avatar_url).trim()) return String(pr.avatar_url).trim();
+    return null;
+}
+
+/** Full URL for avatar (handles storage paths stored without https:// prefix). */
+function rbsResolvedProfileUrl(raw) {
+    if (raw == null || raw === '') return null;
+    var base = String(RBS_SB_URL || (typeof window !== 'undefined' && window.SKF_SUPABASE_URL) || '').replace(/\/$/, '');
+    var z = (typeof skfResolveAvatarUrl === 'function') ? skfResolveAvatarUrl(raw, base || undefined) : '';
+    if (z) return z;
+    var u = String(raw).trim();
+    return u || null;
+}
+
+function playerImgDiv(p, size) {
+    size = size || 28;
+    var s = 'width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:cover;flex-shrink:0;';
+    var ph = '<div style="display:flex;' + s + 'background:#e5e9ec;align-items:center;justify-content:center;border:1px solid #cfd8dc;flex-shrink:0;"></div>';
+    var photo = p ? rbsPrimaryPhotoFromUserRow(p) : null;
+    if (p && photo) {
+        var src = rbsResolvedProfileUrl(photo) || photo;
+        return '<span style="display:inline-flex;align-items:center;">'
+            + '<img src="' + escHtml(src) + '" style="' + s + '" alt="" onerror="this.style.display=\'none\';var n=this.nextElementSibling;if(n)n.style.display=\'flex\';">'
+            + '<div style="display:none;' + s + 'background:#e5e9ec;align-items:center;justify-content:center;border:1px solid #cfd8dc;" class="rbs-img-fallback"></div>'
+            + '</span>';
+    }
+    return ph;
+}
+
+function rbsFindPlayer(uid) {
+    if (uid == null || uid === '') return null;
+    var sid = String(uid);
+    for (var i = 0; i < _rbsPlayers.length; i++) {
+        if (String(_rbsPlayers[i].id) === sid) return _rbsPlayers[i];
+    }
+    return null;
+}
+function rbsCollectSlotPlayerIds() {
+    var out = [];
+    _rbsSlots.forEach(function (s) {
+        if (s.playerId && out.indexOf(s.playerId) === -1) out.push(s.playerId);
+    });
+    return out;
+}
+/** Fetches user rows (direct SELECT, then RPC fallback for RLS/embed issues). */
+async function rbsFetchUserRows(sb, ids) {
+    var rows = [];
+    if (!sb || !ids || !ids.length) return rows;
+    var uniq = [];
+    ids.forEach(function (id) {
+        if (id && uniq.indexOf(id) === -1) uniq.push(id);
+    });
+    if (!uniq.length) return rows;
+    var sel = 'id,full_name,email,club_name,profile_image_url,profile_photo_url';
+    var got = {};
+    var pq = await sb.from('users').select(sel).in('id', uniq);
+    if (!pq.error && pq.data) {
+        pq.data.forEach(function (u) {
+            got[String(u.id)] = u;
+            rows.push(u);
+        });
+    } else if (pq.error) {
+        console.warn('[RBS] users.in failed', pq.error);
+    }
+    var missing = uniq.filter(function (uid) { return !got[String(uid)]; });
+    if (missing.length) {
+        var rpc = await sb.rpc('bracket_setup_fetch_users_for_ids', { p_user_ids: missing });
+        if (!rpc.error && rpc.data) {
+            var list = Array.isArray(rpc.data) ? rpc.data : [rpc.data];
+            list.forEach(function (u) {
+                if (u && u.id && !got[String(u.id)]) {
+                    got[String(u.id)] = u;
+                    rows.push(u);
+                }
+            });
+        } else if (rpc.error) {
+            console.warn('[RBS] bracket_setup_fetch_users_for_ids', rpc.error);
+        }
+    }
+    for (var i = 0; i < uniq.length; i++) {
+        var uid = uniq[i];
+        if (got[String(uid)]) continue;
+        var one = await sb.from('users').select(sel).eq('id', uid).maybeSingle();
+        if (!one.error && one.data) {
+            got[String(uid)] = one.data;
+            rows.push(one.data);
+        }
+    }
+    return rows;
+}
+
+/**
+ * After player objects are in _rbsPlayers, fetch avatar_url from public.profiles
+ * (direct join first, then RPC fallback) and fill in any missing profile_image_url.
+ */
+async function rbsEnrichWithAvatars(sb) {
+    if (!sb || !_rbsPlayers.length) return;
+    var ids = _rbsPlayers.map(function (p) { return p.id; }).filter(Boolean);
+    if (!ids.length) return;
+
+    var avatarMap = {};
+
+    // Direct join attempt
+    var pq = await sb.from('profiles').select('user_id,avatar_url').in('user_id', ids);
+    if (!pq.error && pq.data) {
+        pq.data.forEach(function (row) {
+            if (row.avatar_url && String(row.avatar_url).trim()) {
+                avatarMap[String(row.user_id)] = String(row.avatar_url).trim();
+            }
+        });
+    }
+
+    // RPC fallback for any IDs not yet resolved (or if the join was blocked by RLS)
+    var stillMissing = ids.filter(function (id) { return !avatarMap[String(id)]; });
+    if (stillMissing.length) {
+        var rpc = await sb.rpc('bracket_setup_fetch_avatars', { p_user_ids: stillMissing });
+        if (!rpc.error && rpc.data) {
+            var list = Array.isArray(rpc.data) ? rpc.data : [rpc.data];
+            list.forEach(function (row) {
+                if (row && row.user_id && row.avatar_url && String(row.avatar_url).trim()) {
+                    avatarMap[String(row.user_id)] = String(row.avatar_url).trim();
+                }
+            });
+        }
+    }
+
+    // Merge: prefer profiles.avatar_url, fall back to existing profile_image_url
+    _rbsPlayers.forEach(function (p) {
+        var av = avatarMap[String(p.id)];
+        if (av) p.profile_image_url = av;
+    });
+}
+
+
+/**
+ * After player objects are in _rbsPlayers, fetch avatar_url from public.profiles
+ * (direct join first, then RPC fallback) and fill in any missing profile_image_url.
+ */
+
+async function rbsMergeAthleteProfiles(sb, userIdsArr) {
+    if (!sb || !userIdsArr || !userIdsArr.length) return;
+    var need = [];
+    userIdsArr.forEach(function (uid) {
+        if (!uid) return;
+        if (rbsFindPlayer(uid)) return;
+        if (need.indexOf(uid) === -1) need.push(uid);
+    });
+    if (!need.length) return;
+    var fetched = await rbsFetchUserRows(sb, need);
+    fetched.forEach(function (u) {
+        if (rbsFindPlayer(u.id)) return;
+        var photoM = rbsPrimaryPhotoFromUserRow(u);
+        _rbsPlayers.push({
+            id: u.id,
+            full_name: (u.full_name && String(u.full_name).trim()) || (u.email && String(u.email).trim()) || 'Participant',
+            club_name: rbsClubNameFromUserRow(u),
+            profile_image_url: photoM || null,
+            reg_status: 'in_draw'
+        });
+    });
+    await rbsEnrichWithAvatars(sb);
+}
+
+// ── Tournaments / Categories ──
+async function loadTournaments() {
+    var sel = document.getElementById('rbsTournamentSelect');
+    var catSel = document.getElementById('rbsCategorySelect');
+    try {
+        await skfRefreshToken(RBS_SB_URL, RBS_SB_ANON);
+        var sb = rbsSb();
+        if (!sb) {
+            sel.innerHTML = '<option value="">No session — sign in again</option>';
+            if (catSel) { catSel.disabled = true; catSel.innerHTML = '<option value="">Sign in required</option>'; }
+            showStatus('You are not signed in. Please sign in again.', 'error');
+            return;
+        }
+        var list = [];
+        var role = _rbsRefRole;
+        if (role === 'referees_plus' || role === 'skf_admin' || role === 'admin') {
+            var q = await sb.from('tournaments').select('id,name,is_active').eq('is_active', true).order('start_date', { ascending: false });
+            if (q.error) {
+                sel.innerHTML = '<option value="">Could not load tournaments</option>';
+                console.error('[RBS]', q.error);
+                showStatus('Unable to load tournaments. Please try again.', 'error');
+                return;
+            }
+            list = q.data || [];
+        } else if (role === 'referee') {
+            var rid = _rbsRefUserId;
+            if (!rid) {
+                sel.innerHTML = '<option value="">Could not load your profile</option>';
+                showStatus('Your profile could not be loaded. Please sign out and sign in again.', 'error');
+                return;
+            }
+            var r = await sb.from('tournament_referees').select('tournament_id').eq('referee_id', rid);
+            if (r.error) {
+                sel.innerHTML = '<option value="">Assignment query failed</option>';
+                if (r.error) console.error('[RBS]', r.error);
+                showStatus('Unable to load your tournament assignments. Please try again.', 'error');
+                return;
+            }
+            var tids = [];
+            (r.data || []).forEach(function (row) {
+                if (row.tournament_id && tids.indexOf(row.tournament_id) < 0) tids.push(row.tournament_id);
+            });
+            if (!tids.length) {
+                sel.innerHTML = '<option value="">No tournaments assigned to you</option>';
+                if (catSel) { catSel.disabled = true; catSel.innerHTML = '<option value="">Ask SKF admin to add you as referee</option>'; }
+                showStatus('You are not assigned to any tournaments yet. Contact SKF administration.', 'info');
+                return;
+            }
+            // Include assigned tournaments even if is_active is false (setup/archive still needed)
+            var tq = await sb.from('tournaments').select('id,name,is_active').in('id', tids).order('start_date', { ascending: false });
+            if (tq.error) {
+                sel.innerHTML = '<option value="">Tournament load failed</option>';
+                if (tq.error) console.error('[RBS]', tq.error);
+                showStatus('Unable to load tournament details. Please try again.', 'error');
+                return;
+            }
+            list = tq.data || [];
+        } else {
+            sel.innerHTML = '<option value="">This account cannot use this page</option>';
+            showStatus('Unsupported role for this page.', 'error');
+            return;
+        }
+        sel.innerHTML = '<option value="">-- Select tournament --</option>'
+            + list.map(function (t) {
+                return '<option value="' + t.id + '">' + escHtml(t.name) + (t.is_active === false ? ' (inactive)' : '') + '</option>';
+            }).join('');
+        if (catSel) {
+            catSel.disabled = false;
+            catSel.innerHTML = '<option value="">-- Select category --</option>';
+        }
+        var saved = localStorage.getItem('skf_ref_tournament_id');
+        if (saved && list.some(function (t) { return String(t.id) === String(saved); })) {
+            sel.value = saved;
+            await onTournamentChange();
+        }
+    } catch (e) {
+        console.error('[RBS] loadTournaments', e);
+        sel.innerHTML = '<option value="">Error loading list</option>';
+        showStatus('Something went wrong while loading tournaments. Please refresh the page.', 'error');
+    }
+}
+
+async function onTournamentChange() {
+    var tid = document.getElementById('rbsTournamentSelect').value;
+    var hint = document.getElementById('rbsPageHint');
+    var catSel = document.getElementById('rbsCategorySelect');
+    document.getElementById('rbsLayout').style.display = 'none';
+    if (hint) hint.style.display = 'block';
+    if (!tid) {
+        if (catSel) {
+            catSel.disabled = true;
+            catSel.innerHTML = '<option value="">Select a tournament first</option>';
+        }
+        return;
+    }
+    if (catSel) catSel.disabled = false;
+    localStorage.setItem('skf_ref_tournament_id', tid);
+    await skfRefreshToken(RBS_SB_URL, RBS_SB_ANON);
+    var sb = rbsSb();
+    if (!sb) {
+        showStatus('No session token. Sign in again.', 'error');
+        return;
+    }
+    var q = await sb.from('tournament_categories')
+        .select('id, discipline, gender, age_group, weight_class, event_type, age_category, is_team_event, bracket_type')
+        .eq('tournament_id', tid)
+        .order('discipline');
+    if (q.error) {
+        _rbsCategories = [];
+        catSel.innerHTML = '<option value="">Error loading categories</option>';
+        if (q.error) console.error('[RBS]', q.error);
+        showStatus('Unable to load categories. Please try again.', 'error');
+        return;
+    }
+    _rbsCategories = q.data || [];
+    if (!_rbsCategories.length) {
+        catSel.innerHTML = '<option value="">No categories found for this tournament</option>';
+        showStatus('No categories are set up for this tournament yet. Please contact the SKF administrator.', 'info');
+        return;
+    }
+    catSel.innerHTML = '<option value="">-- Select category --</option>'
+        + _rbsCategories.map(function(c) { return '<option value="' + c.id + '">' + escHtml(rbsCategoryLabelFromRow(c)) + '</option>'; }).join('');
+    var savedCat = localStorage.getItem('skf_ref_category_id');
+    if (savedCat && _rbsCategories.some(function (c) { return String(c.id) === String(savedCat); })) {
+        // Restore previously selected category
+        catSel.value = savedCat;
+        await onCategoryChange();
+    } else if (_rbsCategories.length >= 1) {
+        // Auto-select first available category
+        catSel.value = _rbsCategories[0].id;
+        await onCategoryChange();
+    }
+}
+
+async function onCategoryChange() {
+    var catId = document.getElementById('rbsCategorySelect').value;
+    var hint = document.getElementById('rbsPageHint');
+    if (!catId) {
+        document.getElementById('rbsLayout').style.display = 'none';
+        if (hint) hint.style.display = 'block';
+        return;
+    }
+    if (hint) hint.style.display = 'none';
+    localStorage.setItem('skf_ref_category_id', catId);
+    await skfRefreshToken(RBS_SB_URL, RBS_SB_ANON);
+    var catObj = _rbsCategories.find(function(c){ return String(c.id) === String(catId); });
+    if (catObj && catObj.bracket_type) {
+        document.getElementById('rbsFormatSelect').value = catObj.bracket_type === 'league' ? 'league' : 'knockout';
+    }
+    // Sync size selector visibility only (no full re-render yet)
+    var _fmtNow = document.getElementById('rbsFormatSelect').value;
+    var _sw = document.getElementById('rbsSizeLabelWrap');
+    var _rrw = document.getElementById('rbsRRSizeLabelWrap');
+    if (_sw)  _sw.style.display  = _fmtNow === 'knockout' ? '' : 'none';
+    if (_rrw) _rrw.style.display = _fmtNow === 'league'   ? '' : 'none';
+    var _gb = document.getElementById('rbsGenerateBtn');
+    if (_gb && _fmtNow === 'league') {
+        _gb.textContent = 'Generate Schedule';
+    } else if (_gb && _fmtNow === 'knockout') {
+        _gb.textContent = 'Generate Bracket';
+    }
+    document.getElementById('rbsLayout').style.display = 'grid';
+    await loadPlayers(catId);
+    await loadExistingMatches(catId);
+}
+
+async function loadPlayers(catId) {
+    await skfRefreshToken(RBS_SB_URL, RBS_SB_ANON);
+    var sb = rbsSb();
+    var tid = document.getElementById('rbsTournamentSelect').value;
+    _rbsPlayers = [];
+
+    if (!catId) {
+        document.getElementById('rbsPoolCount').textContent = '0 registered';
+        renderPool();
+        return;
+    }
+    if (!tid) {
+        showStatus('Select a tournament first.', 'error');
+        document.getElementById('rbsPoolCount').textContent = '0 registered';
+        renderPool();
+        return;
+    }
+
+    var sidCat = String(catId);
+    var rq = await sb.from('tournament_registrations')
+        .select('user_id, status, category_id, tournament_category_id')
+        .eq('tournament_id', tid);
+
+    if (rq.error) {
+        rq = await sb.from('tournament_registrations')
+            .select('user_id, status, category_id')
+            .eq('tournament_id', tid);
+    }
+
+    var regRows = [];
+    if (!rq.error && rq.data) {
+        regRows = rq.data.filter(function (r) {
+            if (!r.user_id) return false;
+            var c1 = r.category_id != null ? String(r.category_id) : '';
+            var c2 = r.tournament_category_id != null ? String(r.tournament_category_id) : '';
+            return c1 === sidCat || c2 === sidCat;
+        });
+    }
+
+    if (!rq.error && rq.data && rq.data.length && !regRows.length) {
+        var cats = {};
+        rq.data.forEach(function (r) {
+            var k = r.category_id != null ? String(r.category_id) : '(null)';
+            cats[k] = (cats[k] || 0) + 1;
+        });
+        var hint = Object.keys(cats).slice(0, 6).join(', ');
+        showStatus('This tournament has registrations, but none match the category you selected. Choose another category or contact SKF administration.', 'info');
+    }
+
+    var ids = [];
+    var statusMap = {};
+    regRows.forEach(function (r) {
+        if (r.user_id && ids.indexOf(r.user_id) === -1) ids.push(r.user_id);
+        if (r.user_id) statusMap[String(r.user_id)] = r.status;
+    });
+
+    if (ids.length) {
+        var users = await rbsFetchUserRows(sb, ids);
+        users.forEach(function (u) {
+            var photo = rbsPrimaryPhotoFromUserRow(u);
+            _rbsPlayers.push({
+                id: u.id,
+                full_name: (u.full_name && String(u.full_name).trim()) || (u.email && String(u.email).trim()) || 'Participant',
+                club_name: rbsClubNameFromUserRow(u),
+                profile_image_url: photo || null,
+                reg_status: statusMap[String(u.id)] || 'pending'
+            });
+        });
+        await rbsEnrichWithAvatars(sb);
+        if (!users.length) {
+            showStatus('Athletes are registered for this category, but their profiles could not be loaded. Please contact SKF support so access can be checked.', 'error');
+        }
+    }
+
+    var approvedCount = _rbsPlayers.filter(function (p) { return p.reg_status === 'approved'; }).length;
+    var totalCount = _rbsPlayers.length;
+    document.getElementById('rbsPoolCount').textContent = totalCount + ' registered'
+        + (approvedCount !== totalCount ? ' (' + approvedCount + ' approved)' : '');
+
+    if (!totalCount) {
+        var dbgSb = rbsSb();
+        var dbgAll = await dbgSb.from('tournament_registrations')
+            .select('category_id,tournament_category_id,status', { count: 'exact', head: false })
+            .eq('tournament_id', tid)
+            .limit(30);
+        if (dbgAll.error) {
+            dbgAll = await dbgSb.from('tournament_registrations')
+                .select('category_id,status', { count: 'exact', head: false })
+                .eq('tournament_id', tid)
+                .limit(30);
+        }
+        var cnt = (!dbgAll.error && dbgAll.count != null) ? dbgAll.count : (dbgAll.data || []).length;
+        if (dbgAll.error) {
+            showStatus('Unable to load registration information. Please try again.', 'error');
+        } else if (!cnt) {
+            showStatus('No registrations were found for this tournament.', 'info');
+        }
+    } else if (totalCount && !approvedCount) {
+        showStatus(totalCount + ' athlete(s) in this category are still pending approval. Contact SKF administration.', 'info');
+    }
+    renderPool();
+}
+
+async function loadExistingMatches(catId) {
+    await skfRefreshToken(RBS_SB_URL, RBS_SB_ANON);
+    var sb = rbsSb();
+    var tid = document.getElementById('rbsTournamentSelect').value;
+    var q = await sb.from('tournament_matches')
+        .select('id,round_number,bracket_position,red_user_id,blue_user_id,red_score,blue_score,winner_user_id,status')
+        .eq('tournament_id', tid)
+        .eq('category_id', catId)
+        .order('round_number').order('bracket_position');
+    if (q.error) {
+        if (q.error) console.error('[RBS]', q.error);
+        showStatus('Unable to load matches. Please try again.', 'error');
+        _rbsMatches = [];
+        return;
+    }
+    _rbsMatches = q.data || [];
+    if (_rbsMatches.length) {
+        buildSlotsFromMatches();
+        await rbsMergeAthleteProfiles(sb, rbsCollectSlotPlayerIds());
+        renderBracketSlots();
+    } else {
+        _rbsSlots = [];
+        var fmtNow = document.getElementById('rbsFormatSelect').value;
+        if (fmtNow === 'league') {
+            // Round Robin empty state — render the dedicated RR setup view
+            renderLeagueSetup();
+            document.getElementById('rbsGenerateBtn').disabled = false;
+            document.getElementById('rbsGenerateBtn').textContent = 'Generate Schedule';
+        } else {
+            var sizeVal = (document.getElementById('rbsSizeSelect') || {}).value || 'auto';
+            if (sizeVal !== 'auto') {
+                previewLocalBracket(parseInt(sizeVal, 10));
+            } else {
+                document.getElementById('rbsBracketSlots').innerHTML =
+                    '<div class="rbs-empty">No bracket yet. Choose a <strong>Bracket Size</strong> above to preview the structure and assign players, or click <strong>Generate Bracket</strong> to auto-generate from approved registrations.</div>';
+                document.getElementById('rbsGenerateBtn').disabled = false;
+                document.getElementById('rbsGenerateBtn').textContent = 'Generate Bracket';
+            }
+        }
+    }
+    updatePoolAssignedState();
+    rbsCheckSlotMismatch();
+
+    // If a specific size is pre-selected and there are no DB matches, show preview
+    var sizeVal2 = (document.getElementById('rbsSizeSelect') || {}).value || 'auto';
+    if (sizeVal2 !== 'auto'
+        && document.getElementById('rbsFormatSelect').value === 'knockout'
+        && !_rbsSlots.length) {
+        previewLocalBracket(parseInt(sizeVal2, 10));
+    }
+
+    // Subscribe to live updates so standings/scores refresh in real time
+    rbsSubscribeRealtime(catId, tid);
+}
+
+function rbsSubscribeRealtime(catId, tid) {
+    try {
+        var sb = rbsSb();
+        if (!sb || !sb.channel) return;
+        // Tear down any previous channel first
+        if (_rbsRealtimeChannel) {
+            try { sb.removeChannel(_rbsRealtimeChannel); } catch(e) {}
+            _rbsRealtimeChannel = null;
+        }
+        var channelName = 'rbs-matches-' + catId;
+        _rbsRealtimeChannel = sb.channel(channelName)
+            .on('postgres_changes',
+                { event: '*', schema: 'public', table: 'tournament_matches', filter: 'category_id=eq.' + catId },
+                function(payload) {
+                    // A match changed — silently refresh local list and re-render
+                    rbsApplyRealtimeChange(payload);
+                })
+            .subscribe();
+    } catch (e) {
+        console.warn('[RBS] realtime subscribe failed:', e);
+    }
+}
+
+function rbsApplyRealtimeChange(payload) {
+    if (!payload) return;
+    var newRow = payload.new || null;
+    var oldRow = payload.old || null;
+    if (payload.eventType === 'DELETE' && oldRow) {
+        _rbsMatches = _rbsMatches.filter(function(m){ return String(m.id) !== String(oldRow.id); });
+    } else if (newRow) {
+        var idx = _rbsMatches.findIndex(function(m){ return String(m.id) === String(newRow.id); });
+        if (idx >= 0) _rbsMatches[idx] = Object.assign({}, _rbsMatches[idx], newRow);
+        else _rbsMatches.push(newRow);
+    }
+    _rbsMatches.sort(function(a, b) {
+        if (a.round_number !== b.round_number) return a.round_number - b.round_number;
+        return (a.bracket_position || 0) - (b.bracket_position || 0);
+    });
+    renderBracketSlots();
+}
+
+function buildSlotsFromMatches() {
+    _rbsSlots = [];
+    _rbsMatches.forEach(function (m) {
+        _rbsSlots.push({ round: m.round_number, match: m.bracket_position, slot: 1, playerId: m.red_user_id || null, matchId: m.id, manualName: null });
+        _rbsSlots.push({ round: m.round_number, match: m.bracket_position, slot: 2, playerId: m.blue_user_id || null, matchId: m.id, manualName: null });
+    });
+    // Always keep Generate Bracket enabled so referee can regenerate when player count changes
+    document.getElementById('rbsGenerateBtn').disabled = false;
+    document.getElementById('rbsGenerateBtn').textContent = 'Regenerate Bracket';
+    rbsCheckSlotMismatch();
+}
+
+// Show a warning banner when registered players outnumber bracket slots
+function rbsCheckSlotMismatch() {
+    var bannerEl     = document.getElementById('rbsMismatchBanner');
+    if (!bannerEl) return;
+    // Round Robin has no fixed slots — mismatch concept does not apply
+    var fmt = document.getElementById('rbsFormatSelect');
+    if (fmt && fmt.value === 'league') { bannerEl.style.display = 'none'; return; }
+
+    var totalSlots   = _rbsSlots.length;   // 2 per match
+    var totalPlayers = _rbsPlayers.length;
+
+    if (totalSlots === 0) {
+        bannerEl.style.display = 'none';
+        return;
+    }
+    if (totalPlayers > totalSlots) {
+        var slotCount = totalSlots;
+        bannerEl.style.display = 'block';
+        bannerEl.innerHTML = '<strong>Bracket size mismatch:</strong> '
+            + totalPlayers + ' players are registered but the current bracket only has '
+            + slotCount + ' slot' + (slotCount !== 1 ? 's' : '') + '. '
+            + 'Click <strong>Regenerate Bracket</strong> above to rebuild the bracket for all '
+            + totalPlayers + ' players.';
+    } else {
+        bannerEl.style.display = 'none';
+    }
+}
+
+function rbsSlotVisualFilled(s) {
+    return !!(s && (s.playerId || (s.manualName && String(s.manualName).trim())));
+}
+
+function rbsIdAssignedToSlot(pid) {
+    if (pid == null || pid === '') return false;
+    var sid = String(pid);
+    return _rbsSlots.some(function (s) { return s.playerId && String(s.playerId) === sid; });
+}
+
+// ── Player pool rendering ──
+function renderPool() {
+    var q = (document.getElementById('rbsPoolSearch').value || '').trim().toLowerCase();
+    var list = _rbsPlayers.filter(function(p) {
+        if (!q) return true;
+        return (p.full_name || '').toLowerCase().indexOf(q) !== -1 || (p.club_name || '').toLowerCase().indexOf(q) !== -1;
+    });
+    var html = list.length ? list.map(function (p) {
+        var isAssigned = rbsIdAssignedToSlot(p.id);
+        var isInDraw = p.reg_status === 'in_draw';
+        var isPending = p.reg_status && p.reg_status !== 'approved' && !isInDraw;
+        var statusDot = isInDraw
+            ? '<span style="font-size:9px;padding:1px 5px;border-radius:999px;background:#e3f2fd;color:#1565c0;margin-left:auto;flex-shrink:0;">In draw</span>'
+            : isPending
+            ? '<span style="font-size:9px;padding:1px 5px;border-radius:999px;background:#fff3e0;color:#e65100;margin-left:auto;flex-shrink:0;">Pending</span>'
+            : '<span style="font-size:9px;padding:1px 5px;border-radius:999px;background:#e8f5e9;color:#2e7d32;margin-left:auto;flex-shrink:0;">Approved</span>';
+        return '<div class="rbs-player-tile' + (isAssigned ? ' assigned' : '') + '" onclick="' + (isAssigned ? '' : 'openPickerForPlayer(\'' + p.id + '\')') + '">'
+            + playerImgDiv(p, 32)
+            + '<div style="flex:1;min-width:0;"><div class="rbs-player-name">' + escHtml(p.full_name) + '</div><div class="rbs-player-club">' + escHtml(p.club_name || '—') + '</div></div>'
+            + (isAssigned ? '<span style="font-size:10px;color:#2e7d32;flex-shrink:0;font-weight:600;">Assigned</span>' : statusDot)
+            + '</div>';
+    }).join('') : '<div class="rbs-empty">No players found.</div>';
+    document.getElementById('rbsPoolList').innerHTML = html;
+}
+
+function updatePoolAssignedState() { renderPool(); }
+
+// ── Bracket slots rendering ──
+function renderBracketSlots() {
+    var fmt = document.getElementById('rbsFormatSelect') ? document.getElementById('rbsFormatSelect').value : 'knockout';
+    if (fmt === 'league') {
+        renderLeagueSetup();
+    } else {
+        if (typeof SKFBracket !== 'undefined') {
+            SKFBracket.injectCSS();
+            document.getElementById('rbsBracketSlots').innerHTML =
+                SKFBracket.renderSetup(_rbsSlots, rbsFindPlayer);
+        } else {
+            document.getElementById('rbsBracketSlots').innerHTML =
+                '<div class="rbs-empty">Bracket engine loading, please wait…</div>';
+        }
+    }
+    updatePoolAssignedState();
+}
+
+function renderLeagueSetup() {
+    var container = document.getElementById('rbsBracketSlots');
+    var allApproved = _rbsPlayers.filter(function(p){ return p.reg_status === 'approved'; });
+    var approvedCount = allApproved.length;
+
+    var rrSizeEl = document.getElementById('rbsRRSizeSelect');
+    var rrSizeVal = rrSizeEl ? rrSizeEl.value : 'auto';
+    var groupSize = rrSizeVal !== 'auto' ? parseInt(rrSizeVal, 10) : approvedCount;
+    var effectiveCount = Math.min(approvedCount, groupSize);
+    var expectedMatches = effectiveCount > 1 ? (effectiveCount * (effectiveCount - 1) / 2) : 0;
+
+    /* ── No schedule yet ── */
+    if (!_rbsMatches.length) {
+        var warn = '';
+        if (approvedCount < 2) {
+            warn = '<div style="margin-top:10px;padding:10px 14px;background:#fff3e0;border:1px solid #ffcc80;border-radius:8px;font-size:13px;color:#e65100;">'
+                + 'At least 2 approved players are required to generate a schedule.</div>';
+        } else if (approvedCount > 10 && rrSizeVal === 'auto') {
+            warn = '<div style="margin-top:10px;padding:10px 14px;background:#fff3e0;border:1px solid #ffcc80;border-radius:8px;font-size:13px;color:#e65100;">'
+                + approvedCount + ' approved players detected. Round Robin groups work best with 4-10 players. Select a Group Size above to limit participants.</div>';
+        } else if (rrSizeVal !== 'auto' && approvedCount > groupSize) {
+            warn = '<div style="margin-top:10px;padding:10px 14px;background:#e3f2fd;border:1px solid #90caf9;border-radius:8px;font-size:13px;color:#0d47a1;">'
+                + approvedCount + ' players approved. Only the first <strong>' + groupSize + '</strong> will be included in the group.</div>';
+        }
+        container.innerHTML =
+            '<div style="padding:32px 24px;text-align:center;">'
+            + '<div style="font-size:44px;margin-bottom:16px;">&#9776;</div>'
+            + '<div style="font-size:16px;font-weight:700;color:#1b5e20;margin-bottom:6px;">Round Robin Group Stage</div>'
+            + '<div style="font-size:14px;color:#666;margin-bottom:4px;">'
+            +   (effectiveCount > 1
+                    ? '<strong>' + effectiveCount + '</strong> players &rarr; <strong>' + expectedMatches + '</strong> matches will be generated.'
+                    : 'No approved players yet in this category.')
+            + '</div>'
+            + '<div style="font-size:13px;color:#999;margin-bottom:16px;">Every player plays against every other player once. Click <strong>Generate Schedule</strong> above to create all matches.</div>'
+            + warn
+            + '</div>';
+        return;
+    }
+
+    /* ── Schedule already generated — show full league table + match list ── */
+    var done = _rbsMatches.filter(function(m){ return m.status === 'completed' || m.status === 'walkover'; }).length;
+    var live = _rbsMatches.filter(function(m){ return m.status === 'live' || m.status === 'in_progress'; }).length;
+    var total = _rbsMatches.length;
+
+    /* Collect player IDs from matches */
+    var pidSet = {};
+    _rbsMatches.forEach(function(m) {
+        if (m.red_user_id)  pidSet[String(m.red_user_id)]  = true;
+        if (m.blue_user_id) pidSet[String(m.blue_user_id)] = true;
+    });
+    var playerIds = Object.keys(pidSet);
+    var playerCount = playerIds.length;
+
+    /* Calculate live standings */
+    var stats = {};
+    playerIds.forEach(function(pid) {
+        var p = rbsFindPlayer(pid);
+        stats[String(pid)] = { id: pid, player: p || null, mp: 0, w: 0, l: 0, pts: 0, diff: 0 };
+    });
+    _rbsMatches.forEach(function(m) {
+        if (m.status !== 'completed' && m.status !== 'walkover') return;
+        var rid = m.red_user_id, bid = m.blue_user_id, wid = m.winner_user_id;
+        var rs  = m.red_score  != null ? m.red_score  : 0;
+        var bs  = m.blue_score != null ? m.blue_score : 0;
+        if (rid && stats[String(rid)]) {
+            stats[String(rid)].mp++; stats[String(rid)].diff += (rs - bs);
+            if (wid === rid) { stats[String(rid)].w++; stats[String(rid)].pts += 3; }
+            else             { stats[String(rid)].l++; }
+        }
+        if (bid && stats[String(bid)]) {
+            stats[String(bid)].mp++; stats[String(bid)].diff += (bs - rs);
+            if (wid === bid) { stats[String(bid)].w++; stats[String(bid)].pts += 3; }
+            else             { stats[String(bid)].l++; }
+        }
+    });
+    var standings = Object.keys(stats).map(function(k){ return stats[k]; }).sort(function(a, b) {
+        if (b.pts  !== a.pts)  return b.pts  - a.pts;
+        if (b.w    !== a.w)    return b.w    - a.w;
+        if (b.diff !== a.diff) return b.diff - a.diff;
+        var na = (a.player && a.player.full_name) || '';
+        var nb = (b.player && b.player.full_name) || '';
+        return na.localeCompare(nb);
+    });
+
+    var groupComplete = (done === total && total > 0);
+
+    var html = '<div style="padding:16px 20px;">';
+
+    /* ── Summary header ── */
+    html += '<div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid #eef2f7;">'
+        + '<span style="font-size:15px;font-weight:800;color:#1b5e20;">Round Robin Group</span>'
+        + '<span style="font-size:13px;color:#888;">' + playerCount + ' players &middot; ' + total + ' matches</span>'
+        + '<span style="font-size:12px;font-weight:700;color:#2e7d32;background:#e8f5e9;padding:3px 10px;border-radius:999px;">' + done + ' / ' + total + ' completed</span>'
+        + (live > 0 ? '<span style="font-size:12px;font-weight:700;color:#e53935;background:#ffebee;padding:3px 10px;border-radius:999px;">&#x25CF; ' + live + ' live</span>' : '')
+        + (groupComplete ? '<span style="font-size:12px;font-weight:700;color:#fff;background:#1b5e20;padding:3px 10px;border-radius:999px;">Group Complete</span>' : '')
+        + '</div>';
+
+    /* ── League standings table ── */
+    html += '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#888;text-transform:uppercase;margin-bottom:10px;">Group Standings</div>';
+    html += '<div style="overflow-x:auto;margin-bottom:24px;">'
+        + '<table style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e0e7ef;border-radius:12px;overflow:hidden;font-size:13px;">'
+        + '<thead style="background:#f7f9fc;">'
+        + '<tr style="text-align:left;color:#666;font-size:11px;text-transform:uppercase;letter-spacing:.05em;">'
+        + '<th style="padding:10px 12px;width:40px;text-align:center;">#</th>'
+        + '<th style="padding:10px 12px;">Player</th>'
+        + '<th style="padding:10px 8px;text-align:center;width:50px;" title="Matches Played">MP</th>'
+        + '<th style="padding:10px 8px;text-align:center;width:50px;color:#2e7d32;" title="Wins">W</th>'
+        + '<th style="padding:10px 8px;text-align:center;width:50px;color:#c62828;" title="Losses">L</th>'
+        + '<th style="padding:10px 8px;text-align:center;width:60px;" title="Score Difference">+/-</th>'
+        + '<th style="padding:10px 8px;text-align:center;width:60px;font-weight:800;color:#1b5e20;" title="Points">Pts</th>'
+        + '<th style="padding:10px 12px;width:90px;text-align:center;">Status</th>'
+        + '</tr>'
+        + '</thead><tbody>';
+
+    standings.forEach(function(s, idx) {
+        var rank = idx + 1;
+        var player = s.player;
+        var name = player ? (player.full_name || 'Participant') : 'Participant';
+        var club = player && player.club_name ? player.club_name : '';
+        var avatar = player ? playerImgDiv(player, 32) : '<div style="width:32px;height:32px;border-radius:50%;background:#e0e7ef;display:inline-flex;align-items:center;justify-content:center;color:#999;font-size:11px;font-weight:700;">' + escHtml((name[0] || '?').toUpperCase()) + '</div>';
+        var rowBg = '#fff';
+        var qualBadge = '';
+        if (rank === 1) {
+            rowBg = '#fff8e1';
+            qualBadge = groupComplete
+                ? '<span style="font-size:9px;font-weight:800;background:#ffd54f;color:#5d4037;padding:2px 7px;border-radius:999px;letter-spacing:.05em;">QUALIFIED</span>'
+                : '<span style="font-size:9px;font-weight:800;background:#fff3c4;color:#827717;padding:2px 7px;border-radius:999px;letter-spacing:.05em;">TOP 1</span>';
+        } else if (rank === 2) {
+            rowBg = '#f5f5f5';
+            qualBadge = groupComplete
+                ? '<span style="font-size:9px;font-weight:800;background:#bdbdbd;color:#fff;padding:2px 7px;border-radius:999px;letter-spacing:.05em;">QUALIFIED</span>'
+                : '<span style="font-size:9px;font-weight:800;background:#e0e0e0;color:#555;padding:2px 7px;border-radius:999px;letter-spacing:.05em;">TOP 2</span>';
+        }
+        var diffStr = (s.diff > 0 ? '+' : '') + s.diff;
+        html += '<tr style="background:' + rowBg + ';border-top:1px solid #eef2f7;">'
+            + '<td style="padding:10px 12px;text-align:center;font-weight:800;color:#1b5e20;">' + rank + '</td>'
+            + '<td style="padding:10px 12px;">'
+            +   '<div style="display:flex;align-items:center;gap:10px;">'
+            +     avatar
+            +     '<div style="min-width:0;">'
+            +       '<div style="font-weight:700;color:#222;line-height:1.2;">' + escHtml(name) + '</div>'
+            +       (club ? '<div style="font-size:11px;color:#999;">' + escHtml(club) + '</div>' : '')
+            +     '</div>'
+            +   '</div>'
+            + '</td>'
+            + '<td style="padding:10px 8px;text-align:center;color:#555;">' + s.mp + '</td>'
+            + '<td style="padding:10px 8px;text-align:center;font-weight:700;color:#2e7d32;">' + s.w + '</td>'
+            + '<td style="padding:10px 8px;text-align:center;font-weight:700;color:#c62828;">' + s.l + '</td>'
+            + '<td style="padding:10px 8px;text-align:center;color:' + (s.diff > 0 ? '#2e7d32' : (s.diff < 0 ? '#c62828' : '#888')) + ';font-weight:600;">' + diffStr + '</td>'
+            + '<td style="padding:10px 8px;text-align:center;font-weight:800;color:#1b5e20;font-size:15px;">' + s.pts + '</td>'
+            + '<td style="padding:10px 12px;text-align:center;">' + qualBadge + '</td>'
+            + '</tr>';
+    });
+    html += '</tbody></table></div>';
+
+    /* ── Match schedule ── */
+    html += '<div style="font-size:11px;font-weight:700;letter-spacing:.08em;color:#888;text-transform:uppercase;margin-bottom:10px;">Match Schedule</div>';
+    _rbsMatches.forEach(function(m, mi) {
+        var red  = rbsFindPlayer(m.red_user_id);
+        var blue = rbsFindPlayer(m.blue_user_id);
+        var redName  = red  ? (red.full_name  || 'Participant') : 'TBD';
+        var blueName = blue ? (blue.full_name || 'Participant') : 'TBD';
+        var redClub  = red  && red.club_name  ? red.club_name  : '';
+        var blueClub = blue && blue.club_name ? blue.club_name : '';
+        var st = m.status || 'scheduled';
+        var stLabel = { scheduled:'Scheduled', pending:'Scheduled', in_progress:'In Progress', live:'Live Now', completed:'Completed', walkover:'Walkover' }[st] || st;
+        var stBg = { in_progress:'#e3f2fd', live:'#ffebee', completed:'#e8f5e9', walkover:'#f3e5f5' }[st] || '#f5f5f5';
+        var stFg = { in_progress:'#1565c0', live:'#e53935', completed:'#2e7d32', walkover:'#6a1b9a' }[st] || '#888';
+        var scoreStr = (st === 'completed' || st === 'in_progress' || st === 'live' || st === 'walkover')
+            ? (m.red_score != null ? m.red_score : '0') + ' \u2013 ' + (m.blue_score != null ? m.blue_score : '0')
+            : 'vs';
+        var redIsWinner  = m.winner_user_id && m.winner_user_id === m.red_user_id;
+        var blueIsWinner = m.winner_user_id && m.winner_user_id === m.blue_user_id;
+
+        html += '<div style="display:flex;align-items:center;background:#fff;border:1px solid #e0e7ef;border-radius:12px;padding:12px 16px;margin-bottom:8px;gap:12px;' + (st === 'live' || st === 'in_progress' ? 'border-color:#ef9a9a;box-shadow:0 0 0 2px #ffebee inset;' : '') + '">'
+            + '<div style="font-size:11px;color:#bbb;font-weight:700;min-width:30px;text-align:center;">M' + (mi+1) + '</div>'
+            + '<div style="flex:1;text-align:right;">'
+            +   '<div style="font-size:9px;font-weight:800;color:#ef5350;letter-spacing:.05em;margin-bottom:2px;">RED</div>'
+            +   '<div style="font-weight:' + (redIsWinner ? '800' : '600') + ';font-size:14px;line-height:1.2;color:' + (redIsWinner ? '#1b5e20' : '#222') + ';">' + escHtml(redName) + (redIsWinner ? ' &#10004;' : '') + '</div>'
+            +   (redClub ? '<div style="font-size:11px;color:#aaa;">' + escHtml(redClub) + '</div>' : '')
+            + '</div>'
+            + '<div style="text-align:center;min-width:60px;font-size:14px;font-weight:800;color:' + (st === 'completed' ? '#1b5e20' : '#bbb') + ';">' + escHtml(scoreStr) + '</div>'
+            + '<div style="flex:1;text-align:left;">'
+            +   '<div style="font-size:9px;font-weight:800;color:#1e88e5;letter-spacing:.05em;margin-bottom:2px;">BLUE</div>'
+            +   '<div style="font-weight:' + (blueIsWinner ? '800' : '600') + ';font-size:14px;line-height:1.2;color:' + (blueIsWinner ? '#1b5e20' : '#222') + ';">' + escHtml(blueName) + (blueIsWinner ? ' &#10004;' : '') + '</div>'
+            +   (blueClub ? '<div style="font-size:11px;color:#aaa;">' + escHtml(blueClub) + '</div>' : '')
+            + '</div>'
+            + '<div style="font-size:11px;font-weight:700;padding:3px 10px;border-radius:999px;background:' + stBg + ';color:' + stFg + ';min-width:84px;text-align:center;">' + escHtml(stLabel) + '</div>'
+            + '</div>';
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// ── Slot management ──
+function removeFromSlot(round, match, slot) {
+    _rbsSlots.forEach(function (s) {
+        if (s.round === round && s.match === match && s.slot === slot) {
+            s.playerId = null;
+            s.manualName = null;
+        }
+    });
+    renderBracketSlots();
+}
+
+function openPickerForSlot(round, match, slot) {
+    _rbsPickerTarget = { round: round, match: match, slot: slot, mode: 'slot' };
+    showPicker();
+}
+
+function openPickerForPlayer(playerId) {
+    // In Round Robin, you don't manually assign players to slots — the schedule auto-pairs everyone
+    var fmtSel = document.getElementById('rbsFormatSelect');
+    if (fmtSel && fmtSel.value === 'league') {
+        showStatus('Round Robin schedules are auto-generated. Click "Generate Schedule" to create matches for all approved players.', 'info');
+        return;
+    }
+    // Find first empty slot
+    var empty = _rbsSlots.find(function (s) { return !s.playerId && !(s.manualName && String(s.manualName).trim()); });
+    if (!empty) {
+        var playerCount = _rbsPlayers.length;
+        var slotCount   = _rbsSlots.length;
+        if (playerCount > slotCount) {
+            showStatus(
+                'All ' + slotCount + ' bracket slots are full, but ' + playerCount + ' players are registered. '
+                + 'Click "Regenerate Bracket" to rebuild the bracket for all ' + playerCount + ' players.',
+                'error'
+            );
+        } else {
+            showStatus('All bracket slots are filled. Remove a player from a slot first.', 'error');
+        }
+        return;
+    }
+    _rbsPickerTarget = { round: empty.round, match: empty.match, slot: empty.slot, mode: 'player', playerId: playerId };
+    assignPlayerToTarget(playerId, null);
+}
+
+function showPicker() {
+    document.getElementById('rbsPickerSearch').value = '';
+    document.getElementById('rbsPickerManual').value = '';
+    filterPickerList();
+    var modal = document.getElementById('rbsPickerModal');
+    modal.style.display = 'flex';
+}
+
+function closePicker() {
+    document.getElementById('rbsPickerModal').style.display = 'none';
+    _rbsPickerTarget = null;
+}
+
+function filterPickerList() {
+    var q = (document.getElementById('rbsPickerSearch').value || '').trim().toLowerCase();
+    var available = _rbsPlayers.filter(function (p) {
+        if (rbsIdAssignedToSlot(p.id)) return false;
+        if (!q) return true;
+        return (p.full_name || '').toLowerCase().indexOf(q) !== -1;
+    });
+    var html = available.length ? available.map(function(p) {
+        return '<div style="display:flex;align-items:center;gap:8px;padding:9px 10px;cursor:pointer;border-radius:8px;margin-bottom:4px;border:1px solid #f0f0f0;" onclick="pickPlayer(\'' + p.id + '\')" onmouseover="this.style.background=\'#e8f5e9\'" onmouseout="this.style.background=\'\';">'
+            + playerImgDiv(p, 30)
+            + '<div><div style="font-size:12px;font-weight:700;">' + escHtml(p.full_name) + '</div><div style="font-size:10px;color:#888;">' + escHtml(p.club_name || '—') + '</div></div>'
+            + '</div>';
+    }).join('') : '<div style="text-align:center;padding:20px;color:#888;font-size:13px;">No available players.</div>';
+    document.getElementById('rbsPickerList').innerHTML = html;
+}
+
+function pickPlayer(playerId) {
+    closePicker();
+    if (!_rbsPickerTarget) return;
+    assignPlayerToTarget(playerId, null);
+}
+
+function onManualEntry(e) {
+    if (e.key !== 'Enter') return;
+    var name = document.getElementById('rbsPickerManual').value.trim();
+    if (!name || !_rbsPickerTarget) return;
+    closePicker();
+    assignPlayerToTarget(null, name);
+}
+
+function assignPlayerToTarget(playerId, manualName) {
+    if (!_rbsPickerTarget) return;
+    var t = _rbsPickerTarget;
+    _rbsSlots.forEach(function (s) {
+        if (s.round === t.round && s.match === t.match && s.slot === t.slot) {
+            if (playerId) {
+                s.playerId = playerId;
+                s.manualName = null;
+            } else {
+                s.playerId = null;
+                s.manualName = manualName;
+            }
+        }
+    });
+    renderBracketSlots();
+    _rbsPickerTarget = null;
+}
+
+// ── Bracket size selector ──────────────────────────────────────────────────
+
+// Map bracket sizes to human-readable descriptions
+var RBS_SIZE_INFO = {
+    4   : { title: '4-Player Bracket',   desc: 'Round 1 (2 matches) → Final. All 4 players compete in Round 1.' },
+    8   : { title: '8-Player Bracket',   desc: 'Round 1 (4 matches) → Semi-final (2 matches) → Final.' },
+    16  : { title: '16-Player Bracket',  desc: 'Round 1 (8) → Quarter-final (4) → Semi-final (2) → Final.' },
+    32  : { title: '32-Player Bracket',  desc: 'Round 1 (16) → Round 2 (8) → QF (4) → SF (2) → Final.' },
+    64  : { title: '64-Player Bracket',  desc: 'Round of 64 → Round of 32 → QF → SF → Final.' },
+    128 : { title: '128-Player Bracket', desc: 'Round of 128 → Round of 64 → Round of 32 → QF → SF → Final.' }
+};
+
+function onFormatChange() {
+    var fmt = document.getElementById('rbsFormatSelect').value;
+    var sizeWrap   = document.getElementById('rbsSizeLabelWrap');
+    var rrSizeWrap = document.getElementById('rbsRRSizeLabelWrap');
+    // Knockout shows bracket-size selector; Round Robin shows group-size selector
+    if (sizeWrap)   sizeWrap.style.display   = fmt === 'knockout' ? '' : 'none';
+    if (rrSizeWrap) rrSizeWrap.style.display = fmt === 'league'   ? '' : 'none';
+    // Update button label and banner visibility based on format
+    var genBtn = document.getElementById('rbsGenerateBtn');
+    if (fmt === 'league') {
+        var infoBanner = document.getElementById('rbsSizeInfoBanner');
+        if (infoBanner) infoBanner.style.display = 'none';
+        var mismatch = document.getElementById('rbsMismatchBanner');
+        if (mismatch) mismatch.style.display = 'none';
+        if (genBtn) genBtn.textContent = _rbsMatches.length ? 'Regenerate Schedule' : 'Generate Schedule';
+    } else {
+        if (genBtn && genBtn.textContent === 'Generate Schedule' || genBtn && genBtn.textContent === 'Regenerate Schedule') {
+            genBtn.textContent = _rbsMatches.length ? 'Regenerate Bracket' : 'Generate Bracket';
+        }
+    }
+    renderBracketSlots();
+}
+
+function onRRSizeChange() {
+    var sizeVal = document.getElementById('rbsRRSizeSelect').value;
+    var infoBanner = document.getElementById('rbsSizeInfoBanner');
+    if (infoBanner) infoBanner.style.display = 'none';
+    var catId = document.getElementById('rbsCategorySelect').value;
+    if (!catId) return;
+    // Update the "no schedule yet" prompt with the new expected match count
+    if (!_rbsMatches.length) renderBracketSlots();
+}
+
+function onSizeChange() {
+    var sizeVal = document.getElementById('rbsSizeSelect').value;
+    var infoBanner  = document.getElementById('rbsSizeInfoBanner');
+    var infoTitle   = document.getElementById('rbsSizeInfoTitle');
+    var infoBody    = document.getElementById('rbsSizeInfoBody');
+
+    if (sizeVal === 'auto') {
+        if (infoBanner) infoBanner.style.display = 'none';
+        // If category already loaded, show existing bracket or generate prompt
+        return;
+    }
+
+    var size = parseInt(sizeVal, 10);
+    var info = RBS_SIZE_INFO[size];
+    if (infoBanner && info) {
+        infoTitle.textContent = info.title;
+        infoBody.textContent  = info.desc
+            + '  (' + (size / 2) + ' first-round match' + (size / 2 > 1 ? 'es' : '') + ', '
+            + _rbsPlayers.length + ' players registered)';
+        infoBanner.style.display = 'block';
+    }
+
+    // If a category is already selected, preview the bracket immediately
+    var catId = document.getElementById('rbsCategorySelect').value;
+    if (catId) {
+        previewLocalBracket(size);
+    }
+}
+
+/**
+ * Generate a local bracket structure immediately — no DB call needed.
+ * Creates _rbsSlots with matchId = null (unsaved).
+ * Players are auto-seeded into first-round slots.
+ */
+function previewLocalBracket(size) {
+    var totalRounds = Math.round(Math.log2(size));
+    _rbsSlots   = [];
+    _rbsMatches = [];  // no DB records backing these slots yet
+
+    for (var ri = 0; ri < totalRounds; ri++) {
+        var roundNum   = ri + 1;
+        var matchCount = Math.round(size / Math.pow(2, ri + 1));
+        for (var m = 1; m <= matchCount; m++) {
+            _rbsSlots.push({ round: roundNum, match: m, slot: 1, playerId: null, matchId: null, manualName: null });
+            _rbsSlots.push({ round: roundNum, match: m, slot: 2, playerId: null, matchId: null, manualName: null });
+        }
+    }
+
+    renderBracketSlots();
+    rbsCheckSlotMismatch();
+
+    // Auto-seed approved players into Round 1 slots
+    var approved = _rbsPlayers.filter(function(p) { return p.reg_status === 'approved'; });
+    if (approved.length) { autoSeedInto(approved); }
+
+    // Update button labels
+    document.getElementById('rbsGenerateBtn').textContent = 'Confirm & Save Bracket';
+    document.getElementById('rbsGenerateBtn').disabled    = false;
+
+    showStatus(
+        'Bracket preview ready: ' + size + ' slots across ' + totalRounds + ' round(s). '
+        + 'Assign players, then click “Confirm & Save Bracket” to publish.',
+        'info'
+    );
+}
+
+/** Seed a specific list of players into empty first-round slots */
+function autoSeedInto(players) {
+    // Shuffle
+    var list = players.slice();
+    for (var i = list.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var t = list[i]; list[i] = list[j]; list[j] = t;
+    }
+    // Only fill round-1 slots (round = 1, matchId = null or real)
+    var r1Empty = _rbsSlots.filter(function(s) {
+        return s.round === 1 && !s.playerId && !(s.manualName && s.manualName.trim());
+    });
+    var placed = 0;
+    for (var k = 0; k < r1Empty.length && k < list.length; k++) {
+        r1Empty[k].playerId  = list[k].id;
+        r1Empty[k].manualName = null;
+        placed++;
+    }
+    if (placed) renderBracketSlots();
+}
+
+/** Wrapper called by "Generate Bracket" / "Confirm & Save Bracket" button */
+async function onGenerateClick() {
+    var sizeVal = document.getElementById('rbsSizeSelect').value;
+    var format  = document.getElementById('rbsFormatSelect').value;
+
+    if (format === 'league') {
+        // Round Robin: generate locally from _rbsPlayers (avoids RPC category-column mismatch)
+        await generateRRScheduleLocally();
+        return;
+    }
+
+    if (sizeVal === 'auto') {
+        // Auto mode: use RPC to determine bracket size from approved players
+        await generateBracket();
+        return;
+    }
+
+    // Specific size selected: preview already shown, now save to DB
+    var catId = document.getElementById('rbsCategorySelect').value;
+    var tid   = document.getElementById('rbsTournamentSelect').value;
+    if (!catId) { showStatus('Select a category first.', 'error'); return; }
+    if (!tid)   { showStatus('Select a tournament first.', 'error'); return; }
+
+    // Any slots without matchId = client-side only (need INSERT)
+    var hasLocalSlots = _rbsSlots.some(function(s) { return !s.matchId; });
+    if (hasLocalSlots) {
+        if (_rbsMatches.length > 0) {
+            if (!confirm('This will replace the existing bracket with the new ' + sizeVal + '-player structure. Continue?')) return;
+        }
+        await saveLocalBracketToDb(rbsSb(), catId, tid);
+    } else {
+        // All slots backed by DB records — just save assignments
+        await saveBracket();
+    }
+}
+
+// ── Auto Seed ──
+function autoSeed() {
+    if (!_rbsSlots.length) { showStatus('Generate bracket structure first.', 'error'); return; }
+    var empty = _rbsSlots.filter(function (s) { return !s.playerId && !(s.manualName && String(s.manualName).trim()); });
+    var unassigned = _rbsPlayers.filter(function (p) {
+        return !rbsIdAssignedToSlot(p.id);
+    });
+    // Shuffle unassigned
+    for (var i = unassigned.length - 1; i > 0; i--) {
+        var j = Math.floor(Math.random() * (i + 1));
+        var tmp = unassigned[i]; unassigned[i] = unassigned[j]; unassigned[j] = tmp;
+    }
+    var placed = 0;
+    for (var k = 0; k < empty.length && k < unassigned.length; k++) {
+        empty[k].playerId = unassigned[k].id;
+        empty[k].manualName = null;
+        placed++;
+    }
+    renderBracketSlots();
+    showStatus(placed + ' players seeded automatically.', 'success');
+}
+
+// ── Generate bracket structure ──
+// ── Round Robin: client-side generation (bypasses RPC, uses already-loaded _rbsPlayers) ──
+async function generateRRScheduleLocally() {
+    var catId = document.getElementById('rbsCategorySelect').value;
+    var tid   = document.getElementById('rbsTournamentSelect').value;
+    if (!catId) { showStatus('Select a category first.', 'error'); return; }
+    if (!tid)   { showStatus('Select a tournament first.', 'error'); return; }
+
+    var allApproved = _rbsPlayers.filter(function(p) { return p.reg_status === 'approved'; });
+    var rrSizeEl = document.getElementById('rbsRRSizeSelect');
+    var rrSizeVal = rrSizeEl ? rrSizeEl.value : 'auto';
+    var approved = allApproved;
+    if (rrSizeVal !== 'auto') {
+        var groupSize = parseInt(rrSizeVal, 10);
+        if (allApproved.length > groupSize) {
+            if (!confirm(allApproved.length + ' approved players found but group size is set to ' + groupSize + '.\n\nOnly the first ' + groupSize + ' registered players will be included.\n\nContinue?')) return;
+            approved = allApproved.slice(0, groupSize);
+        }
+    }
+    var n = approved.length;
+
+    if (n < 2) {
+        showStatus('At least 2 approved players are required to generate a Round Robin schedule.', 'error');
+        return;
+    }
+    if (n > 10 && rrSizeVal === 'auto') {
+        if (!confirm(n + ' approved players found. Round Robin works best with 4-10 players. Continue anyway?')) return;
+    }
+    if (_rbsMatches.length > 0) {
+        if (!confirm('A schedule already exists (' + _rbsMatches.length + ' match' + (_rbsMatches.length > 1 ? 'es' : '') + ').\n\nRegenerating will delete all existing matches and results.\n\nContinue?')) return;
+    }
+
+    // Generate all unique pairings: n*(n-1)/2
+    var pairs = [];
+    var pos = 0;
+    for (var i = 0; i < n - 1; i++) {
+        for (var j = i + 1; j < n; j++) {
+            pos++;
+            pairs.push({
+                red_player_id : approved[i].id,
+                blue_player_id: approved[j].id,
+                match_number  : pos
+            });
+        }
+    }
+
+    var sb = rbsSb();
+    var genBtn = document.getElementById('rbsGenerateBtn');
+    showStatus('Generating schedule...', 'info');
+    if (genBtn) genBtn.disabled = true;
+
+    var inserted = 0;
+    var saved = false;
+
+    // Path A: Try the canonical RPC referee_plus_generate_league_round_robin
+    // This is the proper SECURITY DEFINER function that handles ALL approved
+    // registrations (including ones using tournament_category_id) and inserts
+    // every n*(n-1)/2 pairing automatically. Run phase16_rr_save_rpc.sql to install.
+    try {
+        var rpc1 = await sb.rpc('referee_plus_generate_league_round_robin', {
+            p_category_id: catId
+        });
+        if (!rpc1.error && rpc1.data && rpc1.data.ok !== false) {
+            inserted = (rpc1.data && rpc1.data.matches_created) ? rpc1.data.matches_created : pairs.length;
+            saved = true;
+            console.log('[RBS] RR generated via canonical RPC:', rpc1.data);
+        } else if (rpc1.error) {
+            console.warn('[RBS] canonical RR RPC failed:', rpc1.error.message || rpc1.error);
+        }
+    } catch (e) {
+        console.warn('[RBS] canonical RR RPC exception:', e);
+    }
+
+    // Path B: Try the bracket_rr_save_matches fallback RPC (also from phase16 SQL)
+    if (!saved) {
+        try {
+            var rpc2 = await sb.rpc('bracket_rr_save_matches', {
+                p_tournament_id: tid,
+                p_category_id  : catId,
+                p_pairs        : pairs
+            });
+            if (!rpc2.error && rpc2.data && rpc2.data.ok !== false) {
+                inserted = (rpc2.data && rpc2.data.inserted) ? rpc2.data.inserted : pairs.length;
+                saved = true;
+                console.log('[RBS] RR generated via bracket_rr_save_matches:', rpc2.data);
+            } else if (rpc2.error) {
+                console.warn('[RBS] bracket_rr_save_matches RPC failed:', rpc2.error.message || rpc2.error);
+            }
+        } catch (e) {
+            console.warn('[RBS] bracket_rr_save_matches RPC exception:', e);
+        }
+    }
+
+    // Path B: Direct DELETE + INSERT fallback (works if phase14 RLS policies are in place)
+    if (!saved) {
+        var del = await sb.from('tournament_matches')
+            .delete()
+            .eq('category_id',  catId)
+            .eq('tournament_id', tid);
+        if (del.error) {
+            console.error('[RBS] direct DELETE failed:', del.error);
+            if (genBtn) genBtn.disabled = false;
+            var hint = del.error.message || del.error.code || 'permission denied';
+            showStatus('Could not clear the existing schedule (' + hint + '). Please contact SKF technical support.', 'error');
+            return;
+        }
+        var records = pairs.map(function(p) {
+            return {
+                tournament_id   : tid,
+                category_id     : catId,
+                round_number    : 1,
+                bracket_position: p.match_number,
+                red_user_id     : p.red_player_id,
+                blue_user_id    : p.blue_player_id,
+                status          : 'scheduled'
+            };
+        });
+        var ins = await sb.from('tournament_matches').insert(records).select();
+        if (ins.error) {
+            console.error('[RBS] direct INSERT failed:', ins.error);
+            if (genBtn) genBtn.disabled = false;
+            var hint2 = ins.error.message || ins.error.code || 'permission denied';
+            showStatus('Could not save the new schedule (' + hint2 + '). Please contact SKF technical support.', 'error');
+            return;
+        }
+        inserted = (ins.data || []).length || pairs.length;
+    }
+
+    if (genBtn) { genBtn.disabled = false; genBtn.textContent = 'Regenerate Schedule'; }
+    showStatus(
+        'Round Robin schedule generated. ' + inserted + ' match' + (inserted !== 1 ? 'es' : '') + ' created. '
+        + 'Players can now see their upcoming matches.',
+        'success'
+    );
+    await loadExistingMatches(catId);
+    rbsNavigateToMatchControlSoon();
+}
+
+async function generateBracket() {
+    var catId = document.getElementById('rbsCategorySelect').value;
+    var format = document.getElementById('rbsFormatSelect').value;
+    var sb = rbsSb();
+    if (!catId) { showStatus('Select a category first.', 'error'); return; }
+
+    // If a bracket already exists, confirm regeneration
+    if (_rbsMatches.length > 0) {
+        var totalPlayers = _rbsPlayers.length;
+        var formatWord = format === 'league' ? 'schedule' : 'bracket';
+        var msg = 'A ' + formatWord + ' already exists for this category ('
+            + _rbsMatches.length + ' match' + (_rbsMatches.length > 1 ? 'es' : '') + ').\n\n'
+            + 'Regenerating will rebuild it for all ' + totalPlayers + ' approved players '
+            + 'and clear current results.\n\nContinue?';
+        if (!confirm(msg)) return;
+    }
+
+    showStatus('Generating bracket…', 'info');
+    document.getElementById('rbsGenerateBtn').disabled = true;
+    try {
+        var fn = format === 'league' ? 'referee_plus_generate_league_round_robin' : 'referee_plus_generate_knockout_bracket';
+        var res = await sb.rpc(fn, { p_category_id: catId });
+        if (res.error) {
+            console.error('[RBS] RPC', res.error);
+            showStatus('Could not generate the bracket. Make sure all players are approved and you have Referee Plus access.', 'error');
+            document.getElementById('rbsGenerateBtn').disabled = false;
+            return;
+        }
+        var genBtn2 = document.getElementById('rbsGenerateBtn');
+        if (format === 'league') {
+            showStatus('Round Robin schedule generated! All matchups are now live.', 'success');
+            if (genBtn2) genBtn2.textContent = 'Regenerate Schedule';
+        } else {
+            showStatus('Bracket generated! Loading matches...', 'success');
+        }
+        await loadExistingMatches(catId);
+        rbsNavigateToMatchControlSoon();
+    } catch(e) {
+        console.error(e);
+        showStatus('Something went wrong. Please try again.', 'error');
+        document.getElementById('rbsGenerateBtn').disabled = false;
+    }
+}
+
+// ── Clear all slots ──
+function clearAllSlots() {
+    if (!confirm('Remove all player assignments from slots?')) return;
+    _rbsSlots.forEach(function(s){ s.playerId = null; s.manualName = null; });
+    renderBracketSlots();
+}
+
+// ── Save bracket (update player assignments to DB) ──
+async function saveBracket() {
+    var sb    = rbsSb();
+    var catId = document.getElementById('rbsCategorySelect').value;
+    var tid   = document.getElementById('rbsTournamentSelect').value;
+    if (!_rbsSlots.length) { showStatus('Nothing to save.', 'error'); return; }
+    if (!catId) { showStatus('Select a category first.', 'error'); return; }
+    if (!tid)   { showStatus('Select a tournament first.', 'error'); return; }
+    showStatus('Saving…', 'info');
+
+    var hasLocalSlots = _rbsSlots.some(function(s) { return !s.matchId; });
+    if (hasLocalSlots) {
+        await saveLocalBracketToDb(sb, catId, tid);
+    } else {
+        await updateExistingMatches(sb);
+    }
+}
+
+// Update player assignments on matches that already exist in the DB
+async function updateExistingMatches(sb) {
+    var matchMap = {};
+    _rbsSlots.forEach(function(s) {
+        if (!matchMap[s.matchId]) matchMap[s.matchId] = {};
+        if (s.slot === 1) matchMap[s.matchId].red_user_id  = s.playerId;
+        else               matchMap[s.matchId].blue_user_id = s.playerId;
+    });
+    var errors = [];
+    var ids = Object.keys(matchMap);
+    for (var i = 0; i < ids.length; i++) {
+        var mid = ids[i];
+        var upd = {};
+        if ('red_user_id'  in matchMap[mid]) upd.red_user_id  = matchMap[mid].red_user_id;
+        if ('blue_user_id' in matchMap[mid]) upd.blue_user_id = matchMap[mid].blue_user_id;
+        if (!Object.keys(upd).length) continue;
+        var r = await sb.from('tournament_matches').update(upd).eq('id', mid);
+        if (r.error) errors.push(r.error.message);
+    }
+    if (errors.length) {
+        console.error('[RBS] updateExistingMatches', errors);
+        showStatus('Some match assignments could not be saved. Please try again.', 'error');
+        return;
+    }
+    showStatus(
+        'Bracket saved. All assigned players can now see their upcoming match in their dashboard.',
+        'success'
+    );
+    var catId = document.getElementById('rbsCategorySelect').value;
+    await loadExistingMatches(catId);
+}
+
+/**
+ * Create brand-new match records in DB for a locally-previewed bracket,
+ * then assign the players. Used when no DB matches exist yet (matchId = null).
+ */
+async function saveLocalBracketToDb(sb, catId, tid) {
+    // Build one record per unique (round, match) pair
+    var matchMap = {};
+    _rbsSlots.forEach(function(s) {
+        var key = s.round + '_' + s.match;
+        if (!matchMap[key]) matchMap[key] = { round: s.round, pos: s.match, red: null, blue: null };
+        if (s.slot === 1) matchMap[key].red  = s.playerId  || null;
+        else               matchMap[key].blue = s.playerId  || null;
+    });
+
+    var records = Object.keys(matchMap).map(function(k) {
+        var m = matchMap[k];
+        return {
+            tournament_id   : tid,
+            category_id     : catId,
+            round_number    : m.round,
+            bracket_position: m.pos,
+            red_user_id     : m.red,
+            blue_user_id    : m.blue,
+            status          : 'scheduled'
+        };
+    });
+
+    // Remove any old matches for this category first
+    var del = await sb.from('tournament_matches')
+        .delete()
+        .eq('category_id', catId)
+        .eq('tournament_id', tid);
+    if (del.error) {
+        console.error('[RBS] delete old matches', del.error);
+        showStatus('Could not clear old bracket. Please try again.', 'error');
+        return;
+    }
+
+    // Insert the new bracket
+    var ins = await sb.from('tournament_matches').insert(records).select();
+    if (ins.error) {
+        console.error('[RBS] insert matches', ins.error);
+        showStatus('Could not create bracket matches. Please try again.', 'error');
+        return;
+    }
+
+    showStatus(
+        'Bracket published! '
+        + records.length + ' matches created. '
+        + 'Players can now see their upcoming matches in their dashboard.',
+        'success'
+    );
+
+    // Reload so slots get real DB match IDs
+    await loadExistingMatches(catId);
+    rbsNavigateToMatchControlSoon();
+}
+
+
+function viewBracket() { window.location.href = 'referee-bracket.html'; }
+
+// ── Menu ──
+document.addEventListener('DOMContentLoaded', function() {
+    var mt = document.getElementById('menuToggle');
+    var nav = document.getElementById('dashboardNav');
+    if (mt && nav) mt.addEventListener('click', function() { this.classList.toggle('active'); nav.classList.toggle('active'); });
+
+    // Close picker on backdrop click
+    document.getElementById('rbsPickerModal').addEventListener('click', function(e) {
+        if (e.target === this) closePicker();
+    });
+
+    if (typeof SKFRoleLayout !== 'undefined' && !SKFRoleLayout.initRefereePage('bracket-setup')) return;
+    try {
+        var user = JSON.parse(localStorage.getItem('user') || '{}');
+        var nr = (typeof SKFRoleLayout !== 'undefined') ? SKFRoleLayout.normalizeRole(user.role) : '';
+        _rbsRefRole = nr;
+        _rbsRole = nr;
+        var el = document.getElementById('userDisplay');
+        if (el) {
+            var who = user.fullName || user.email || 'Referee';
+            el.textContent = 'Welcome, ' + who + (nr === 'referees_plus' ? ' (Referee+)' : ' (Referee)');
+        }
+        _rbsRefUserId = user.id || user.userId || null;
+        loadTournaments().catch(function (e) { console.error(e); showStatus("Failed to load tournaments.", "error"); });
+    } catch (e) {
+        window.location.href = 'index.html';
+    }
+});
+</script>
+</body>
+</html>

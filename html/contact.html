@@ -153,13 +153,16 @@
         }
         
         /* Contact sections layout */
-        .contact-content.centered {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 50px;
-}
+        .contact-content {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            justify-content: center;
+            align-items: flex-start;
+            margin-bottom: 50px;
+        }
 
-.contact-info {
+        .contact-info {
     width: 500px;
     max-width: 100%;
     background-color: white;
@@ -459,98 +462,6 @@
                 min-width: 100%;
             }
         }
-        HHHHHHH
-N 
-.form-section {
-  display: flex;
-  justify-content: center;
-  margin-top: 40px;
-}
-
-.form-wrapper {
-  text-align: center;
-}
-
-.filters {
-  display: flex;
-  justify-content: center;
-  gap: 20px;
-  margin-top: 20px;
-}
-
-.filter-box select {
-  padding: 10px;
-  border-radius: 8px;
-  border: none;
-  background-color: #85c49e;
-  color: white;
-  font-weight: bold;
-  transition: transform 0.3s ease;
-}
-
-.filter-box select:hover {
-  transform: scale(1.05);
-}
-.filter-box {
-  display: inline-block;
-  background: linear-gradient(to right, #76b17c, #97d5a3);
-  border-radius: 10px;
-  padding: 15px 20px;
-  margin: 15px;
-  box-shadow: 0 0 10px rgba(0, 128, 0, 0.3);
-  animation: pulse 3s infinite;
-  transition: all 0.3s ease-in-out;
-}
-
-.filter-box label {
-  font-weight: bold;
-  color: white;
-  margin-right: 8px;
-  font-size: 16px;
-}
-
-.filter-box select {
-  padding: 8px 12px;
-  border-radius: 5px;
-  border: none;
-  font-size: 15px;
-  background: white;
-}
-.photo-gallery {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 25px;
-  margin-top: 40px;
-  padding: 0 20px;
-}
-
-.photo-card {
-  width: 300px;
-  height: 220px;
-  background-color: #e6e6e6;
-  border: 2px dashed #999;
-  border-radius: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  color: #666;
-  text-align: center;
-  transition: transform 0.3s ease-in-out;
-}
-
-.photo-card:hover {
-  transform: scale(1.03);
-  box-shadow: 0 0 12px rgba(0, 128, 0, 0.2);
-}
-
-/* Animation */
-@keyframes pulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.03); }
-  100% { transform: scale(1); }
-}
     </style>
 </head>
 <body>
@@ -566,72 +477,152 @@ N
         <nav class="nav-menu">
             <a href="land.html" class="nav-item">HOME</a>
             <a href="about.html" class="nav-item">ABOUT US</a>
-            <a href="media-center.html" class="nav-item">MEDIA CENTER</a>
             <a href="registration.html" class="nav-item">REGISTER</a>
             <a href="skf-staff-register.html" class="nav-item" title="SKF Administrator &amp; Referees+">SKF STAFF</a>
             <a href="contact.html" class="nav-item">CONTACT US</a>
         </nav>
         
-        
         <!-- Login Button -->
         <a href="index.html" class="login-btn">LOGIN</a>
     </header>
- <!-- Added substantial spacing div to push content down -->
-<div style="height: 120px;"></div>
+    
+    <div class="container">
+        <!-- Page Title -->
+        <h1 class="page-title">اتصل بنا</h1>
+        
+        <!-- Contact Content -->
+        <div class="contact-content">
+            <!-- Contact Information -->
+            <div class="contact-info">
+                <h2 class="info-title">معلومات التواصل</h2>
+                
+                <!-- Email -->
+                <div class="info-item">
+                    <div class="info-icon email"></div>
+                    <div class="info-text">
+                        <div class="info-label">البريد الإلكتروني</div>
+                        <div class="info-value">yosef.h.naytah@gmail.com</div>
+                    </div>
+                </div>
+                
+                <!-- Phone -->
+                <div class="info-item">
+                    <div class="info-icon phone"></div>
+                    <div class="info-text">
+                        <div class="info-label">رقم الهاتف</div>
+                        <div class="info-value">+966540766673</div>
+                    </div>
+                </div>
+                
+                <!-- Location -->
+                <div class="info-item">
+                    <div class="info-icon location"></div>
+                    <div class="info-text">
+                        <div class="info-label">العنوان</div>
+                        <div class="info-value">الرياض - السعودية</div>
+                    </div>
+                </div>
+                
+                <!-- Team Information (for assignment requirement) -->
+                <div class="team-info">
+                    <h3 class="team-title">فريق التطوير</h3>
+                    <div class="team-member">
+                        <strong>الاسم:</strong> 1-Yosef Naytah 2-AHMED JAMAL
+                    </div>
+                    <div class="team-member">
+                        <strong>الرقم الجامعي:</strong> 1-2143380  2-2141928
+                    </div>
+                    <div class="team-member">
+                        <strong>البريد الإلكتروني:</strong> yosef.h.naytah@gmail.com - aahmedjamalallail@stu.kau.edu.sa
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact Form -->
+            <div class="contact-form">
+                <h2 class="form-title">أرسل لنا رسالة</h2>
+                <form id="contactForm">
+                    <div class="form-group">
+                        <label class="form-label" for="cf_name">الاسم</label>
+                        <input class="form-input" type="text" id="cf_name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="cf_email">البريد الإلكتروني</label>
+                        <input class="form-input" type="email" id="cf_email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="cf_message">الرسالة</label>
+                        <textarea class="form-input form-textarea" id="cf_message" name="message" required></textarea>
+                    </div>
+                    <button type="submit" class="submit-btn">إرسال</button>
+                </form>
+            </div>
+        </div>
 
- <!-- Added spacing div to push content down a bit -->
-<div style="height: 80px;"></div>
+        <!-- Map Section -->
+        <div class="map-section">
+            <h2 class="map-title">موقعنا</h2>
+            <div style="text-align: center; margin-top: 30px;">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m14!1m8!1m3!1d3610.2807677068727!2d46.64308086623305!3d24.76754022256858!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3e2f1b96c96ed3e9%3A0xff2b38d642d3a1d7!2z2KfZhNin2KrYrdin2K8g2KfZhNiz2LnZiNiv2Yog2YTZhNix2YrYp9i22Kkg2YTZhNis2YXZiti5!5e0!3m2!1sar!2ssa!4v1744711103248!5m2!1sar!2ssa"
+                  width="100%"
+                  height="400"
+                  style="border:0; border-radius: 12px;"
+                  allowfullscreen=""
+                  loading="lazy"
+                  referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+                <div class="map-button-wrapper" style="text-align: center; margin-top: 20px;">
+                    <a href="https://www.google.com/maps/place/الاتحاد+السعودي+للرياضة+للجميع/@24.7675412,46.6430861,17z" 
+                       target="_blank" 
+                       rel="noopener noreferrer"
+                       class="map-button">
+                       افتح الموقع على الخريطة
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<!-- Filter Section -->
-<section class="form-section" style="text-align: center;">
-    <h2 style="text-align: center;">View Photos by Year or Competition</h2>
-  
-    <div style="display: flex; justify-content: center; gap: 20px; margin-top: 20px;">
-      <div class="filter-box">
-        <label for="year">Year:</label>
-        <select id="year">
-          <option value="all">All</option>
-          <option value="2024">2024</option>
-          <option value="2025">2025</option>
-        </select>
-      </div>
-  
-      <div class="filter-box">
-        <label for="competition">Competition Name:</label>
-        <select id="competition">
-          <option value="all">All</option>
-          <option value="2024">بطولة الدوري 2024</option>
-          <option value="كأس الوزير">كأس الوزير</option>
-        </select>
-      </div>
-    </div>
-  </section>
-  
-  <!-- Photo Gallery Placeholder Section -->
-  <section class="photo-gallery">
-    <div class="photo-card">
-      <p>No images uploaded yet</p>
-    </div>
-    <div class="photo-card">
-      <p>No images uploaded yet</p>
-    </div>
-    <div class="photo-card">
-      <p>No images uploaded yet</p>
-    </div>
-  </section>
-  
-  <!-- Photo Gallery Placeholder Section -->
-  <section class="photo-gallery">
-    <div class="photo-card">
-      <p>No images uploaded yet</p>
-    </div>
-    <div class="photo-card">
-      <p>No images uploaded yet</p>
-    </div>
-    <div class="photo-card">
-      <p>No images uploaded yet</p>
-    </div>
-  </section>
-
+    <footer class="footer">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3 class="footer-title">الاتحاد السعودي للكاراتيه</h3>
+                <p>تعزيز التميز في الكاراتيه في جميع أنحاء المملكة العربية السعودية</p>
+                <div class="social-icons">
+                    <a href="https://www.youtube.com/@skf2034" target="_blank" class="social-icon">YT</a>
+                    <a href="https://x.com/skf2034" target="_blank" class="social-icon">X</a>
+                    <a href="https://www.instagram.com/skf2034" target="_blank" class="social-icon">IG</a>
+                    <a href="https://www.snapchat.com/add/skf2034" target="_blank" class="social-icon">SN</a>
+                </div>
+            </div>
+            
+            <div class="footer-section">
+                <h3 class="footer-title">روابط سريعة</h3>
+                <ul>
+                    <li><a href="land.html">الرئيسية</a></li>
+                    <li><a href="about.html">عن الاتحاد</a></li>
+                    <li><a href="registration.html">التسجيل</a></li>
+                    <li><a href="contact.html">اتصل بنا</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="copyright">
+            © 2025 الاتحاد السعودي للكاراتيه - جميع الحقوق محفوظة
+        </div>
+    </footer>
+    
+    <script>
+        (function () {
+            var f = document.getElementById('contactForm');
+            if (!f) return;
+            f.addEventListener('submit', function (event) {
+                event.preventDefault();
+                alert('تم إرسال رسالتك بنجاح. سوف نتواصل معك قريباً.');
+                f.reset();
+            });
+        })();
+    </script>
 </body>
 </html>

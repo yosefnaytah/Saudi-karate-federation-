@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Member sign-in — SKF</title>
+    <link rel="stylesheet" href="SKF.CSS">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js?v=20260411d" defer></script>
+    <style>
+        #loginError {
+            display: none;
+            background: #ffeaea;
+            color: #c0392b;
+            border: 1px solid #f5c6cb;
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            font-size: 13px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Member sign-in</h2>
+        <p id="memberLoginIntro" style="font-size:13px;color:#555;margin:0 0 14px;text-align:center;line-height:1.45;"></p>
+        <div id="loginError"></div>
+        <form onsubmit="return handleLogin(event)">
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" autocomplete="username" required>
+            <label for="password" style="display:block;margin-top:10px;">Password</label>
+            <input type="password" id="password" name="password" autocomplete="current-password" required>
+            <button type="submit" style="margin-top:14px;">Sign in</button>
+        </form>
+        <a href="registration.html" class="btn-skf-staff-register" style="margin-top:14px;display:inline-block;">Choose your registration path</a>
+        <p style="font-size:12px;color:#666;margin:10px 0 0;text-align:center;">
+            <a href="skf-admin-login.html">Federation staff sign-in</a>
+        </p>
+        <div class="login-links">
+            <a href="registration.html" class="create-account">Create a new account</a>
+        </div>
+        <p id="skfAuthBuild" style="font-size:11px;color:#2e7d32;margin-top:16px;text-align:center;font-family:system-ui,sans-serif;"></p>
+    </div>
+    <!-- Panels expected by initAuthModeUI when SKF_AUTH_MODE is password (optional; keeps intro text in sync) -->
+    <div id="loginEmailCodePanel" style="display:none;"></div>
+    <div id="loginPasswordPanel" style="display:none;"></div>
+</body>
+</html>

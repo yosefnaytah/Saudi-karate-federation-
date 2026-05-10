@@ -88,6 +88,8 @@
         .nav-menu {
             display: flex;
             gap: 30px;
+            position: relative;
+            z-index: 2;
         }
         
         .nav-item {
@@ -129,6 +131,8 @@
             text-decoration: none;
             transition: all 0.3s ease;
             box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 2;
         }
         
         .login-btn:hover {
@@ -273,9 +277,12 @@
         }
         
         .feature-icon {
-            font-size: 40px;
-            margin-bottom: 20px;
-            color: #2e8b57;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            margin: 0 auto 20px;
+            background: rgba(46, 139, 87, 0.15);
+            border: 2px solid rgba(46, 139, 87, 0.35);
         }
         
         .feature-card h3 {
@@ -471,7 +478,6 @@
         <!-- Navigation Menu - Simplified -->
         <nav class="nav-menu">
             <a href="about.html" class="nav-item">ABOUT US</a>
-            <a href="media-center.html" class="nav-item">MEDIA CENTER</a>
             <a href="registration.html" class="nav-item">REGISTER</a>
             <a href="contact.html" class="nav-item">CONTACT US</a>
         </nav>
@@ -497,21 +503,21 @@
         <h2 class="section-title">خدماتنا</h2>
         <div class="features-container">
             <div class="feature-card">
-                <div class="feature-icon">🏆</div>
+                <div class="feature-icon" aria-hidden="true"></div>
                 <h3>البطولات</h3>
                 <p>تسجيل وإدارة البطولات على مستوى المملكة</p>
                 <a href="#" class="btn btn-primary">المزيد</a>
             </div>
             
             <div class="feature-card">
-                <div class="feature-icon">🥋</div>
+                <div class="feature-icon" aria-hidden="true"></div>
                 <h3>اختبارات الأحزمة</h3>
                 <p>تنظيم وإدارة اختبارات ترقية الأحزمة</p>
                 <a href="#" class="btn btn-primary">المزيد</a>
             </div>
             
             <div class="feature-card">
-                <div class="feature-icon">👨‍🏫</div>
+                <div class="feature-icon" aria-hidden="true"></div>
                 <h3>تدريب الحكام</h3>
                 <p>برامج تدريب وتأهيل الحكام والمدربين</p>
                 <a href="#" class="btn btn-primary">المزيد</a>
@@ -555,8 +561,6 @@
 
 <!-- Footer -->
 <footer class="footer">
-    <!-- Footer -->
-    <footer class="footer">
         <div class="footer-content">
             <div class="footer-section">
                 <div class="footer-logo">الاتحاد السعودي للكاراتيه</div>
@@ -574,8 +578,7 @@
                 <ul class="footer-links">
                     <li><a href="land.html">الرئيسية</a></li>
                     <li><a href="about.html">عن الاتحاد</a></li>
-                    <li><a href="#">البطولات</a></li>
-                    <li><a href="media-center.html">المركز الإعلامي</a></li>
+                    <li><a href="tournament.html">البطولات</a></li>
                     <li><a href="registration.html">التسجيل</a></li>
                     <li><a href="contact.html">اتصل بنا</a></li>
                 </ul>
@@ -584,8 +587,8 @@
             <div class="footer-section">
                 <h3 class="footer-title">تواصل معنا</h3>
                 <p>العنوان: الرياض، المملكة العربية السعودية</p>
-                <p>البريد الإلكتروني: info@skf.sa</p>
-                <p>الهاتف:  +966114803710                </p>
+                <p>البريد الإلكتروني: yosef.h.naytah@gmail.com</p>
+                <p>الهاتف: +966540766673</p>
                 
                 <!-- Team information for assignment requirement -->
                 <div class="team-info">
@@ -598,6 +601,6 @@
         <div class="copyright">
             © 2025 الاتحاد السعودي للكاراتيه - جميع الحقوق محفوظة
         </div>
-    </footer>
+</footer>
 </body>
 </html>

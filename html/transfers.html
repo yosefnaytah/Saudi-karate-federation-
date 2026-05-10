@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transfer market — Saudi Karate Federation</title>
+    <link rel="stylesheet" href="dashboard.css?v=20260417">
+    <link rel="stylesheet" href="tournament.css?v=20260416">
+    <style>
+        .dashboard-container .menu-toggle { z-index: 2100; }
+        .dashboard-container .dashboard-nav.active { z-index: 2000; }
+        .tm-wrap { max-width: 52rem; margin: 0 auto; }
+        .tm-card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 20px 22px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            margin-bottom: 18px;
+        }
+        .tm-card h2 { margin: 0 0 12px; font-size: 1.1rem; color: #1b5e20; }
+        .tm-hero {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #eee;
+        }
+        .tm-hero img {
+            width: 88px; height: 88px; border-radius: 50%; object-fit: cover;
+            border: 3px solid #3a7d44; flex-shrink: 0;
+        }
+        .tm-hero-ph {
+            width: 88px; height: 88px; border-radius: 50%;
+            background: linear-gradient(145deg, #e8f5e9, #c8e6c9);
+            color: #2e7d32; display: flex; align-items: center; justify-content: center;
+            font-size: 36px; font-weight: 700; border: 3px solid #3a7d44; flex-shrink: 0;
+        }
+        .tm-meta { font-size: 13px; color: #555; line-height: 1.5; }
+        .tm-badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; background: #e8f5e9; color: #1b5e20; }
+        .tm-badge-warn { background: #fff3e0; color: #e65100; }
+        .tm-list { list-style: none; padding: 0; margin: 0; }
+        .tm-list li {
+            border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;
+            display: flex; gap: 12px; align-items: flex-start;
+        }
+        .tm-list img.tm-av-sm { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #3a7d44; }
+        .tm-list .tm-av-ph {
+            width: 48px; height: 48px; border-radius: 50%; background: #e8f5e9; color: #2e7d32;
+            display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0;
+        }
+        .tm-actions { margin-top: 10px; display: flex; flex-wrap: wrap; gap: 8px; }
+        .tm-btn {
+            padding: 10px 16px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer;
+            font-size: 14px;
+        }
+        .tm-btn-primary { background: #2e7d32; color: #fff; }
+        .tm-btn-secondary { background: #6c757d; color: #fff; }
+        .tm-btn-danger { background: #c62828; color: #fff; }
+        .tm-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        textarea.tm-msg { width: 100%; min-height: 72px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 14px; margin-top: 8px; }
+        .tm-hide { display: none !important; }
+        .tm-note { font-size: 12px; color: #666; margin-top: 8px; line-height: 1.45; }
+        #tmAnonNote { text-align: center; padding: 24px; color: #555; }
+    </style>
+</head>
+<body>
+    <div class="tournament-container dashboard-container">
+        <header class="tournament-header">
+            <div class="header-left">
+                <img src="full badge.png" alt="Saudi Karate Federation" class="header-badge">
+            <div class="header-fed-name">
+                <span class="header-fed-ar">الاتحاد السعودي للكاراتيه</span>
+                <span class="header-fed-en">Saudi Karate Federation</span>
+            </div>
+            </div>
+            <div class="header-right">
+                <div class="vision-logo">
+                    <p class="vision-title">VISION (رؤية)</p>
+                    <p class="vision-year">2030</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="menu-toggle" id="menuToggle" title="Menu" aria-label="Open menu">
+            <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+        </div>
+
+        <nav class="dashboard-nav" id="dashboardNav">
+            <ul class="nav-menu" id="transferNavMenu"></ul>
+        </nav>
+
+        <main class="tournament-content">
+            <h1 class="page-title">Transfer market</h1>
+            <p style="text-align:center;max-width:42rem;margin:0 auto 1.25rem;font-size:0.92rem;color:#444;line-height:1.55;">
+                Players can list themselves on the market, clubs submit official offers, and all transfers require <strong>SKF final approval</strong> before taking effect.
+            </p>
+
+            <div id="tmSetupBanner" class="tm-hide" style="max-width:52rem;margin:0 auto 16px;padding:14px 16px;background:#fff3e0;border:1px solid #ffb74d;border-radius:10px;font-size:14px;color:#5d4037;line-height:1.5;">
+                <strong>Transfer service temporarily unavailable.</strong> Please refresh the page. If the issue persists, contact SKF technical support. <span id="tmSetupBannerMsg" style="display:none;"></span>
+            </div>
+
+            <div id="tmAnonNote" class="tm-hide">
+                <p>Sign in as a player, club admin, or SKF admin to use the transfer workflow.</p>
+                <a href="index.html" style="color:#2e7d32;font-weight:600;">Sign in</a>
+            </div>
+
+            <div id="tmPlayerPanel" class="tm-wrap tm-hide">
+                <div class="tm-card" id="tmPlayerContractCard">
+                    <h2>Your contract &amp; eligibility</h2>
+                    <div id="tmPlayerContractBody" class="tm-meta">Loading…</div>
+                    <div class="tm-actions" id="tmPlayerListingActions"></div>
+                </div>
+                <div class="tm-card tm-hide" id="tmPlayerOffersCard">
+                    <h2>Offers on your listing</h2>
+                    <ul class="tm-list" id="tmPlayerOffersList"></ul>
+                </div>
+                <div class="tm-card tm-hide" id="tmPlayerPendingSkfCard">
+                    <h2>Awaiting SKF approval</h2>
+                    <div id="tmPlayerPendingSkfBody" class="tm-meta"></div>
+                </div>
+            </div>
+
+            <div id="tmClubPanel" class="tm-wrap tm-hide">
+                <div class="tm-card">
+                    <h2>Available players (active listings)</h2>
+                    <p class="tm-note">Send an official offer (message + type). The player must accept before the request reaches SKF.</p>
+                    <ul class="tm-list" id="tmClubListingsList"></ul>
+                </div>
+            </div>
+
+            <div id="tmSkfPanel" class="tm-wrap tm-hide">
+                <div class="tm-card">
+                    <h2>SKF — pending transfer approvals</h2>
+                    <p class="tm-note">Transfer requests awaiting your final decision. Approving a request creates an official contract and moves the player to the new club.</p>
+                    <div id="tmSkfMiniBody" class="tm-meta">Loading…</div>
+                </div>
+            </div>
+
+            <p style="text-align:center;margin-top:1.5rem;">
+                <a href="index.html" id="backToDashboard" style="color:#2e7d32;font-weight:600;text-decoration:none;">Return to your dashboard</a>
+            </p>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="skf-role-layout.js?v=20260506"></script>
+    <script src="auth.js?v=20260416"></script>
+    <script>
+        (function () {
+            var menuToggle = document.getElementById('menuToggle');
+            var dashboardNav = document.getElementById('dashboardNav');
+            if (menuToggle && dashboardNav) {
+                menuToggle.addEventListener('click', function () {
+                    this.classList.toggle('active');
+                    dashboardNav.classList.toggle('active');
+                });
+            }
+        })();
+        function closeTransferMenu() {
+            var nav = document.getElementById('dashboardNav');
+            var toggle = document.getElementById('menuToggle');
+            if (nav) nav.classList.remove('active');
+            if (toggle) toggle.classList.remove('active');
+        }
+    </script>
+    <script>
+(function () {
+    function escapeHtml(s) {
+        if (s == null || s === '') return '';
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+    }
+    function escapeAttr(s) {
+        return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    }
+    function isSafePhoto(s) {
+        if (!s || typeof s !== 'string') return false;
+        if (s.length > 950000) return false;
+        var t = s.trim();
+        if (/^javascript:/i.test(t)) return false;
+        return /^data:image\/(jpeg|jpg|png);base64,/i.test(t) || /^https:\/\//i.test(t) || /^blob:/i.test(t)
+            || (/^[a-zA-Z0-9._\/-]+$/.test(t) && t.indexOf('..') === -1 && t.length <= 500);
+    }
+    function resolveAvatar(u) {
+        if (!u) return '';
+        if (typeof skfAvatarRawFromRow === 'function') {
+            var g = skfAvatarRawFromRow(u);
+            if (g) return g;
+        }
+        var p = u.profiles;
+        if (Array.isArray(p)) p = p[0];
+        var a = p && p.avatar_url ? String(p.avatar_url).trim() : '';
+        var im = (u.profile_image_url || '').trim();
+        var l = (u.profile_photo_url || '').trim();
+        return a || im || l || '';
+    }
+    function avHtml(url, initial, sizeCls) {
+        var disp = url && typeof skfResolveAvatarUrl === 'function'
+            ? skfResolveAvatarUrl(String(url).trim(), window.SKF_SUPABASE_URL)
+            : (url || '');
+        if (disp && isSafePhoto(disp)) {
+            return '<img class="' + (sizeCls || 'tm-av-sm') + '" src="' + escapeAttr(disp) + '" alt="" loading="lazy" referrerpolicy="no-referrer">';
+        }
+        return '<span class="tm-av-ph">' + escapeHtml(initial || '?') + '</span>';
+    }
+
+    function dashboardHrefFromRole(role) {
+        if (typeof getDashboardUrl === 'function' && role) {
+            try { return getDashboardUrl(role); } catch (_) {}
+        }
+        switch ((role || '').toLowerCase()) {
+            case 'skf_admin':
+            case 'admin': return 'admin-dashboard.html';
+            case 'club_admin': return 'club-dashboard.html';
+            case 'coach': return 'coach-dashboard.html';
+            case 'referee':
+            case 'referees_plus': return 'referee-dashboard.html';
+            default: return 'player-dashboard.html';
+        }
+    }
+
+    /**
+     * Role-scoped only: each branch lists links for that role (never SKF items for players/clubs).
+     * Order mirrors the matching dashboard so the drawer feels consistent.
+     */
+    function buildTransferNav() {
+        var ul = document.getElementById('transferNavMenu');
+        if (!ul) return;
+        var closeLi = '<li class="nav-item"><a href="#" class="nav-link" style="color:#ff4444;font-weight:bold;background-color:rgba(255,0,0,0.1);" onclick="document.getElementById(\'menuToggle\').click();return false;">&times; Close Menu</a></li>';
+        var logoutLi = '<li class="nav-item"><a href="#" class="nav-link" onclick="logout();return false;">Logout</a></li>';
+        var role = '';
+        try {
+            var u = JSON.parse(localStorage.getItem('user') || 'null');
+            role = (u && u.role || '').toLowerCase();
+        } catch (_) {}
+
+        function oc() {
+            return ' onclick="closeTransferMenu();"';
+        }
+
+        var html = closeLi;
+
+        if (role === 'club_admin') {
+            html += '<li class="nav-item"><a href="club-dashboard.html#club-reg" class="nav-link"' + oc() + '>Club registration</a></li>'
+                + '<li class="nav-item"><a href="club-dashboard.html#players-mgmt" class="nav-link"' + oc() + '>Players management</a></li>'
+                + '<li class="nav-item"><a href="club-dashboard.html#players-ranking" class="nav-link"' + oc() + '>Players ranking</a></li>'
+                + '<li class="nav-item"><a href="club-dashboard.html#players-op" class="nav-link"' + oc() + '>Players &amp; tournaments</a></li>'
+                + '<li class="nav-item"><a href="tournament.html" class="nav-link"' + oc() + '>Tournaments</a></li>'
+                + '<li class="nav-item"><a href="transfers.html" class="nav-link active"' + oc() + '>Transfer market</a></li>'
+                + logoutLi;
+        } else if (role === 'player') {
+            html += '<li class="nav-item"><a href="transfers.html" class="nav-link active"' + oc() + '>Transfers</a></li>'
+                + '<li class="nav-item"><a href="tournament.html" class="nav-link"' + oc() + '>Tournament</a></li>'
+                + '<li class="nav-item"><a href="player-dashboard.html#overview" class="nav-link"' + oc() + '>Overview</a></li>'
+                + '<li class="nav-item"><a href="player-dashboard.html#events" class="nav-link"' + oc() + '>Upcoming Events</a></li>'
+                + '<li class="nav-item"><a href="player-dashboard.html#matches" class="nav-link"' + oc() + '>Upcoming Matches</a></li>'
+                + '<li class="nav-item"><a href="player-dashboard.html#registrations" class="nav-link"' + oc() + '>My Registrations</a></li>'
+                + '<li class="nav-item"><a href="player-dashboard.html#stats" class="nav-link"' + oc() + '>Stats</a></li>'
+                + '<li class="nav-item"><a href="player-dashboard.html#rankings" class="nav-link"' + oc() + '>Rankings</a></li>'
+                + '<li class="nav-item"><a href="player-dashboard.html#belttest" class="nav-link"' + oc() + '>Belt Test</a></li>'
+                + '<li class="nav-item"><a href="player-dashboard.html#virtual" class="nav-link"' + oc() + '>Virtual Exam</a></li>'
+                + '<li class="nav-item"><a href="player-dashboard.html#profile" class="nav-link"' + oc() + '>Profile</a></li>'
+                + logoutLi;
+        } else if (role === 'skf_admin' || role === 'admin') {
+            html += '<li class="nav-item"><a href="admin-dashboard.html#dashboard" class="nav-link"' + oc() + '>Dashboard</a></li>'
+                + '<li class="nav-item"><a href="admin-dashboard.html#user-management" class="nav-link"' + oc() + '>User Management</a></li>'
+                + '<li class="nav-item"><a href="admin-dashboard.html#pending-approvals" class="nav-link"' + oc() + '>Pending Approvals</a></li>'
+                + '<li class="nav-item"><a href="admin-dashboard.html#club-registration-requests" class="nav-link"' + oc() + '>Club registration requests</a></li>'
+                + '<li class="nav-item"><a href="admin-dashboard.html#tournament-management" class="nav-link"' + oc() + '>Tournaments</a></li>'
+                + '<li class="nav-item"><a href="transfers.html" class="nav-link active"' + oc() + '>Transfer market</a></li>'
+                + '<li class="nav-item"><a href="admin-dashboard.html#transfer-market-skf" class="nav-link"' + oc() + '>Transfer approvals</a></li>'
+                + '<li class="nav-item"><a href="admin-dashboard.html#registration-management" class="nav-link"' + oc() + '>Registrations</a></li>'
+                + '<li class="nav-item"><a href="admin-dashboard.html#reference-data" class="nav-link"' + oc() + '>Reference data</a></li>'
+                + '<li class="nav-item"><a href="admin-dashboard.html#club-management" class="nav-link"' + oc() + '>Clubs</a></li>'
+                + '<li class="nav-item"><a href="admin-dashboard.html#profile" class="nav-link"' + oc() + '>Profile</a></li>'
+                + logoutLi;
+        } else if (role === 'coach') {
+            html += '<li class="nav-item"><a href="' + escapeAttr(dashboardHrefFromRole('coach')) + '" class="nav-link"' + oc() + '>Coach dashboard</a></li>'
+                + '<li class="nav-item"><a href="tournament.html" class="nav-link"' + oc() + '>Tournaments</a></li>'
+                + '<li class="nav-item"><a href="transfers.html" class="nav-link active"' + oc() + '>Transfer market</a></li>'
+                + logoutLi;
+        } else if (role === 'referee' || role === 'referees_plus') {
+            html += '<li class="nav-item"><a href="' + escapeAttr(dashboardHrefFromRole(role)) + '" class="nav-link"' + oc() + '>Referee dashboard</a></li>'
+                + '<li class="nav-item"><a href="tournament.html" class="nav-link"' + oc() + '>Tournaments</a></li>'
+                + '<li class="nav-item"><a href="transfers.html" class="nav-link active"' + oc() + '>Transfer market</a></li>'
+                + logoutLi;
+        } else {
+            html += '<li class="nav-item"><a href="index.html" class="nav-link"' + oc() + '>Sign in</a></li>'
+                + '<li class="nav-item"><a href="tournament.html" class="nav-link"' + oc() + '>Tournaments</a></li>'
+                + '<li class="nav-item"><a href="transfers.html" class="nav-link active"' + oc() + '>Transfer market</a></li>';
+        }
+
+        ul.innerHTML = html;
+    }
+
+    var TM_URL = 'https://uqlpxdphikmmpdsuojil.supabase.co';
+    var TM_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxbHB4ZHBoaWttbXBkc3VvamlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3OTI5NDEsImV4cCI6MjA4NjM2ODk0MX0.03xQ8ltwZm_TTEAHDOHocfFKG2j_PHmL1Lzt2t-aFJU';
+
+    function tmIsLocalToken() {
+        var t = localStorage.getItem('token') || '';
+        return !t || t.indexOf('local-token') === 0;
+    }
+
+    /** Same pattern as admin-dashboard: Bearer JWT from localStorage so RLS matches your session. */
+    function tmSupabase() {
+        if (typeof supabase === 'undefined') return null;
+        var tok = localStorage.getItem('token');
+        if (tok && !tmIsLocalToken()) {
+            return supabase.createClient(TM_URL, TM_ANON, {
+                global: { headers: { Authorization: 'Bearer ' + tok } },
+                auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+            });
+        }
+        return typeof getSupabase === 'function' ? getSupabase() : null;
+    }
+
+    function showTransferSetupBanner(err) {
+        var ban = document.getElementById('tmSetupBanner');
+        var msg = document.getElementById('tmSetupBannerMsg');
+        if (!ban || !msg) return;
+        var m = (err && (err.message || err.details || err.hint)) ? String(err.message || err.details || err.hint) : '';
+        if (!/relation|does not exist|schema cache|pgrst205|permission denied|42501/i.test(m)) return;
+        msg.textContent = '';
+        ban.classList.remove('tm-hide');
+    }
+
+    async function loadPlayerTransferUi(uid, sb) {
+        var contractEl = document.getElementById('tmPlayerContractBody');
+        var actionsEl = document.getElementById('tmPlayerListingActions');
+        var offersCard = document.getElementById('tmPlayerOffersCard');
+        var offersList = document.getElementById('tmPlayerOffersList');
+        var skfCard = document.getElementById('tmPlayerPendingSkfCard');
+        var skfBody = document.getElementById('tmPlayerPendingSkfBody');
+
+        var uq = await sb.from('users').select('*, profiles(avatar_url)').eq('id', uid).maybeSingle();
+        if (uq.error) {
+            showTransferSetupBanner(uq.error);
+            contractEl.innerHTML = '<p class="tm-note" style="color:#c62828;">Could not load profile: ' + escapeHtml(uq.error.message || '') + '</p>';
+            return;
+        }
+        var me = uq.data || {};
+        var av = resolveAvatar(me);
+        var init = (me.full_name || me.email || '?').trim().charAt(0).toUpperCase();
+
+        var cq = await sb.from('player_club_contracts')
+            .select('id,effective_from,effective_to,contract_status, clubs(name)')
+            .eq('player_user_id', uid)
+            .eq('contract_status', 'active')
+            .maybeSingle();
+
+        var active = cq.data;
+        var eligible = !active;
+
+        var contractHtml = '';
+        if (active) {
+            var cn = (active.clubs && active.clubs.name) || '—';
+            var from = active.effective_from ? new Date(active.effective_from).toLocaleDateString() : '—';
+            var to = active.effective_to ? new Date(active.effective_to).toLocaleDateString() : 'Open-ended';
+            contractHtml = '<div class="tm-hero">' +
+                (av && isSafePhoto(av)
+                    ? '<img src="' + escapeAttr(av) + '" alt="" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid #3a7d44;">'
+                    : '<div class="tm-hero-ph">' + escapeHtml(init) + '</div>') +
+                '<div><strong style="font-size:16px;color:#222;">' + escapeHtml(me.full_name || '') + '</strong><div class="tm-meta" style="margin-top:8px;">' +
+                '<div>Current club: <strong>' + escapeHtml(cn) + '</strong></div>' +
+                '<div>Contract start: ' + escapeHtml(from) + '</div>' +
+                '<div>Contract end: ' + escapeHtml(to) + '</div>' +
+                '<span class="tm-badge" style="margin-top:8px;">Active contract — not eligible for market</span>' +
+                '</div></div></div>';
+        } else {
+            contractHtml = '<div class="tm-hero">' +
+                (av && isSafePhoto(av) ? '<img src="' + escapeAttr(av) + '" alt="" style="width:88px;height:88px;border-radius:50%;object-fit:cover;border:3px solid #3a7d44;">' : '<div class="tm-hero-ph">' + escapeHtml(init) + '</div>') +
+                '<div><strong style="font-size:16px;">' + escapeHtml(me.full_name || '') + '</strong>' +
+                '<div class="tm-meta" style="margin-top:8px;">No active federation contract. You may list yourself on the transfer market.</div>' +
+                '<span class="tm-badge tm-badge-warn" style="margin-top:8px;">Free agent / contract ended</span></div></div>';
+        }
+        contractEl.innerHTML = contractHtml;
+
+        var lq = await sb.from('transfer_market_listings').select('*').eq('player_user_id', uid).eq('status', 'active').maybeSingle();
+        if (lq.error) {
+            showTransferSetupBanner(lq.error);
+            actionsEl.innerHTML = '<p class="tm-note" style="color:#c62828;">' + escapeHtml(lq.error.message || 'Listing query failed') + '</p>';
+            return;
+        }
+        var listing = lq.data;
+
+        actionsEl.innerHTML = '';
+        if (eligible && !listing) {
+            actionsEl.innerHTML = '<button type="button" class="tm-btn tm-btn-primary" id="tmBtnList">List me on the transfer market</button>';
+            document.getElementById('tmBtnList').onclick = async function () {
+                var ins = await sb.from('transfer_market_listings').insert({
+                    player_user_id: uid,
+                    status: 'active',
+                    listing_mode: 'manual'
+                });
+                if (ins.error) { alert(ins.error.message); return; }
+                loadPlayerTransferUi(uid, sb);
+            };
+        } else if (eligible && listing) {
+            actionsEl.innerHTML = '<span class="tm-badge">Listed on market</span> ' +
+                '<button type="button" class="tm-btn tm-btn-secondary" id="tmBtnWithdraw">Withdraw listing</button>';
+            document.getElementById('tmBtnWithdraw').onclick = async function () {
+                var up = await sb.from('transfer_market_listings').update({ status: 'withdrawn', updated_at: new Date().toISOString() }).eq('id', listing.id);
+                if (up.error) { alert(up.error.message); return; }
+                loadPlayerTransferUi(uid, sb);
+            };
+        } else {
+            actionsEl.innerHTML = '<p class="tm-note">When your contract ends, you can list yourself or enter the market per federation rules.</p>';
+        }
+
+        if (listing) {
+            offersCard.classList.remove('tm-hide');
+            var oq = await sb.from('transfer_offers').select('*, clubs(name)').eq('listing_id', listing.id).order('created_at', { ascending: false });
+            var offers = oq.data || [];
+            if (!offers.length) {
+                offersList.innerHTML = '<li style="border:none;padding:8px 0;color:#666;">No offers yet.</li>';
+            } else {
+                offersList.innerHTML = offers.map(function (o) {
+                    var cn = (o.clubs && o.clubs.name) || 'Club';
+                    var st = o.status || 'pending';
+                    var btns = '';
+                    if (st === 'pending') {
+                        btns = '<div class="tm-actions">' +
+                            '<button type="button" class="tm-btn tm-btn-primary" data-oid="' + escapeAttr(o.id) + '" data-toclub="' + escapeAttr(o.offering_club_id) + '" data-act="acc">Accept</button>' +
+                            '<button type="button" class="tm-btn tm-btn-danger" data-oid="' + escapeAttr(o.id) + '" data-act="rej">Reject</button></div>';
+                    }
+                    return '<li><div style="flex:1;"><strong>' + escapeHtml(cn) + '</strong> ' +
+                        '<span class="tm-badge">' + escapeHtml(o.offer_type || '') + '</span>' +
+                        '<div class="tm-meta" style="margin-top:6px;">' + escapeHtml(o.message || '—') + '</div>' +
+                        '<div class="tm-note">Status: ' + escapeHtml(st) + '</div>' + btns + '</div></li>';
+                }).join('');
+                offersList.querySelectorAll('button[data-act]').forEach(function (btn) {
+                    btn.onclick = async function () {
+                        var oid = btn.getAttribute('data-oid');
+                        var act = btn.getAttribute('data-act');
+                        if (act === 'rej') {
+                            await sb.from('transfer_offers').update({ status: 'rejected', updated_at: new Date().toISOString() }).eq('id', oid);
+                            loadPlayerTransferUi(uid, sb);
+                            return;
+                        }
+                        if (!confirm('Accept this offer? An SKF approval request will be created.')) return;
+                        var toClub = btn.getAttribute('data-toclub');
+                        var ou = await sb.from('transfer_offers').update({ status: 'accepted', updated_at: new Date().toISOString() }).eq('id', oid).eq('status', 'pending');
+                        if (ou.error) { alert(ou.error.message); return; }
+                        var ins = await sb.from('transfer_approval_requests').insert({
+                            offer_id: oid,
+                            listing_id: listing.id,
+                            player_user_id: uid,
+                            from_club_id: me.club_id || null,
+                            to_club_id: toClub,
+                            status: 'pending_skf'
+                        });
+                        if (ins.error) { alert(ins.error.message); return; }
+                        loadPlayerTransferUi(uid, sb);
+                    };
+                });
+            }
+        } else {
+            offersCard.classList.add('tm-hide');
+        }
+
+        var aq = await sb.from('transfer_approval_requests').select('*').eq('player_user_id', uid).order('created_at', { ascending: false }).limit(3);
+        var aprs = (aq.data || []).filter(function (r) { return r.status === 'pending_skf'; });
+        if (aprs.length) {
+            skfCard.classList.remove('tm-hide');
+            skfBody.innerHTML = aprs.map(function (r) {
+                return '<div style="margin-bottom:10px;padding:10px;background:#f9f9f9;border-radius:8px;font-size:14px;">Transfer approval submitted — awaiting SKF review.</div>';
+            }).join('');
+        } else {
+            skfCard.classList.add('tm-hide');
+        }
+    }
+
+    async function loadClubTransferUi(cid, sb) {
+        var listEl = document.getElementById('tmClubListingsList');
+        var lq = await sb.from('transfer_market_listings').select('*').eq('status', 'active');
+        if (lq.error) {
+            showTransferSetupBanner(lq.error);
+            listEl.innerHTML = '<li style="border:none;color:#c62828;">' + escapeHtml(lq.error.message) + '</li>';
+            return;
+        }
+        var listings = lq.data || [];
+        if (!listings.length) {
+            listEl.innerHTML = '<li style="border:none;color:#666;">No active listings.</li>';
+            return;
+        }
+        // 1) Immediate loading UI (prevents raw UUIDs flashing).
+        listEl.innerHTML = listings.map(function (L) {
+            var lid = L.id;
+            return '<li>'
+                + '<span class="tm-av-ph">…</span>'
+                + '<div style="flex:1;">'
+                + '<strong>Loading player…</strong>'
+                + '<div class="tm-meta">Loading profile details…</div>'
+                + '<label class="tm-note">Offer message</label>'
+                + '<textarea class="tm-msg" id="msg-' + escapeAttr(lid) + '" placeholder="Official offer details…" disabled></textarea>'
+                + '<div class="tm-actions">'
+                + '<select id="typ-' + escapeAttr(lid) + '" style="padding:8px;border-radius:8px;" disabled>'
+                + '<option value="new_club">New club</option><option value="renewal_same_club">Renewal (same club)</option></select>'
+                + '<button type="button" class="tm-btn tm-btn-primary" disabled>Send offer</button>'
+                + '</div></div></li>';
+        }).join('');
+
+        // 2) Load player cards in a way that survives strict users-table RLS.
+        var ids = listings.map(function (L) { return L.player_user_id; }).filter(Boolean);
+        var uniqIds = Array.from(new Set(ids.map(String)));
+
+        var umap = {}; // user_id -> { full_name, email, club_name, age_group, rank, avatar_url }
+
+        // Prefer RPC (SECURITY DEFINER) if available; fall back to direct table read otherwise.
+        var cardErr = null;
+        try {
+            var rpc = await sb.rpc('get_transfer_listing_player_cards', { p_player_ids: uniqIds });
+            if (!rpc.error && rpc.data) {
+                (rpc.data || []).forEach(function (row) {
+                    // row fields are normalized by the RPC
+                    umap[String(row.user_id)] = row;
+                });
+            } else if (rpc.error) {
+                // If RPC is missing, we silently fall back to direct select.
+                var m = String(rpc.error.message || '');
+                if (!/function|schema cache|pgrst202|not found/i.test(m)) {
+                    cardErr = rpc.error;
+                }
+            }
+        } catch (e) {
+            // ignore; fall back below
+        }
+
+        if (!Object.keys(umap).length) {
+            var uq = await sb.from('users')
+                .select('id,full_name,email,club_name,age_group,rank,profile_photo_url,profiles(avatar_url)')
+                .in('id', uniqIds);
+            if (uq.error) {
+                cardErr = uq.error;
+            } else {
+                (uq.data || []).forEach(function (u) {
+                    var p = u.profiles;
+                    if (Array.isArray(p)) p = p[0];
+                    umap[String(u.id)] = {
+                        user_id: u.id,
+                        full_name: u.full_name || '',
+                        email: u.email || '',
+                        club_name: u.club_name || '',
+                        age_group: u.age_group || '',
+                        rank: u.rank || '',
+                        avatar_url: (p && p.avatar_url ? String(p.avatar_url).trim() : '') || (u.profile_photo_url || '').trim()
+                    };
+                });
+            }
+        }
+
+        // 3) Render final list with clean player cards and strict submit rules.
+        listEl.innerHTML = listings.map(function (L) {
+            var lid = L.id;
+            var uid = String(L.player_user_id || '');
+            var u = umap[uid] || null;
+            var loaded = !!(u && (u.full_name || u.email));
+            var name = loaded ? (u.full_name || u.email) : 'Player details unavailable';
+            var init = loaded ? (name || '?').trim().charAt(0).toUpperCase() : '?';
+            var av = loaded ? (u.avatar_url || '') : '';
+
+            var meta = '';
+            if (!loaded) {
+                meta = '<div class="tm-meta" style="color:#c62828;">'
+                    + 'Could not load this player profile. You cannot send an offer until the player card loads.'
+                    + (cardErr && cardErr.message ? '<div class="tm-note">(' + escapeHtml(cardErr.message) + ')</div>' : '')
+                    + '</div>';
+            } else {
+                var clubLine = u.club_name ? ('Current club: <strong>' + escapeHtml(u.club_name) + '</strong>') : 'Current club: <strong>—</strong>';
+                var ageLine = u.age_group ? ('Age group: <strong>' + escapeHtml(u.age_group) + '</strong>') : 'Age group: <strong>—</strong>';
+                var rankLine = u.rank ? ('Belt / rank: <strong>' + escapeHtml(u.rank) + '</strong>') : 'Belt / rank: <strong>—</strong>';
+                meta = '<div class="tm-meta">' + clubLine + '<br>' + ageLine + '<br>' + rankLine + '</div>';
+            }
+
+            return '<li>'
+                + avHtml(av, init)
+                + '<div style="flex:1;">'
+                + '<strong>' + escapeHtml(name) + '</strong>'
+                + meta
+                + '<label class="tm-note">Offer message</label>'
+                + '<textarea class="tm-msg" id="msg-' + escapeAttr(lid) + '" placeholder="Official offer details…"' + (loaded ? '' : ' disabled') + '></textarea>'
+                + '<div class="tm-actions">'
+                + '<select id="typ-' + escapeAttr(lid) + '" style="padding:8px;border-radius:8px;"' + (loaded ? '' : ' disabled') + '>'
+                + '<option value="new_club">New club</option><option value="renewal_same_club">Renewal (same club)</option></select>'
+                + '<button type="button" class="tm-btn tm-btn-primary" data-send="' + escapeAttr(lid) + '" data-player="' + escapeAttr(uid) + '"' + (loaded ? '' : ' disabled title="Player card not loaded"') + '>Send offer</button>'
+                + '</div></div></li>';
+        }).join('');
+
+        listEl.querySelectorAll('button[data-send]').forEach(function (btn) {
+            btn.onclick = async function () {
+                var lid = btn.getAttribute('data-send');
+                var uid = String(btn.getAttribute('data-player') || '');
+                var u = umap[uid] || null;
+                if (!u || !(u.full_name || u.email)) {
+                    alert('Cannot send offer because the selected player data is not loaded.');
+                    return;
+                }
+                var msg = (document.getElementById('msg-' + lid) || {}).value || '';
+                var typ = (document.getElementById('typ-' + lid) || {}).value || 'new_club';
+                var tok = JSON.parse(localStorage.getItem('user') || '{}');
+                var ins = await sb.from('transfer_offers').insert({
+                    listing_id: lid,
+                    offering_club_id: cid,
+                    offered_by_user_id: tok.id,
+                    message: msg,
+                    offer_type: typ,
+                    status: 'pending'
+                });
+                if (ins.error) { alert(ins.error.message); return; }
+                alert('Offer sent.');
+                loadClubTransferUi(cid, sb);
+            };
+        });
+    }
+
+    function tmFormatWhen(iso) {
+        if (!iso) return '—';
+        try { return new Date(iso).toLocaleString(); } catch (_) { return String(iso); }
+    }
+
+    async function loadSkfMini(sb) {
+        var el = document.getElementById('tmSkfMiniBody');
+        var q = await sb.from('transfer_approval_requests').select('*').eq('status', 'pending_skf').order('created_at', { ascending: false }).limit(25);
+        if (q.error) {
+            showTransferSetupBanner(q.error);
+            el.innerHTML = '<span style="color:#c62828;">' + escapeHtml(q.error.message) + '</span>';
+            return;
+        }
+        var rows = q.data || [];
+        if (!rows.length) {
+            el.innerHTML = '<p style="margin:0 0 12px;">No pending requests.</p><p style="margin:0;">You can also use <a href="admin-dashboard.html#transfer-market-skf" style="color:#2e7d32;font-weight:600;">Admin → Transfer approvals</a>.</p>';
+            return;
+        }
+        var uids = rows.map(function (r) { return r.player_user_id; });
+        var cids = [];
+        rows.forEach(function (r) {
+            if (r.from_club_id) cids.push(r.from_club_id);
+            if (r.to_club_id) cids.push(r.to_club_id);
+        });
+        var umap = {};
+        var uq = await sb.from('users').select('id,full_name,email,profile_photo_url,profiles(avatar_url)').in('id', uids);
+        if (!uq.error) (uq.data || []).forEach(function (u) { umap[u.id] = u; });
+        var cmap = {};
+        if (cids.length) {
+            var cq = await sb.from('clubs').select('id,name').in('id', [...new Set(cids.map(String))]);
+            if (!cq.error) (cq.data || []).forEach(function (c) { cmap[c.id] = c.name; });
+        }
+        var html = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:14px;"><thead><tr style="text-align:left;border-bottom:2px solid #e0e0e0;">'
+            + '<th style="padding:8px 6px;">Player</th><th style="padding:8px 6px;">Move</th><th style="padding:8px 6px;">Submitted</th><th style="padding:8px 6px;">Actions</th></tr></thead><tbody>';
+        html += rows.map(function (r) {
+            var u = umap[r.player_user_id] || {};
+            var av = resolveAvatar(u);
+            var init = (u.full_name || u.email || '?').charAt(0).toUpperCase();
+            var fromN = r.from_club_id ? (cmap[r.from_club_id] || r.from_club_id) : 'Free agent';
+            var toN = cmap[r.to_club_id] || r.to_club_id || '—';
+            var nm = escapeHtml(u.full_name || String(r.player_user_id));
+            var em = escapeHtml(u.email || '');
+            return '<tr style="border-bottom:1px solid #eee;vertical-align:top;">'
+                + '<td style="padding:10px 6px;">' + avHtml(av, init, 'tm-av-sm') + '<div style="display:inline-block;vertical-align:middle;margin-left:10px;"><strong>' + nm + '</strong><br><span style="font-size:12px;color:#666;">' + em + '</span></div></td>'
+                + '<td style="padding:10px 6px;">' + escapeHtml(String(fromN)) + ' → ' + escapeHtml(String(toN)) + '</td>'
+                + '<td style="padding:10px 6px;white-space:nowrap;font-size:12px;color:#555;">' + escapeHtml(tmFormatWhen(r.created_at)) + '</td>'
+                + '<td style="padding:10px 6px;white-space:nowrap;">'
+                + '<button type="button" class="tm-btn tm-btn-primary tm-skf-appr" data-rid="' + escapeAttr(String(r.id)) + '">Approve</button> '
+                + '<button type="button" class="tm-btn tm-btn-danger tm-skf-rej" data-rid="' + escapeAttr(String(r.id)) + '">Reject</button>'
+                + '</td></tr>';
+        }).join('');
+        html += '</tbody></table></div>';
+        el.innerHTML = html;
+        el.querySelectorAll('.tm-skf-appr').forEach(function (btn) {
+            btn.onclick = async function () {
+                var rid = btn.getAttribute('data-rid');
+                if (!rid || !confirm('Approve this transfer? This creates a new active contract and moves the player to the target club.')) return;
+                var r = await sb.rpc('approve_transfer_request', { p_request_id: rid });
+                if (r.error) { alert(r.error.message || 'Approval failed. Please try again or contact SKF technical support.'); return; }
+                await loadSkfMini(sb);
+            };
+        });
+        el.querySelectorAll('.tm-skf-rej').forEach(function (btn) {
+            btn.onclick = async function () {
+                var rid = btn.getAttribute('data-rid');
+                if (!rid) return;
+                var note = window.prompt('Optional note for rejection:', '') || '';
+                if (note === null) return;
+                if (!confirm('Reject this transfer request?')) return;
+                var r = await sb.rpc('reject_transfer_request', { p_request_id: rid, p_note: note || null });
+                if (r.error) { alert(r.error.message || 'Reject failed.'); return; }
+                await loadSkfMini(sb);
+            };
+        });
+    }
+
+    async function initTransferPage() {
+        buildTransferNav();
+        var ban = document.getElementById('tmSetupBanner');
+        if (ban) ban.classList.add('tm-hide');
+        var back = document.getElementById('backToDashboard');
+        try {
+            var u = JSON.parse(localStorage.getItem('user') || 'null');
+            if (back && u && u.role && typeof getDashboardUrl === 'function') {
+                back.setAttribute('href', getDashboardUrl(u.role));
+            }
+        } catch (_) {}
+
+        var token = localStorage.getItem('token');
+        var userStr = localStorage.getItem('user');
+        var sb = tmSupabase();
+
+        document.getElementById('tmPlayerPanel').classList.add('tm-hide');
+        document.getElementById('tmClubPanel').classList.add('tm-hide');
+        document.getElementById('tmSkfPanel').classList.add('tm-hide');
+        document.getElementById('tmAnonNote').classList.add('tm-hide');
+
+        if (!token || !userStr || !sb) {
+            document.getElementById('tmAnonNote').classList.remove('tm-hide');
+            return;
+        }
+
+        if (typeof SKFRoleLayout !== 'undefined' && SKFRoleLayout.guardPage && SKFRoleLayout.guardPage({}) === false) {
+            return;
+        }
+
+        var user = JSON.parse(userStr);
+        var role = (user.role || '').toLowerCase();
+        var uid = user.id;
+
+        if (role === 'player') {
+            document.getElementById('tmPlayerPanel').classList.remove('tm-hide');
+            await loadPlayerTransferUi(uid, sb);
+        } else if (role === 'club_admin') {
+            document.getElementById('tmClubPanel').classList.remove('tm-hide');
+            var urow = await sb.from('users').select('club_id').eq('id', uid).maybeSingle();
+            var cid = urow.data && urow.data.club_id;
+            if (!cid) {
+                document.getElementById('tmClubListingsList').innerHTML = '<li style="border:none;color:#666;">Your club is not yet linked to this account. Contact SKF to complete the setup.</li>';
+            } else {
+                await loadClubTransferUi(cid, sb);
+            }
+        } else if (role === 'skf_admin' || role === 'admin') {
+            document.getElementById('tmSkfPanel').classList.remove('tm-hide');
+            await loadSkfMini(sb);
+        } else if (role === 'coach') {
+            document.getElementById('tmAnonNote').classList.remove('tm-hide');
+            document.getElementById('tmAnonNote').querySelector('p').textContent = 'Coach transfer actions are not available in this build. Please work with your club admin or use the club dashboard.';
+        } else {
+            document.getElementById('tmAnonNote').classList.remove('tm-hide');
+            document.getElementById('tmAnonNote').querySelector('p').textContent = 'Transfer offers are for players, coaches, and club admins. Use your dashboard for other roles.';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', initTransferPage);
+})();
+    </script>
+</body>
+</html>

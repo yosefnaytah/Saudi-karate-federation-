@@ -16,9 +16,14 @@ instance/
 # OS
 .DS_Store
 
+# Microsoft Office (lock files while editing)
+~$*
+
 # Backend - Sensitive Configuration
 backend/SkfWebsite.Api/appsettings.json
 backend/SkfWebsite.Api/appsettings.*.json
 !backend/SkfWebsite.Api/appsettings.template.json
 backend/SkfWebsite.Api/bin/
 backend/SkfWebsite.Api/obj/
+backend/SkfWebsite.Api.Tests/bin/
+backend/SkfWebsite.Api.Tests/obj/

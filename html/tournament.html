@@ -4,27 +4,51 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tournaments - Saudi Karate Federation</title>
-    <link rel="stylesheet" href="tournament.css">
+    <!-- dashboard.css first so tournament.css layout wins, but nav matches other dashboards -->
+    <link rel="stylesheet" href="dashboard.css?v=20260417">
+    <link rel="stylesheet" href="tournament.css?v=20260413">
+    <style>
+        .status-draft { background-color: #6c757d; color: #fff; }
+        .status-reg-open { background-color: #0d6efd; color: #fff; }
+        .status-reg-closed { background-color: #6f42c1; color: #fff; }
+        .tournament-banner-err {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+        .tournament-banner-empty {
+            color: #555;
+            font-style: italic;
+            padding: 1rem 0;
+        }
+        .tournament-desc {
+            font-size: 0.9rem;
+            color: #444;
+            margin: 0.5rem 0 0;
+            line-height: 1.4;
+        }
+        .category-table-wrap { overflow-x: auto; margin-top: 0.5rem; }
+        .category-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .category-table th, .category-table td { border: 1px solid #ddd; padding: 6px 8px; text-align: left; }
+        .category-table th { background: #f0f9f4; }
+        .tournament-container .menu-toggle { z-index: 2100; }
+        .tournament-container .dashboard-nav.active { z-index: 2000; }
+    </style>
 </head>
 <body>
     <div class="tournament-container">
-        <!-- Header - Same as Dashboard -->
         <header class="tournament-header">
-            <!-- Left: Logo -->
             <div class="header-left">
-                <div class="header-logo">Saudi Karate Federation</div>
+                <img src="full badge.png" alt="Saudi Karate Federation" class="header-badge">
+            <div class="header-fed-name">
+                <span class="header-fed-ar">الاتحاد السعودي للكاراتيه</span>
+                <span class="header-fed-en">Saudi Karate Federation</span>
             </div>
-            
-            <!-- Center: Navigation Buttons -->
-            <div class="header-center">
-                <a href="transfers.html" class="nav-button">TRANSFERS</a>
-                <a href="tournament.html" class="nav-button active">TOURNAMENT</a>
-                <a href="player-dashboard.html" class="back-button">BACK</a>
             </div>
-            
-            <!-- Right: Vision 2030 -->
             <div class="header-right">
-                <!-- Vision 2030 Logo -->
                 <div class="vision-logo">
                     <p class="vision-title">VISION (رؤية)</p>
                     <p class="vision-year">2030</p>
@@ -32,488 +56,353 @@
             </div>
         </header>
 
-        <!-- Main Content -->
+        <div class="menu-toggle" id="menuToggle" title="Menu" aria-label="Open menu">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </div>
+
+        <nav class="dashboard-nav" id="dashboardNav">
+            <ul class="nav-menu" id="tournamentNavMenu"></ul>
+        </nav>
+
         <main class="tournament-content">
-            <!-- Page Title -->
             <h1 class="page-title">Tournaments</h1>
+            <p class="tournament-desc" style="text-align:center;max-width:42rem;margin:0 auto 1.5rem;">
+                All active tournaments published by the Saudi Karate Federation are listed below.
+            </p>
 
-            <!-- Live Tournaments Section -->
+            <div id="loadError" class="tournament-banner-err" style="display:none;"></div>
+
             <section class="tournament-section">
-                <h2 class="section-title">Live Tournaments</h2>
-                <div class="tournament-grid">
-                    <!-- Live Tournament 1 -->
-                    <div class="tournament-card" data-tournament="live1">
-                        <h3 class="tournament-name">Riyadh Championship 2025</h3>
-                        
-                        <div class="tournament-info">
-                            <span class="label">Status:</span>
-                            <span class="status-badge status-live">Live</span>
-                        </div>
-                        
-                        <div class="tournament-info">
-                            <span class="label">Date:</span>
-                            <span class="value">June 1-3, 2025</span>
-                        </div>
-                        
-                        <div class="tournament-info">
-                            <span class="label">Location:</span>
-                            <span class="value">King Saud University Stadium</span>
-                        </div>
-                        
-                        <div class="tournament-info">
-                            <span class="label">Participants:</span>
-                            <span class="value">256 Athletes</span>
-                        </div>
-                        
-                        <div class="tournament-actions">
-                            <button class="action-btn btn-primary" onclick="toggleAgeGroups('live1')">View Age Groups</button>
-                            <button class="action-btn btn-info">Live Results</button>
-                            <button class="action-btn btn-secondary">Bracket Tree</button>
-                        </div>
-                       
-                        <!-- Age Groups for Live Tournament 1 -->
-<div class="age-groups" id="ageGroups-live1">
-    <h4 class="age-groups-title">Select Age Group</h4>
-    <div class="age-group-list">
-        <div class="age-group-item" onclick="toggleCompetitionTypes('live1-cadet')">
-            <div class="age-group-name">Cadet</div>
-            <div class="age-group-range">12-13 years</div>
-        </div>
-        <div class="age-group-item" onclick="toggleCompetitionTypes('live1-junior')">
-            <div class="age-group-name">Junior</div>
-            <div class="age-group-range">14-15 years</div>
-        </div>
-        <div class="age-group-item" onclick="toggleCompetitionTypes('live1-u21')">
-            <div class="age-group-name">Under 21</div>
-            <div class="age-group-range">16-20 years</div>
-        </div>
-        <div class="age-group-item" onclick="toggleCompetitionTypes('live1-senior')">
-            <div class="age-group-name">Senior</div>
-            <div class="age-group-range">18+ years</div>
-        </div>
-    </div>
-    
-    <!-- Competition Types for Cadet -->
-    <div class="competition-types" id="competition-live1-cadet">
-        <h5 class="competition-types-title">Select Competition Type - Cadet (12-13 years)</h5>
-        <div class="competition-list">
-            <div class="competition-item" onclick="toggleGenderSelection('live1-cadet-kumite')">
-                <div class="competition-name">KUMITE</div>
-            </div>
-            <div class="competition-item" onclick="toggleGenderSelection('live1-cadet-kata')">
-                <div class="competition-name">KATA</div>
-            </div>
-            <div class="competition-item" onclick="toggleGenderSelection('live1-cadet-teamkumite')">
-                <div class="competition-name">TEAM KUMITE</div>
-            </div>
-            <div class="competition-item" onclick="toggleGenderSelection('live1-cadet-teamkata')">
-                <div class="competition-name">TEAM KATA</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Competition Types for Junior -->
-    <div class="competition-types" id="competition-live1-junior">
-        <h5 class="competition-types-title">Select Competition Type - Junior (14-15 years)</h5>
-        <div class="competition-list">
-            <div class="competition-item" onclick="toggleGenderSelection('live1-junior-kumite')">
-                <div class="competition-name">KUMITE</div>
-            </div>
-            <div class="competition-item" onclick="toggleGenderSelection('live1-junior-kata')">
-                <div class="competition-name">KATA</div>
-            </div>
-            <div class="competition-item" onclick="toggleGenderSelection('live1-junior-teamkumite')">
-                <div class="competition-name">TEAM KUMITE</div>
-            </div>
-            <div class="competition-item" onclick="toggleGenderSelection('live1-junior-teamkata')">
-                <div class="competition-name">TEAM KATA</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Competition Types for U21 -->
-    <div class="competition-types" id="competition-live1-u21">
-        <h5 class="competition-types-title">Select Competition Type - Under 21 (16-20 years)</h5>
-        <div class="competition-list">
-            <div class="competition-item" onclick="toggleGenderSelection('live1-u21-kumite')">
-                <div class="competition-name">KUMITE</div>
-            </div>
-            <div class="competition-item" onclick="toggleGenderSelection('live1-u21-kata')">
-                <div class="competition-name">KATA</div>
-            </div>
-            <div class="competition-item" onclick="toggleGenderSelection('live1-u21-teamkumite')">
-                <div class="competition-name">TEAM KUMITE</div>
-            </div>
-            <div class="competition-item" onclick="toggleGenderSelection('live1-u21-teamkata')">
-                <div class="competition-name">TEAM KATA</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Competition Types for Senior -->
-    <div class="competition-types" id="competition-live1-senior">
-        <h5 class="competition-types-title">Select Competition Type - Senior (18+ years)</h5>
-        <div class="competition-list">
-            <div class="competition-item" onclick="toggleGenderSelection('live1-senior-kumite')">
-                <div class="competition-name">KUMITE</div>
-            </div>
-            <div class="competition-item" onclick="toggleGenderSelection('live1-senior-kata')">
-                <div class="competition-name">KATA</div>
-            </div>
-            <div class="competition-item" onclick="toggleGenderSelection('live1-senior-teamkumite')">
-                <div class="competition-name">TEAM KUMITE</div>
-            </div>
-            <div class="competition-item" onclick="toggleGenderSelection('live1-senior-teamkata')">
-                <div class="competition-name">TEAM KATA</div>
-            </div>
-        </div>
-    </div>
-</div>
-                    </div>
-                    <!-- Live Tournament 2 -->
-                    <div class="tournament-card" data-tournament="live2">
-                        <h3 class="tournament-name">Eastern Province Open</h3>
-                        
-                        <div class="tournament-info">
-                            <span class="label">Status:</span>
-                            <span class="status-badge status-live">Live</span>
-                        </div>
-                        
-                        <div class="tournament-info">
-                            <span class="label">Date:</span>
-                            <span class="value">June 2-4, 2025</span>
-                        </div>
-                        
-                        <div class="tournament-info">
-                            <span class="label">Location:</span>
-                            <span class="value">Dammam Sports Complex</span>
-                        </div>
-                        
-                        <div class="tournament-info">
-                            <span class="label">Participants:</span>
-                            <span class="value">128 Athletes</span>
-                        </div>
-                        
-                        <div class="tournament-actions">
-                            <button class="action-btn btn-primary" onclick="toggleAgeGroups('live2')">View Age Groups</button>
-                            <button class="action-btn btn-info">Live Results</button>
-                            <button class="action-btn btn-secondary">Bracket Tree</button>
-                        </div>
-                        
-                        <!-- Age Groups for Live Tournament 2 -->
-                        <div class="age-groups" id="ageGroups-live2">
-                            <h4 class="age-groups-title">Select Age Group</h4>
-                            <div class="age-group-list">
-                                <div class="age-group-item" onclick="toggleWeightCategories('live2-junior')">
-                                    <div class="age-group-name">Junior</div>
-                                    <div class="age-group-range">Under 16</div>
-                                </div>
-                                <div class="age-group-item" onclick="toggleWeightCategories('live2-cadet')">
-                                    <div class="age-group-name">Cadet</div>
-                                    <div class="age-group-range">16-17 years</div>
-                                </div>
-                                <div class="age-group-item" onclick="toggleWeightCategories('live2-youth')">
-                                    <div class="age-group-name">Youth</div>
-                                    <div class="age-group-range">18-20 years</div>
-                                </div>
-                                <div class="age-group-item" onclick="toggleWeightCategories('live2-senior')">
-                                    <div class="age-group-name">Senior</div>
-                                    <div class="age-group-range">21+ years</div>
-                                </div>
-                                <div class="age-group-item" onclick="toggleWeightCategories('live2-masters')">
-                                    <div class="age-group-name">Masters</div>
-                                    <div class="age-group-range">35+ years</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <h2 class="section-title">Upcoming &amp; ongoing</h2>
+                <div class="tournament-grid" id="gridUpcoming"></div>
+                <p class="tournament-banner-empty" id="emptyUpcoming" style="display:none;">No upcoming or ongoing tournaments yet.</p>
             </section>
 
-            <!-- Past Tournaments Section -->
             <section class="tournament-section">
-                <h2 class="section-title">Past Tournaments</h2>
-                <div class="tournament-grid">
-                    <!-- Past Tournament 1 -->
-                    <div class="tournament-card" data-tournament="past1">
-                        <h3 class="tournament-name">Saudi National Championship 2024</h3>
-                        
-                        <div class="tournament-info">
-                            <span class="label">Status:</span>
-                            <span class="status-badge status-completed">Completed</span>
-                        </div>
-                        
-                        <div class="tournament-info">
-                            <span class="label">Date:</span>
-                            <span class="value">December 15-17, 2024</span>
-                        </div>
-                        
-                        <div class="tournament-info">
-                            <span class="label">Location:</span>
-                            <span class="value">Riyadh Sports Center</span>
-                        </div>
-                        
-                        <div class="tournament-info">
-                            <span class="label">Participants:</span>
-                            <span class="value">312 Athletes</span>
-                        </div>
-                        
-                        <div class="tournament-actions">
-                            <button class="action-btn btn-primary" onclick="toggleAgeGroups('past1')">View Results</button>
-                            <button class="action-btn btn-secondary">Final Brackets</button>
-                            <button class="action-btn btn-info">Medal Table</button>
-                        </div>
-                        
-                        <!-- Age Groups for Past Tournament 1 -->
-                        <div class="age-groups" id="ageGroups-past1">
-                            <h4 class="age-groups-title">Tournament Results by Age Group</h4>
-                            <div class="age-group-list">
-                                <div class="age-group-item" onclick="toggleWeightCategories('past1-junior')">
-                                    <div class="age-group-name">Junior</div>
-                                    <div class="age-group-range">Under 16</div>
-                                </div>
-                                <div class="age-group-item" onclick="toggleWeightCategories('past1-cadet')">
-                                    <div class="age-group-name">Cadet</div>
-                                    <div class="age-group-range">16-17 years</div>
-                                </div>
-                                <div class="age-group-item" onclick="toggleWeightCategories('past1-youth')">
-                                    <div class="age-group-name">Youth</div>
-                                    <div class="age-group-range">18-20 years</div>
-                                </div>
-                                <div class="age-group-item" onclick="toggleWeightCategories('past1-senior')">
-                                    <div class="age-group-name">Senior</div>
-                                    <div class="age-group-range">21+ years</div>
-                                </div>
-                                <div class="age-group-item" onclick="toggleWeightCategories('past1-masters')">
-                                    <div class="age-group-name">Masters</div>
-                                    <div class="age-group-range">35+ years</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Past Tournament 2 -->
-                    <div class="tournament-card" data-tournament="past2">
-                        <h3 class="tournament-name">Western Region Cup 2024</h3>
-                        
-                        <div class="tournament-info">
-                            <span class="label">Status:</span>
-                            <span class="status-badge status-completed">Completed</span>
-                        </div>
-                        
-                        <div class="tournament-info">
-                            <span class="label">Date:</span>
-                            <span class="value">November 10-12, 2024</span>
-                        </div>
-                        
-                        <div class="tournament-info">
-                            <span class="label">Location:</span>
-                            <span class="value">Jeddah Olympic Center</span>
-                        </div>
-                        
-                        <div class="tournament-info">
-                            <span class="label">Participants:</span>
-                            <span class="value">189 Athletes</span>
-                        </div>
-                        
-                        <div class="tournament-actions">
-                            <button class="action-btn btn-primary" onclick="toggleAgeGroups('past2')">View Results</button>
-                            <button class="action-btn btn-secondary">Final Brackets</button>
-                            <button class="action-btn btn-info">Medal Table</button>
-                        </div>
-                    </div>
-
-                    <!-- Past Tournament 3 -->
-                    <div class="tournament-card" data-tournament="past3">
-                        <h3 class="tournament-name">Youth Championship 2024</h3>
-                        
-                        <div class="tournament-info">
-                            <span class="label">Status:</span>
-                            <span class="status-badge status-completed">Completed</span>
-                        </div>
-                        
-                        <div class="tournament-info">
-                            <span class="label">Date:</span>
-                            <span class="value">October 5-7, 2024</span>
-                        </div>
-                        
-                        <div class="tournament-info">
-                            <span class="label">Location:</span>
-                            <span class="value">Abha Sports Stadium</span>
-                        </div>
-                        
-                        <div class="tournament-info">
-                            <span class="label">Participants:</span>
-                            <span class="value">156 Athletes</span>
-                        </div>
-                        
-                        <div class="tournament-actions">
-                            <button class="action-btn btn-primary" onclick="toggleAgeGroups('past3')">View Results</button>
-                            <button class="action-btn btn-secondary">Final Brackets</button>
-                            <button class="action-btn btn-info">Medal Table</button>
-                        </div>
-                    </div>
-                </div>
+                <h2 class="section-title">Past tournaments</h2>
+                <div class="tournament-grid" id="gridPast"></div>
+                <p class="tournament-banner-empty" id="emptyPast" style="display:none;">No past tournaments in the database.</p>
             </section>
         </main>
     </div>
 
-    <!-- JavaScript for Interactive Functionality -->
- <script>
-// Toggle Age Groups visibility
-function toggleAgeGroups(tournamentId) {
-    const ageGroupsDiv = document.getElementById('ageGroups-' + tournamentId);
-    
-    // Hide all other age groups first
-    const allAgeGroups = document.querySelectorAll('.age-groups');
-    allAgeGroups.forEach(group => {
-        if (group.id !== 'ageGroups-' + tournamentId) {
-            group.classList.remove('active');
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js?v=20260413"></script>
+    <script src="skf-role-layout.js?v=20260506"></script>
+    <script>
+        (function () {
+            var menuToggle = document.getElementById('menuToggle');
+            var dashboardNav = document.getElementById('dashboardNav');
+            if (menuToggle && dashboardNav) {
+                menuToggle.addEventListener('click', function () {
+                    this.classList.toggle('active');
+                    dashboardNav.classList.toggle('active');
+                });
+            }
+        })();
+        function closeTournamentMenu() {
+            var nav = document.getElementById('dashboardNav');
+            var toggle = document.getElementById('menuToggle');
+            if (nav) nav.classList.remove('active');
+            if (toggle) toggle.classList.remove('active');
         }
-    });
-    
-    // Hide all competition types when switching tournaments
-    const allCompetitionTypes = document.querySelectorAll('.competition-types');
-    allCompetitionTypes.forEach(comp => {
-        comp.classList.remove('active');
-    });
-    
-    // Hide all gender selections when switching tournaments
-    const allGenderSelections = document.querySelectorAll('.gender-selection');
-    allGenderSelections.forEach(gender => {
-        gender.classList.remove('active');
-    });
-    
-    // Hide all final categories when switching tournaments
-    const allFinalCategories = document.querySelectorAll('.final-categories');
-    allFinalCategories.forEach(final => {
-        final.classList.remove('active');
-    });
-    
-    // Toggle current age groups
-    ageGroupsDiv.classList.toggle('active');
-}
-
-// Toggle Competition Types visibility (NEW FUNCTION)
-function toggleCompetitionTypes(categoryId) {
-    // Hide all competition types first
-    const allCompetitionTypes = document.querySelectorAll('.competition-types');
-    allCompetitionTypes.forEach(comp => {
-        comp.classList.remove('active');
-    });
-    
-    // Hide all gender selections
-    const allGenderSelections = document.querySelectorAll('.gender-selection');
-    allGenderSelections.forEach(gender => {
-        gender.classList.remove('active');
-    });
-    
-    // Hide all final categories
-    const allFinalCategories = document.querySelectorAll('.final-categories');
-    allFinalCategories.forEach(final => {
-        final.classList.remove('active');
-    });
-    
-    // Show selected competition type
-    const selectedCompetition = document.getElementById('competition-' + categoryId);
-    if (selectedCompetition) {
-        selectedCompetition.classList.add('active');
+    </script>
+    <script>
+(function () {
+    function dashboardHrefFromRole(role) {
+        if (typeof getDashboardUrl === 'function' && role) {
+            try { return getDashboardUrl(role); } catch (_) {}
+        }
+        switch ((role || '').toLowerCase()) {
+            case 'skf_admin':
+            case 'admin': return 'admin-dashboard.html';
+            case 'club_admin': return 'club-dashboard.html';
+            case 'coach': return 'coach-dashboard.html';
+            case 'referee':
+            case 'referees_plus': return 'referee-dashboard.html';
+            default: return 'player-dashboard.html';
+        }
     }
-}
 
-// Toggle Gender Selection visibility (NEW FUNCTION)
-function toggleGenderSelection(categoryId) {
-    // Hide all gender selections first
-    const allGenderSelections = document.querySelectorAll('.gender-selection');
-    allGenderSelections.forEach(gender => {
-        gender.classList.remove('active');
-    });
-    
-    // Hide all final categories
-    const allFinalCategories = document.querySelectorAll('.final-categories');
-    allFinalCategories.forEach(final => {
-        final.classList.remove('active');
-    });
-    
-    // Show selected gender selection
-    const selectedGender = document.getElementById('gender-' + categoryId);
-    if (selectedGender) {
-        selectedGender.classList.add('active');
-    } else {
-        // For now, show alert until we build all gender sections
-        alert('Gender selection for: ' + categoryId + '\n\nChoose Male or Female, then view weight categories.');
+    /** Same items/order as the user’s main dashboard (club vs player vs admin). */
+    function buildTournamentNav() {
+        var ul = document.getElementById('tournamentNavMenu');
+        if (!ul) return;
+
+        function addClose() {
+            var li = document.createElement('li');
+            li.className = 'nav-item';
+            var a = document.createElement('a');
+            a.href = '#';
+            a.className = 'nav-link';
+            a.style.color = '#ff4444';
+            a.style.fontWeight = 'bold';
+            a.style.backgroundColor = 'rgba(255,0,0,0.1)';
+            a.textContent = '\u00d7 Close Menu';
+            a.onclick = function () {
+                document.getElementById('menuToggle').click();
+                return false;
+            };
+            li.appendChild(a);
+            ul.appendChild(li);
+        }
+
+        function addLink(href, label, active) {
+            var li = document.createElement('li');
+            li.className = 'nav-item';
+            var a = document.createElement('a');
+            a.href = href;
+            a.className = 'nav-link' + (active ? ' active' : '');
+            a.textContent = label;
+            a.onclick = function () { closeTournamentMenu(); };
+            li.appendChild(a);
+            ul.appendChild(li);
+        }
+
+        function addLogout() {
+            var li = document.createElement('li');
+            li.className = 'nav-item';
+            var a = document.createElement('a');
+            a.href = '#';
+            a.className = 'nav-link';
+            a.textContent = 'Logout';
+            a.onclick = function () { logout(); return false; };
+            li.appendChild(a);
+            ul.appendChild(li);
+        }
+
+        ul.innerHTML = '';
+        addClose();
+
+        var role = '';
+        try {
+            var u = JSON.parse(localStorage.getItem('user') || 'null');
+            role = (u && u.role || '').toLowerCase();
+        } catch (_) {}
+
+        if (role === 'club_admin') {
+            addLink('club-dashboard.html#club-reg', 'Club registration', false);
+            addLink('club-dashboard.html#players-mgmt', 'Players management', false);
+            addLink('club-dashboard.html#players-ranking', 'Players ranking', false);
+            addLink('club-dashboard.html#players-op', 'Players & tournaments', false);
+            addLink('tournament.html', 'Tournaments', true);
+            addLink('transfers.html', 'Transfer market', false);
+        } else if (role === 'player') {
+            addLink('transfers.html', 'Transfers', false);
+            addLink('tournament.html', 'Tournament', true);
+            addLink('player-dashboard.html', 'Player dashboard', false);
+        } else if (role === 'skf_admin' || role === 'admin') {
+            addLink('admin-dashboard.html', 'Admin dashboard', false);
+            addLink('tournament.html', 'Tournaments', true);
+            addLink('transfers.html', 'Transfer market', false);
+        } else if (role === 'coach') {
+            addLink(dashboardHrefFromRole('coach'), 'Coach dashboard', false);
+            addLink('tournament.html', 'Tournaments', true);
+            addLink('transfers.html', 'Transfer market', false);
+        } else if (role === 'referee' || role === 'referees_plus') {
+            var rtok = localStorage.getItem('token');
+            if (rtok && typeof SKFRoleLayout !== 'undefined' && SKFRoleLayout.applyRefereeSidebar) {
+                SKFRoleLayout.applyRefereeSidebar('public');
+                return;
+            }
+            addLink(dashboardHrefFromRole(role), 'Referee dashboard', false);
+            addLink('tournament.html', 'Tournaments', true);
+            addLink('transfers.html', 'Transfer market', false);
+        } else {
+            addLink('index.html', 'Sign in', false);
+            addLink('tournament.html', 'Tournaments', true);
+            addLink('transfers.html', 'Transfer market', false);
+        }
+
+        if (role) addLogout();
     }
-}
 
-// Show Final Categories (NEW FUNCTION)
-function showFinalCategories(categoryId) {
-    // Hide all final categories first
-    const allFinalCategories = document.querySelectorAll('.final-categories');
-    allFinalCategories.forEach(final => {
-        final.classList.remove('active');
-    });
-    
-    // Show selected final categories
-    const selectedFinal = document.getElementById('final-' + categoryId);
-    if (selectedFinal) {
-        selectedFinal.classList.add('active');
-    } else {
-        // For now, show alert with weight categories
-        showWeightCategoriesAlert(categoryId);
+    /** Labels and registration hint depend on who is viewing (club admin ≠ player). */
+    function roleContext() {
+        var out = {
+            dashHref: 'index.html',
+            dashLabel: 'Sign in',
+            regHint: 'Sign in to register for tournaments.'
+        };
+        try {
+            var u = JSON.parse(localStorage.getItem('user') || 'null');
+            if (!u || !u.role) return out;
+            out.dashHref = dashboardHrefFromRole(u.role);
+            var r = (u.role || '').toLowerCase();
+            if (r === 'club_admin') {
+                out.dashLabel = 'Club dashboard';
+                out.regHint = 'Club admins: use Players & tournaments on your club dashboard to register athletes.';
+            } else if (r === 'coach') {
+                out.dashLabel = 'Coach dashboard';
+                out.regHint = 'Registration is managed from your coach dashboard when enabled.';
+            } else if (r === 'skf_admin' || r === 'admin') {
+                out.dashLabel = 'Admin dashboard';
+                out.regHint = 'SKF staff manage registrations in the admin tools.';
+            } else {
+                out.dashLabel = 'Player dashboard';
+                out.regHint = 'Players complete registration from the player dashboard.';
+            }
+        } catch (_) {}
+        return out;
     }
-}
 
-// Show Weight Categories Alert (HELPER FUNCTION)
-function showWeightCategoriesAlert(categoryId) {
-    let weights = '';
-    
-    // Define weight categories based on age group and gender
-    if (categoryId.includes('cadet-kumite-male')) {
-        weights = '-52kg, -57kg, -63kg, -70kg, +70kg';
-    } else if (categoryId.includes('cadet-kumite-female')) {
-        weights = '-47kg, -54kg, +54kg';
-    } else if (categoryId.includes('junior-kumite-male')) {
-        weights = '-55kg, -61kg, -68kg, -76kg, +76kg';
-    } else if (categoryId.includes('junior-kumite-female')) {
-        weights = '-48kg, -53kg, -59kg, +59kg';
-    } else if (categoryId.includes('u21-kumite-male') || categoryId.includes('senior-kumite-male')) {
-        weights = '-60kg, -67kg, -75kg, -84kg, +84kg';
-    } else if (categoryId.includes('u21-kumite-female') || categoryId.includes('senior-kumite-female')) {
-        weights = '-50kg, -55kg, -61kg, -68kg, +68kg';
-    } else if (categoryId.includes('kata') || categoryId.includes('team')) {
-        weights = 'No weight categories for this competition type';
-    } else {
-        weights = 'Weight categories will be displayed here';
+    var ctx = roleContext();
+
+    function fmtRange(startIso, endIso) {
+        var s = new Date(startIso);
+        var e = new Date(endIso);
+        var o = { month: 'short', day: 'numeric', year: 'numeric' };
+        return s.toLocaleDateString(undefined, o) + ' – ' + e.toLocaleDateString(undefined, o);
     }
-    
-    alert('Final Categories for: ' + categoryId + '\n\nWeight Categories: ' + weights + '\n\nClick on a weight to view the bracket tree.');
-}
 
-// View Bracket for specific weight category (EXISTING FUNCTION)
-function viewBracket(categoryId) {
-    alert('Opening bracket view for: ' + categoryId + '\n\nThis will show the tournament bracket tree (128→64→32→16→8→4→final) for this weight category.');
-    
-    // Here you would typically navigate to a detailed bracket page
-    // window.location.href = 'bracket.html?category=' + categoryId;
-}
+    function statusBadge(status) {
+        var st = (status || '').toLowerCase();
+        if (st === 'registration_open') return { cls: 'status-reg-open', label: 'Registration open' };
+        if (st === 'registration_closed') return { cls: 'status-reg-closed', label: 'Registration closed' };
+        if (st === 'draft') return { cls: 'status-draft', label: 'Draft' };
+        return { cls: 'status-upcoming', label: status || '—' };
+    }
 
-// Add smooth scrolling and animations (EXISTING FUNCTION)
-document.addEventListener('DOMContentLoaded', function() {
-    // Add animation to tournament cards on load
-    const cards = document.querySelectorAll('.tournament-card');
-    cards.forEach((card, index) => {
-        setTimeout(() => {
-            card.style.opacity = '0';
-            card.style.transform = 'translateY(20px)';
-            card.style.transition = 'all 0.5s ease';
-            
-            setTimeout(() => {
-                card.style.opacity = '1';
-                card.style.transform = 'translateY(0)';
-            }, 100);
-        }, index * 100);
+    function renderCard(t, isPast, rc) {
+        var meta = statusBadge(t.status);
+        if (isPast) {
+            meta = { cls: 'status-completed', label: 'Ended' };
+        }
+        var desc = (t.description || '').trim();
+        var descHtml = desc
+            ? '<p class="tournament-desc">' + desc.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</p>'
+            : '';
+        var regRow = '';
+        if (!isPast && t.status === 'registration_open') {
+            regRow = '<div class="tournament-info"><span class="label">Registration:</span><span class="value">' +
+                String(rc.regHint || '').replace(/&/g, '&amp;').replace(/</g, '&lt;') + '</span></div>';
+        }
+
+        return (
+            '<div class="tournament-card" data-tid="' + t.id + '">' +
+            '<h3 class="tournament-name">' + (t.name || 'Tournament').replace(/</g, '&lt;') + '</h3>' +
+            descHtml +
+            '<div class="tournament-info"><span class="label">Status:</span>' +
+            '<span class="status-badge ' + meta.cls + '">' + meta.label + '</span></div>' +
+            '<div class="tournament-info"><span class="label">Date:</span><span class="value">' + fmtRange(t.start_date, t.end_date) + '</span></div>' +
+            '<div class="tournament-info"><span class="label">Location:</span><span class="value">' + (t.location || '—').replace(/</g, '&lt;') + '</span></div>' +
+            regRow +
+            '<div class="tournament-actions">' +
+            '<button type="button" class="action-btn btn-primary cat-toggle" data-tid="' + t.id + '">View categories</button>' +
+            '<a class="action-btn btn-secondary" href="' + String(rc.dashHref).replace(/"/g, '&quot;') + '">' +
+            String(rc.dashLabel).replace(/</g, '&lt;') + '</a>' +
+            '</div>' +
+            '<div class="age-groups" id="ageGroups-' + t.id + '">' +
+            '<h4 class="age-groups-title">Categories</h4>' +
+            '<div class="cat-body" id="catBody-' + t.id + '"><p class="tournament-desc">Loading…</p></div>' +
+            '</div>' +
+            '</div>'
+        );
+    }
+
+    async function toggleCategories(sb, tournamentId) {
+        var panel = document.getElementById('ageGroups-' + tournamentId);
+        var body = document.getElementById('catBody-' + tournamentId);
+        if (!panel || !body) return;
+
+        var opening = !panel.classList.contains('active');
+        document.querySelectorAll('.age-groups.active').forEach(function (g) {
+            if (g !== panel) g.classList.remove('active');
+        });
+        panel.classList.toggle('active');
+
+        if (!opening || body.dataset.loaded === '1') return;
+
+        body.innerHTML = '<p class="tournament-desc">Loading…</p>';
+        var res = await sb.from('tournament_categories')
+            .select('discipline,gender,age_group,weight_class')
+            .eq('tournament_id', tournamentId)
+            .order('age_group', { ascending: true });
+
+        if (res.error) {
+            body.innerHTML = '<p class="tournament-desc" style="color:#c00;">Could not load categories.</p>';
+            return;
+        }
+        var rows = res.data || [];
+        if (!rows.length) {
+            body.innerHTML = '<p class="tournament-desc">No categories configured for this tournament.</p>';
+        } else {
+            var html = '<div class="category-table-wrap"><table class="category-table"><thead><tr>' +
+                '<th>Age group</th><th>Discipline</th><th>Gender</th><th>Weight</th></tr></thead><tbody>';
+            rows.forEach(function (r) {
+                html += '<tr><td>' + (r.age_group || '—') + '</td><td>' + (r.discipline || '—') + '</td><td>' +
+                    (r.gender || '—') + '</td><td>' + (r.weight_class || '—') + '</td></tr>';
+            });
+            html += '</tbody></table></div>';
+            body.innerHTML = html;
+        }
+        body.dataset.loaded = '1';
+    }
+
+    document.addEventListener('DOMContentLoaded', async function () {
+        ctx = roleContext();
+        buildTournamentNav();
+
+        var errEl = document.getElementById('loadError');
+        var sb = typeof getSupabase === 'function' ? getSupabase() : null;
+        if (!sb) {
+            errEl.style.display = 'block';
+            errEl.textContent = 'Service unavailable. Please refresh the page or contact SKF support.';
+            return;
+        }
+
+        var res = await sb.from('tournaments')
+            .select('id,name,description,status,start_date,end_date,location')
+            .eq('is_active', true)
+            .order('start_date', { ascending: true });
+
+        if (res.error) {
+            errEl.style.display = 'block';
+            errEl.textContent = 'Could not load tournaments. Please try again or contact SKF support.';
+            return;
+        }
+
+        var now = new Date();
+        var upcoming = [];
+        var past = [];
+        (res.data || []).forEach(function (t) {
+            var end = new Date(t.end_date);
+            if (end >= now) upcoming.push(t);
+            else past.push(t);
+        });
+        past.sort(function (a, b) { return new Date(b.end_date) - new Date(a.end_date); });
+
+        var gUp = document.getElementById('gridUpcoming');
+        var gPast = document.getElementById('gridPast');
+        document.getElementById('emptyUpcoming').style.display = upcoming.length ? 'none' : 'block';
+        document.getElementById('emptyPast').style.display = past.length ? 'none' : 'block';
+
+        gUp.innerHTML = upcoming.map(function (t) { return renderCard(t, false, ctx); }).join('');
+        gPast.innerHTML = past.map(function (t) { return renderCard(t, true, ctx); }).join('');
+
+        document.body.addEventListener('click', function (ev) {
+            var btn = ev.target.closest('.cat-toggle');
+            if (!btn) return;
+            var tid = btn.getAttribute('data-tid');
+            if (tid) toggleCategories(sb, tid);
+        });
+
+        var cards = document.querySelectorAll('.tournament-card');
+        cards.forEach(function (card, index) {
+            setTimeout(function () {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(20px)';
+                card.style.transition = 'all 0.5s ease';
+                setTimeout(function () {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, 100);
+            }, index * 80);
+        });
     });
-});
-</script>
+})();
+    </script>
 </body>
 </html>

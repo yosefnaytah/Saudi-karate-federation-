@@ -5,6 +5,8 @@
     min-height: 100vh;
     background-color: #f5f5f5;
     overflow-x: hidden;
+    /* One UI stack for main content + drawer (avoids serif fallback on nav links). */
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 /* Menu Toggle Button */
@@ -23,6 +25,7 @@
     z-index: 1000;
     box-shadow: 0 4px 10px rgba(0,0,0,0.2);
     transition: background-color 0.3s ease, transform 0.3s ease;
+    font-family: inherit;
 }
 
 .menu-toggle:hover {
@@ -95,6 +98,7 @@
     color: #fff;
     text-decoration: none;
     font-size: 16px;
+    font-family: inherit;
     position: relative;
     transition: background-color 0.3s ease, padding-right 0.3s ease;
 }
@@ -334,6 +338,7 @@
 .header-left {
     display: flex;
     align-items: center;
+    gap: 14px;
 }
 
 .header-center {
@@ -352,6 +357,40 @@
     font-size: 20px;
     font-weight: bold;
     color: white;
+}
+
+.header-badge {
+    height: 62px;
+    width: auto;
+    object-fit: contain;
+    border-radius: 6px;
+    display: block;
+    flex-shrink: 0;
+}
+
+.header-fed-name {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 2px;
+}
+
+.header-fed-ar {
+    font-size: 17px;
+    font-weight: 800;
+    color: #fff;
+    line-height: 1.2;
+    font-family: 'Segoe UI', 'Arial', sans-serif;
+    letter-spacing: 0.01em;
+}
+
+.header-fed-en {
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(255,255,255,0.85);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    line-height: 1.2;
 }
 
 /* Header Navigation Buttons */
@@ -437,15 +476,6 @@
     display: flex;
     flex-direction: column;
     transition: all 0.3s ease;
-}
-
-.event-item .btn,
-.event-item a.btn {
-    align-self: flex-start;
-    padding: 7px 22px;
-    font-size: 13px;
-    border-radius: 20px;
-    width: auto;
 }
 
 .event-item:hover {

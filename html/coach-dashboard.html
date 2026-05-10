@@ -1,299 +1,339 @@
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coach Dashboard - Saudi Karate Federation</title>
-    <!-- Link to your CSS files here -->
-    <link rel="stylesheet" href="dashboard.css">
-    <script src="auth.js" defer></script>
+    <link rel="stylesheet" href="dashboard.css?v=20260417">
+    <style>
+        .coach-anchor { scroll-margin-top: 88px; }
+        .dashboard-container .menu-toggle { z-index: 2100; }
+        .dashboard-container .dashboard-nav.active { z-index: 2000; }
+        .coach-empty { text-align: center; padding: 28px 16px; color: #666; font-size: 14px; }
+        .coach-hero { background: linear-gradient(125deg, #e8f5e9, #fff); border: 1px solid #c8e6c9; border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+        .coach-hero h2 { margin: 0 0 6px; color: #1b5e20; font-size: 1.3rem; }
+        .coach-hero p { margin: 0; color: #444; font-size: 14px; line-height: 1.5; }
+        .coach-ov-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 16px; }
+        .coach-ov-grid .dashboard-card { margin-bottom: 0; }
+        .coach-ov-txt { font-size: 13px; color: #555; line-height: 1.45; padding: 8px 16px 16px; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="skf-role-layout.js?v=20260506"></script>
+    <script src="auth.js?v=20260414" defer></script>
+    <script src="skf-highlights.js?v=20260510"></script>
+    <script src="skf-live-board.js?v=20260510"></script>
 </head>
-
 <body>
-    <div class="dashboard-container">
-        <!-- Updated Header -->
-        <header class="dashboard-header">
-            <!-- Left: Tournaments -->
-            <div class="header-left">
+<div class="dashboard-container">
+    <header class="dashboard-header">
+        <div class="header-left">
+            <img src="full badge.png" alt="Saudi Karate Federation" class="header-badge">
+            <div class="header-fed-name">
+                <span class="header-fed-ar">الاتحاد السعودي للكاراتيه</span>
+                <span class="header-fed-en">Saudi Karate Federation</span>
             </div>
-
-            <!-- Center: SKF2030 -->
-            <div class="header-center">
-                <a href="land.html"><img src="skf2030.png" alt="SKF2030" style="height: 60px; object-fit: contain;"></a>
+        </div>
+        <div class="header-right">
+            <div class="user-role" id="userDisplay">Loading…</div>
+            <div class="vision-logo">
+                <p class="vision-title">VISION (رؤية)</p>
+                <p class="vision-year">2030</p>
             </div>
+        </div>
+    </header>
 
-            <!-- Right: Menu -->
-            <div class="header-right">
-                <div class="user-role" id="userDisplay">Loading...</div>
-
-                <!-- Menu Toggle Button inside header right -->
-                <div class="menu-toggle" id="menuToggle">
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                    <span class="bar"></span>
-                </div>
-            </div>
-        </header>
-
-        <!-- Navigation Menu (slides from right) -->
-        <nav class="dashboard-nav" id="dashboardNav">
-            <ul class="nav-menu">
-                <li class="nav-item">
-                    <a href="#" class="nav-link"
-                        style="color: #ff4444; font-weight: bold; background-color: rgba(255,0,0,0.1);"
-                        onclick="document.getElementById('menuToggle').click(); return false;">&times; Close Menu</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#profile" class="nav-link">Profile</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#player-management" class="nav-link">Player Management</a>
-                </li>
-                <li class="nav-item">
-                    <a href="transfers.html" class="nav-link">Transfer Market</a>
-                </li>
-                <li class="nav-item">
-                    <a href="tournament.html" class="nav-link">Tournaments</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#live-matches" class="nav-link">Live Matches</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#leaderboards" class="nav-link">Leaderboards</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#technical-support" class="nav-link">Technical Support</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" class="nav-link" onclick="logout()">Logout</a>
-                </li>
-            </ul>
-        </nav>
-
-        <!-- Main Content Area -->
-        <main class="dashboard-content" style="max-width: 90%; margin: 0 auto; width: 100%;">
-
-            <!-- Upcoming Tournaments with Animation -->
-            <div class="dashboard-card">
-                <div class="dashboard-card-header">
-                    <h2 class="dashboard-card-title">Upcoming Tournaments</h2>
-                </div>
-                <div class="match-container"
-                    style="display: flex; gap: 20px; overflow-x: auto; padding: 10px 0 20px 0; margin: 0; height: auto; position: relative; box-sizing: border-box; width: 100%;">
-                    <!-- Tournament 1 -->
-                    <div class="match-card"
-                        style="position: relative; transform: none; left: auto; top: auto; opacity: 1; animation: none; flex: 0 0 auto; width: 280px; box-sizing: border-box; margin: 0;">
-                        <p><strong>Tournament 1</strong></p>
-                        <p>Location: Jeddah</p>
-                        <p>Date: <span id="t1-date"></span></p>
-                        <a href="tournament.html" class="btn btn-primary"
-                            style="margin-top: 15px; font-size: 14px; padding: 5px 15px;">Tournament Details</a>
-                    </div>
-                    <!-- Tournament 2 -->
-                    <div class="match-card"
-                        style="position: relative; transform: none; left: auto; top: auto; opacity: 1; animation: none; flex: 0 0 auto; width: 280px; box-sizing: border-box; margin: 0;">
-                        <p><strong>Tournament 2</strong></p>
-                        <p>Location: Riyadh</p>
-                        <p>Date: <span id="t2-date"></span></p>
-                        <a href="tournament.html" class="btn btn-primary"
-                            style="margin-top: 15px; font-size: 14px; padding: 5px 15px;">Tournament Details</a>
-                    </div>
-                    <!-- Tournament 3 -->
-                    <div class="match-card"
-                        style="position: relative; transform: none; left: auto; top: auto; opacity: 1; animation: none; flex: 0 0 auto; width: 280px; box-sizing: border-box; margin: 0;">
-                        <p><strong>Tournament 3</strong></p>
-                        <p>Location: Dammam</p>
-                        <p>Date: Oct 25, 2026</p>
-                        <a href="tournament.html" class="btn btn-primary"
-                            style="margin-top: 15px; font-size: 14px; padding: 5px 15px;">Tournament Details</a>
-                    </div>
-                    <!-- Tournament 4 -->
-                    <div class="match-card"
-                        style="position: relative; transform: none; left: auto; top: auto; opacity: 1; animation: none; flex: 0 0 auto; width: 280px; box-sizing: border-box; margin: 0;">
-                        <p><strong>Tournament 4</strong></p>
-                        <p>Location: Mecca</p>
-                        <p>Date: Nov 12, 2026</p>
-                        <a href="tournament.html" class="btn btn-primary"
-                            style="margin-top: 15px; font-size: 14px; padding: 5px 15px;">Tournament Details</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Demo Players List -->
-            <div class="dashboard-card">
-                <div class="dashboard-card-header">
-                    <h2 class="dashboard-card-title">My Players</h2>
-                </div>
-
-                <div class="data-table-container">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Player Name</th>
-                                <th>Belt Level</th>
-                                <th>Closest Tournament Date</th>
-                                <th>Winrate</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Khalid Al-Mutairi</td>
-                                <td>Brown Belt (1st Kyu)</td>
-                                <td><span class="player-date"></span></td>
-                                <td style="font-weight: bold; color: #2e8b57;">78%</td>
-                                <td><a href="#player-details" class="btn"
-                                        style="padding: 5px 10px; font-size: 14px;">Details</a></td>
-                            </tr>
-                            <tr>
-                                <td>Ahmed Al-Salem</td>
-                                <td>Blue Belt (5th Kyu)</td>
-                                <td><span class="player-date"></span></td>
-                                <td style="font-weight: bold; color: #2e8b57;">62%</td>
-                                <td><a href="#player-details" class="btn"
-                                        style="padding: 5px 10px; font-size: 14px;">Details</a></td>
-                            </tr>
-                            <tr>
-                                <td>Fatima Al-Harbi</td>
-                                <td>Green Belt (4th Kyu)</td>
-                                <td><span class="player-date"></span></td>
-                                <td style="font-weight: bold; color: #2e8b57;">85%</td>
-                                <td><a href="#player-details" class="btn"
-                                        style="padding: 5px 10px; font-size: 14px;">Details</a></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-        </main>
+    <div class="menu-toggle" id="menuToggle" title="Menu" aria-label="Open menu">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
     </div>
 
-    <!-- JavaScript -->
-    <script>
-        // Toggle Navigation Menu
-        const menuToggle = document.getElementById('menuToggle');
-        const dashboardNav = document.getElementById('dashboardNav');
+    <nav class="dashboard-nav" id="dashboardNav">
+        <ul class="nav-menu"></ul>
+    </nav>
 
-        menuToggle.addEventListener('click', function () {
-            this.classList.toggle('active');
-            dashboardNav.classList.toggle('active');
-        });
+    <main class="dashboard-content" style="max-width: 1100px; margin: 0 auto; width: 100%;">
+        <!-- SKF Highlights Banner -->
+        <div id="skfHlBannerCoach"></div>
 
-        // Randomly generate future dates
-        function generateRandomFutureDate() {
-            const start = new Date();
-            const end = new Date(start.getFullYear() + 1, 11, 31);
-            const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        <div id="coach-overview" class="coach-anchor">
+            <div class="coach-hero">
+                <h2>Coach overview</h2>
+                <p>Active events, live tatami action, and club leaderboard context load here first. Use the menu to open profile, athletes, and detailed match lists.</p>
+            </div>
+            <div class="stats-container" style="margin-bottom:16px;">
+                <div class="stat-card"><div class="stat-value" id="coachOvTournaments">—</div><div class="stat-label">Active tournaments</div></div>
+                <div class="stat-card"><div class="stat-value" id="coachOvLive">—</div><div class="stat-label">Live / paused bouts</div></div>
+                <div class="stat-card"><div class="stat-value" id="coachOvFinished">—</div><div class="stat-label">Finished (visible)</div></div>
+                <div class="stat-card"><div class="stat-value" id="coachOvClubRank">—</div><div class="stat-label">Club context</div></div>
+            </div>
+            <div class="coach-ov-grid">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header"><h2 class="dashboard-card-title">Upcoming events</h2></div>
+                    <div id="coachOvEventsPreview" class="coach-ov-txt">Loading…</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header"><h2 class="dashboard-card-title">Live tatami</h2></div>
+                    <div id="coachOvLivePreview" class="coach-ov-txt">Loading…</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header"><h2 class="dashboard-card-title">Recent results (federation)</h2></div>
+                    <div id="coachOvResultsPreview" class="coach-ov-txt">Loading…</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header"><h2 class="dashboard-card-title">Athletes & training notes</h2></div>
+                    <div id="coachOvAthletesNote" class="coach-ov-txt">Loading…</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="profile" class="dashboard-card coach-anchor">
+            <div class="dashboard-card-header">
+                <h2 class="dashboard-card-title">Profile</h2>
+            </div>
+            <div id="coachProfileBody" style="padding:12px 20px 20px;color:#555;font-size:14px;line-height:1.6;">Loading…</div>
+        </div>
+
+        <div id="player-management" class="dashboard-card coach-anchor">
+            <div class="dashboard-card-header">
+                <h2 class="dashboard-card-title">Athletes (detail)</h2>
+            </div>
+            <div class="coach-empty" style="padding:20px;">
+                SKF does not yet store a dedicated coach→athlete assignment table. Work with your <strong>club admin</strong> for rosters, contracts, and tournament entries. When federation schema adds coach links, athlete progress will list here automatically.
+            </div>
+        </div>
+
+        <div class="dashboard-card coach-anchor">
+            <div class="dashboard-card-header">
+                <h2 class="dashboard-card-title">Active tournaments (full list)</h2>
+            </div>
+            <p style="font-size:13px;color:#666;margin:0 20px 12px;">All currently published and active tournaments.</p>
+            <div id="coachTournamentsBody" style="padding:8px 20px 20px;min-height:48px;">Loading…</div>
+        </div>
+
+        <div style="margin-bottom:16px;" id="coachLiveBoardWrap">
+            <div id="coachLiveBoard"></div>
+        </div>
+
+        <div id="live-matches" class="dashboard-card coach-anchor">
+            <div class="dashboard-card-header">
+                <h2 class="dashboard-card-title">Live / paused bouts (full list)</h2>
+            </div>
+            <p style="font-size:13px;color:#666;margin:0 20px 12px;">Matches currently in progress or temporarily paused.</p>
+            <div id="coachLiveMatchesBody" style="padding:8px 20px 20px;min-height:48px;">Loading…</div>
+        </div>
+    </main>
+</div>
+
+<script>
+var CH_URL = 'https://uqlpxdphikmmpdsuojil.supabase.co';
+var CH_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxbHB4ZHBoaWttbXBkc3VvamlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3OTI5NDEsImV4cCI6MjA4NjM2ODk0MX0.03xQ8ltwZm_TTEAHDOHocfFKG2j_PHmL1Lzt2t-aFJU';
+
+function chSb() {
+    var tok = localStorage.getItem('token');
+    if (!tok || typeof supabase === 'undefined') return null;
+    return supabase.createClient(CH_URL, CH_ANON, {
+        global: { headers: { Authorization: 'Bearer ' + tok } },
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    });
+}
+
+function escCoach(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+}
+
+async function loadCoachOverview(uid) {
+    var sb = chSb();
+    var elT = document.getElementById('coachOvTournaments');
+    var elL = document.getElementById('coachOvLive');
+    var elF = document.getElementById('coachOvFinished');
+    var elC = document.getElementById('coachOvClubRank');
+    var evP = document.getElementById('coachOvEventsPreview');
+    var lvP = document.getElementById('coachOvLivePreview');
+    var rsP = document.getElementById('coachOvResultsPreview');
+    var atP = document.getElementById('coachOvAthletesNote');
+    if (!sb) {
+        if (evP) evP.textContent = 'Sign in to load.';
+        return;
+    }
+
+    var tq = await sb.from('tournaments').select('id,name,start_date,location,status').eq('is_active', true).order('start_date', { ascending: true }).limit(20);
+    var tours = (!tq.error && tq.data) ? tq.data : [];
+    if (elT) elT.textContent = String(tours.length || 0);
+    if (evP) {
+        if (!tours.length) evP.innerHTML = '<p style="margin:0;color:#666;">No active tournaments published.</p>';
+        else {
+            evP.innerHTML = '<ul style="margin:0;padding-left:1.1rem;">' + tours.slice(0, 5).map(function (t) {
+                var d = t.start_date ? new Date(t.start_date).toLocaleDateString() : '—';
+                return '<li><strong>' + escCoach(t.name) + '</strong> · ' + escCoach(d) + '</li>';
+            }).join('') + '</ul><p style="margin:8px 0 0;"><a href="tournament.html" style="color:#2e7d32;font-weight:600;">Public tournament list</a></p>';
         }
+    }
 
-
-
-        // Random Date Generator for 2026
-        function getRandomDate2026() {
-            const start = new Date(2026, 0, 1);
-            const end = new Date(2026, 11, 31);
-            const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
-            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    var lq = await sb.from('tournament_matches').select('id,status,red_score,blue_score,mat_label,round_number').in('status', ['live', 'paused']).order('scheduled_start', { ascending: true }).limit(30);
+    var liveRows = (!lq.error && lq.data) ? lq.data : [];
+    if (elL) elL.textContent = lq.error ? '—' : String(liveRows.length);
+    if (lvP) {
+        if (lq.error) lvP.innerHTML = '<p style="margin:0;color:#666;">Live matches are restricted by database policies for coach accounts.</p>';
+        else if (!liveRows.length) lvP.innerHTML = '<p style="margin:0;color:#666;">No live bouts visible right now.</p>';
+        else {
+            lvP.innerHTML = '<ul style="margin:0;padding-left:1.1rem;">' + liveRows.slice(0, 6).map(function (m) {
+                return '<li><strong>' + escCoach(m.status) + '</strong> · R' + escCoach(m.round_number) + (m.mat_label ? ' · Mat ' + escCoach(m.mat_label) : '') + '</li>';
+            }).join('') + '</ul><p style="margin:8px 0 0;font-size:12px;">See full list in <a href="#live-matches" style="color:#2e7d32;">Live matches</a> below.</p>';
         }
+    }
 
-        // Set Random Dates for Tournaments
-        document.getElementById('t1-date').textContent = getRandomDate2026();
-        document.getElementById('t2-date').textContent = getRandomDate2026();
+    var fq = await sb.from('tournament_matches').select('id,status,winner_user_id,red_score,blue_score,updated_at').eq('status', 'completed').order('updated_at', { ascending: false }).limit(25);
+    var done = (!fq.error && fq.data) ? fq.data : [];
+    if (elF) elF.textContent = fq.error ? '—' : String(done.length);
+    if (rsP) {
+        if (fq.error) rsP.innerHTML = '<p style="margin:0;color:#666;">Completed bouts are not readable with your current permissions.</p>';
+        else if (!done.length) rsP.innerHTML = '<p style="margin:0;color:#666;">No recent completed matches visible.</p>';
+        else {
+            rsP.innerHTML = '<ul style="margin:0;padding-left:1.1rem;">' + done.slice(0, 6).map(function (m) {
+                var sc = (m.red_score != null && m.blue_score != null) ? escCoach(m.red_score) + '–' + escCoach(m.blue_score) : '—';
+                return '<li>' + sc + ' · completed</li>';
+            }).join('') + '</ul>';
+        }
+    }
 
-        // Set Random Dates for Players
-        const playerDates = document.querySelectorAll('.player-date');
-        playerDates.forEach(el => {
-            el.textContent = getRandomDate2026();
-        });
+    if (atP) {
+        atP.innerHTML = '<p style="margin:0 0 8px;">Training notes and plans are managed externally. Work with your club admin for official records and documentation.</p>'
+            + '<p style="margin:0;">Coordinate official registrations and medical eligibility with your club admin.</p>';
+    }
 
-        // Animate cards on page load
-        document.addEventListener('DOMContentLoaded', function () {
-            const dashboardCards = document.querySelectorAll('.dashboard-card');
-            const tableContainers = document.querySelectorAll('.data-table-container');
-
-            setTimeout(() => {
-                dashboardCards.forEach((card, index) => {
-                    setTimeout(() => {
-                        card.classList.add('loaded');
-                    }, index * 200);
-                });
-            }, 300);
-
-            setTimeout(() => {
-                tableContainers.forEach((container) => {
-                    container.classList.add('loaded');
-                });
-            }, 500);
-        });
-    </script>
-    <script>
-        // Check authentication and role when page loads
-        document.addEventListener('DOMContentLoaded', function () {
-            const userStr = localStorage.getItem('user');
-
-            if (userStr) {
-                const user = JSON.parse(userStr);
-
-                if (typeof displayUserInfo === 'function') {
-                    displayUserInfo();
-                } else {
-                    document.getElementById('userDisplay').textContent = user.name + ' (Coach)';
-                }
-            } else {
-                document.getElementById('userDisplay').textContent = 'Demo Coach (Coach)';
+    if (elC && uid) {
+        var uq = await sb.from('users').select('club_id,club_name').eq('id', uid).maybeSingle();
+        if (uq.error || !uq.data || !uq.data.club_id) {
+            elC.textContent = 'N/A';
+        } else {
+            var cid = uq.data.club_id;
+            var pq = await sb.from('users').select('id').eq('club_id', cid).eq('role', 'player');
+            var n = (!pq.error && pq.data) ? pq.data.length : 0;
+            elC.textContent = n + ' athletes';
+            if (atP) {
+                atP.innerHTML = '<p style="margin:0 0 8px;"><strong>Club on your profile:</strong> ' + escCoach(uq.data.club_name || '—') + '</p>'
+                    + '<p style="margin:0;">Approximately ' + n + ' player(s) are registered under your club. Detailed rostering is managed in the club dashboard.</p>';
             }
+        }
+    }
+}
+
+async function loadCoachTournaments() {
+    var el = document.getElementById('coachTournamentsBody');
+    var sb = chSb();
+    if (!sb) {
+        el.innerHTML = '<p class="coach-empty">Sign in to load tournaments.</p>';
+        return;
+    }
+    var q = await sb.from('tournaments').select('id,name,start_date,location').eq('is_active', true).order('start_date', { ascending: true }).limit(24);
+    if (q.error) {
+        el.innerHTML = '<p class="coach-empty">Could not load tournaments.</p>';
+        return;
+    }
+    var rows = q.data || [];
+    if (!rows.length) {
+        el.innerHTML = '<p class="coach-empty">No active tournament published yet.</p>';
+        return;
+    }
+    el.innerHTML = '<div class="match-container" style="display:flex;gap:14px;overflow-x:auto;padding:6px 0 8px;">'
+        + rows.map(function (t) {
+            var when = t.start_date ? new Date(t.start_date).toLocaleDateString() : '—';
+            return '<div class="match-card" style="flex:0 0 auto;min-width:240px;padding:14px;"><p><strong>' + escCoach(t.name) + '</strong></p>'
+                + '<p style="font-size:13px;color:#666;">' + escCoach(when) + (t.location ? ' · ' + escCoach(t.location) : '') + '</p>'
+                + '<a href="tournament.html" class="btn btn-primary" style="margin-top:10px;font-size:13px;">Public list</a></div>';
+        }).join('') + '</div>';
+}
+
+async function loadCoachLiveMatches() {
+    var el = document.getElementById('coachLiveMatchesBody');
+    var sb = chSb();
+    if (!sb) {
+        el.innerHTML = '<p class="coach-empty">Sign in to load matches.</p>';
+        return;
+    }
+    var q = await sb.from('tournament_matches').select('id,status,red_score,blue_score,mat_label,round_number').in('status', ['live', 'paused']).order('scheduled_start', { ascending: true }).limit(40);
+    if (q.error) {
+        el.innerHTML = '<p class="coach-empty">No live matches in progress at the moment.</p>';
+        return;
+    }
+    var rows = q.data || [];
+    if (!rows.length) {
+        el.innerHTML = '<p class="coach-empty">No live matches currently.</p>';
+        return;
+    }
+    el.innerHTML = '<ul style="list-style:none;padding:0;margin:0;">' + rows.map(function (m) {
+        return '<li style="padding:10px 0;border-bottom:1px solid #eee;font-size:14px;"><strong>' + escCoach(m.status) + '</strong>'
+            + ' · R' + escCoach(m.round_number) + (m.mat_label ? ' · Mat ' + escCoach(m.mat_label) : '')
+            + (m.red_score != null || m.blue_score != null ? ' — ' + escCoach(m.red_score) + ' : ' + escCoach(m.blue_score) : '')
+            + '</li>';
+    }).join('') + '</ul>';
+}
+
+function coachNavFromHash() {
+    var h = (location.hash || '').replace(/^#/, '').toLowerCase();
+    var ok = ['coach-overview', 'profile', 'player-management', 'live-matches'];
+    return ok.indexOf(h) >= 0 ? h : 'coach-overview';
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    var mt = document.getElementById('menuToggle');
+    var nav = document.getElementById('dashboardNav');
+    if (mt && nav) {
+        mt.addEventListener('click', function () {
+            this.classList.toggle('active');
+            nav.classList.toggle('active');
         });
-    </script>
-    <!-- Footer -->
-    <footer class="footer">
-        <!-- Footer -->
-        <footer class="footer">
-            <div class="footer-content">
-                <div class="footer-section">
-                    <div class="footer-logo">الاتحاد السعودي للكاراتيه</div>
-                    <p>تعزيز التميز في الكاراتيه في جميع أنحاء المملكة العربية السعودية</p>
-                    <div class="social-icons">
-                        <a href="https://www.snapchat.com/add/skf2034" class="social-icon">SN</a>
-                        <a href="https://x.com/skf2034" class="social-icon">X</a>
-                        <a href="https://www.instagram.com/skf2034" class="social-icon">IG</a>
-                        <a href="https://www.youtube.com/@skf2034" class="social-icon">YT</a>
-                    </div>
-                </div>
+    }
 
-                <div class="footer-section">
-                    <h3 class="footer-title">روابط سريعة</h3>
-                    <ul class="footer-links">
-                        <li><a href="#">الرئيسية</a></li>
-                        <li><a href="about.html">عن الاتحاد</a></li>
-                        <li><a href="#">البطولات</a></li>
-                        <li><a href="media-center.html">المركز الإعلامي</a></li>
-                        <li><a href="REGISTER.html">التسجيل</a></li>
-                        <li><a href="contact.html">اتصل بنا</a></li>
-                    </ul>
-                </div>
+    var token = localStorage.getItem('token');
+    var userStr = localStorage.getItem('user');
+    if (!token || !userStr) {
+        window.location.href = 'index.html';
+        return;
+    }
 
-                <div class="footer-section">
-                    <h3 class="footer-title">تواصل معنا</h3>
-                    <p>العنوان: الرياض، المملكة العربية السعودية</p>
-                    <p>البريد الإلكتروني: info@skf.sa</p>
-                    <p>الهاتف: +966114803710 </p>
+    var user = JSON.parse(userStr);
+    var initial = coachNavFromHash();
+    if (typeof SKFRoleLayout !== 'undefined' && !SKFRoleLayout.initCoachPage(initial)) return;
 
-                    <!-- Team information for assignment requirement -->
-                    <div class="team-info">
-                        <p><strong>فريق التطوير / Development Team</strong></p>
-                        <p>Name: Yosef Naytah | ID:2143380 | Email: yosef.h.naytah@gmail.com</p>
-                    </div>
-                </div>
-            </div>
+    var elU = document.getElementById('userDisplay');
+    if (elU) elU.textContent = 'Welcome, ' + (user.fullName || user.email || 'Coach') + ' (Coach)';
 
-            <div class="copyright">
-                © 2025 الاتحاد السعودي للكاراتيه - جميع الحقوق محفوظة
-            </div>
-        </footer>
-    </footer>
+    var pb = document.getElementById('coachProfileBody');
+    if (pb) {
+        pb.innerHTML = '<p><strong>Name:</strong> ' + escCoach(user.fullName || '—') + '</p>'
+            + '<p><strong>Email:</strong> ' + escCoach(user.email || '—') + '</p>'
+            + '<p style="font-size:13px;color:#666;margin-top:12px;">Coaching licence and WKF credentials will appear here once your federation profile is fully set up.</p>';
+    }
+
+    loadCoachOverview(user.id);
+    loadCoachTournaments();
+    loadCoachLiveMatches();
+
+    // Live Match Board
+    if (typeof SKFLiveBoard !== 'undefined') {
+        SKFLiveBoard.init({
+            containerId: 'coachLiveBoard',
+            getSb: chSb,
+            supabaseUrl: CH_URL
+        });
+    }
+    // Highlights Banner
+    if (typeof SKFHighlights !== 'undefined') {
+        SKFHighlights.init({
+            containerId: 'skfHlBannerCoach',
+            getSb: chSb,
+            supabaseUrl: CH_URL
+        });
+    }
+
+    window.addEventListener('hashchange', function () {
+        var k = coachNavFromHash();
+        if (typeof SKFRoleLayout !== 'undefined' && SKFRoleLayout.applyCoachSidebar) {
+            SKFRoleLayout.applyCoachSidebar(k);
+        }
+    });
+});
+</script>
 </body>
-
 </html>

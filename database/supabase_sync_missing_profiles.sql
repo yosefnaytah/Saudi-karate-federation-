@@ -1,5 +1,8 @@
 -- One-time fix: create public.users rows for auth.users with no profile (RLS failed on register).
 -- Run in Supabase SQL Editor as postgres.
+--
+-- Full login fix (RLS + get_my_profile + backfill in one file):
+--   database/00_COPY_PASTE_INTO_SUPABASE_SQL_LOGIN_FIX.sql
 
 DROP POLICY IF EXISTS "Users can insert own profile" ON public.users;
 CREATE POLICY "Users can insert own profile" ON public.users

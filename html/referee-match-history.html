@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match History — SKF Referee</title>
+    <link rel="stylesheet" href="dashboard.css?v=20260503">
+    <style>
+        .rmh-content { padding: 24px 20px; max-width: 1100px; margin: 0 auto; }
+        .rmh-breadcrumb { font-size:12px; color:rgba(255,255,255,0.8); margin-bottom:2px; }
+        .rmh-page-title { font-size:22px; font-weight:700; color:#fff; margin:0; }
+
+        /* Top bar */
+        .rmh-topbar { display:flex; gap:10px; align-items:flex-end; flex-wrap:wrap; background:#fff; padding:14px 18px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.07); margin-bottom:20px; }
+        .rmh-topbar label { display:flex; flex-direction:column; gap:4px; font-size:12px; font-weight:600; color:#555; }
+        .rmh-select { padding:9px 12px; border:1px solid #ddd; border-radius:8px; font-size:13px; min-width:160px; background:#fafafa; }
+        .rmh-search { padding:9px 12px; border:1px solid #ddd; border-radius:8px; font-size:13px; min-width:200px; flex:1; }
+        .rmh-reload-btn { padding:9px 16px; background:#2e7d32; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; color:#fff; }
+        .rmh-reload-btn:hover { background:#1b5e20; }
+
+        /* Tab bar */
+        .rmh-tabs { display:flex; gap:4px; margin-bottom:16px; background:#fff; padding:6px; border-radius:10px; box-shadow:0 2px 6px rgba(0,0,0,.06); width:fit-content; }
+        .rmh-tab { padding:8px 18px; border:none; background:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; color:#666; transition:background .15s, color .15s; }
+        .rmh-tab.active { background:#2e7d32; color:#fff; }
+
+        /* Stats strip */
+        .rmh-stats { display:grid; grid-template-columns:repeat(auto-fill, minmax(140px, 1fr)); gap:12px; margin-bottom:20px; }
+        .rmh-stat-card { background:#fff; border-radius:10px; padding:14px 16px; box-shadow:0 2px 8px rgba(0,0,0,.07); text-align:center; }
+        .rmh-stat-val { font-size:28px; font-weight:800; color:#2e7d32; }
+        .rmh-stat-lbl { font-size:11px; color:#888; margin-top:4px; }
+
+        /* Match history card */
+        .rmh-match-card {
+            background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.07);
+            border:1px solid #eee; margin-bottom:12px; overflow:hidden;
+            transition:box-shadow .2s;
+        }
+        .rmh-match-card:hover { box-shadow:0 4px 16px rgba(0,0,0,.1); }
+        .rmh-match-inner { display:grid; grid-template-columns:1fr auto 1fr; align-items:center; padding:14px 20px; gap:10px; }
+        @media(max-width:600px) { .rmh-match-inner { grid-template-columns:1fr; gap:8px; } }
+
+        /* Fighter side */
+        .rmh-fighter { display:flex; align-items:center; gap:10px; }
+        .rmh-fighter.blue-side { flex-direction:row-reverse; text-align:right; }
+        .rmh-fighter-img { width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid; }
+        .rmh-fighter-img.red-border { border-color:#e53935; }
+        .rmh-fighter-img.blue-border { border-color:#1565c0; }
+        .rmh-fighter-placeholder { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:18px; border:2px solid; flex-shrink:0; }
+        .rmh-fighter-placeholder.red-border { border-color:#e53935; background:#ffebee; }
+        .rmh-fighter-placeholder.blue-border { border-color:#1565c0; background:#e3f2fd; }
+        .rmh-fighter-name { font-size:14px; font-weight:700; color:#1b1b1b; }
+        .rmh-fighter-club { font-size:11px; color:#888; }
+        .rmh-fighter-side-label { font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; }
+        .rmh-fighter-side-label.red { color:#e53935; }
+        .rmh-fighter-side-label.blue { color:#1565c0; }
+
+        /* Score centre */
+        .rmh-score-centre { text-align:center; }
+        .rmh-scoreline { font-size:22px; font-weight:800; color:#1b1b1b; letter-spacing:.04em; }
+        .rmh-winner-badge { font-size:10px; font-weight:700; padding:3px 8px; border-radius:999px; display:inline-block; margin-top:4px; }
+        .rmh-winner-badge.red { background:#ffebee; color:#c62828; }
+        .rmh-winner-badge.blue { background:#e3f2fd; color:#1565c0; }
+        .rmh-winner-badge.draw { background:#f5f5f5; color:#555; }
+
+        /* Match meta footer */
+        .rmh-match-footer { display:flex; gap:12px; padding:8px 20px; background:#fafafa; border-top:1px solid #f0f0f0; font-size:11px; color:#888; flex-wrap:wrap; align-items:center; }
+        .rmh-match-footer .action-btn { margin-left:auto; padding:5px 12px; background:#2e7d32; border:none; border-radius:6px; color:#fff; font-size:11px; font-weight:600; cursor:pointer; }
+        .rmh-match-footer .action-btn:hover { background:#1b5e20; }
+
+        /* Status pill */
+        .rmh-status-pill { font-size:10px; font-weight:700; padding:2px 7px; border-radius:999px; }
+        .rmh-status-pill.completed { background:#e8f5e9; color:#2e7d32; }
+        .rmh-status-pill.live { background:#e3f2fd; color:#1565c0; }
+        .rmh-status-pill.scheduled { background:#f5f5f5; color:#888; }
+        .rmh-status-pill.in_progress { background:#fff3e0; color:#e65100; }
+
+        /* Empty / loading */
+        .rmh-empty { text-align:center; padding:60px 20px; color:#888; font-size:14px; }
+        .rmh-empty-icon { font-size:44px; margin-bottom:14px; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="skf-role-layout.js?v=20260506"></script>
+    <script src="auth.js?v=20260508"></script>
+</head>
+<body>
+<div class="dashboard-container">
+    <header class="dashboard-header">
+        <div class="header-left">
+            <img src="full badge.png" alt="Saudi Karate Federation" class="header-badge">
+            <div class="header-fed-name">
+                <span class="header-fed-ar">الاتحاد السعودي للكاراتيه</span>
+                <span class="header-fed-en">Saudi Karate Federation</span>
+            </div>
+            <div>
+                <div class="rmh-breadcrumb">Referee &rsaquo; Match History</div>
+                <div class="rmh-page-title">Match History</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="user-role" id="userDisplay">Loading...</div>
+            <div class="vision-logo">
+                <p class="vision-title">VISION (رؤية)</p>
+                <p class="vision-year">2030</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="menu-toggle" id="menuToggle">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </div>
+
+    <nav class="dashboard-nav" id="dashboardNav">
+        <ul class="nav-menu"></ul>
+    </nav>
+
+    <main class="dashboard-content">
+        <div class="rmh-content">
+            <!-- Top bar -->
+            <div class="rmh-topbar">
+                <label>Tournament
+                    <select class="rmh-select" id="rmhTournamentSelect" onchange="onTournamentChange()"></select>
+                </label>
+                <label>Category
+                    <select class="rmh-select" id="rmhCategorySelect" onchange="loadHistory()"></select>
+                </label>
+                <input type="search" class="rmh-search" id="rmhSearch" placeholder="Search players..." oninput="renderHistory()">
+                <button class="rmh-reload-btn" onclick="loadHistory()">&#8635; Reload</button>
+            </div>
+
+            <!-- Tabs -->
+            <div class="rmh-tabs">
+                <button class="rmh-tab active" onclick="setTab('all',this)">All Matches</button>
+                <button class="rmh-tab" onclick="setTab('completed',this)">Completed</button>
+                <button class="rmh-tab" onclick="setTab('live',this)">Live</button>
+                <button class="rmh-tab" onclick="setTab('scheduled',this)">Scheduled</button>
+            </div>
+
+            <!-- Stats -->
+            <div class="rmh-stats" id="rmhStats" style="display:none;">
+                <div class="rmh-stat-card"><div class="rmh-stat-val" id="statTotal">0</div><div class="rmh-stat-lbl">Total Matches</div></div>
+                <div class="rmh-stat-card"><div class="rmh-stat-val" id="statCompleted">0</div><div class="rmh-stat-lbl">Completed</div></div>
+                <div class="rmh-stat-card"><div class="rmh-stat-val" id="statLive">0</div><div class="rmh-stat-lbl">Live</div></div>
+                <div class="rmh-stat-card"><div class="rmh-stat-val" id="statScheduled">0</div><div class="rmh-stat-lbl">Scheduled</div></div>
+            </div>
+
+            <!-- Match list -->
+            <div id="rmhList">
+                <div class="rmh-empty"><p>Select a tournament and category to view matches.</p></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+var RMH_SB_URL  = 'https://uqlpxdphikmmpdsuojil.supabase.co';
+var RMH_SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxbHB4ZHBoaWttbXBkc3VvamlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3OTI5NDEsImV4cCI6MjA4NjM2ODk0MX0.03xQ8ltwZm_TTEAHDOHocfFKG2j_PHmL1Lzt2t-aFJU';
+
+var _rmhSb = null;
+var _rmhMatches = [];
+var _rmhPlayers = {};
+var _rmhTab = 'all';
+var _rmhCategories = [];
+var _rmhRefRole = '';
+var _rmhRefUserId = null;
+
+// Refresh the JWT from Supabase's own session before every data load.
+// This is the same pattern as referee-dashboard.html (refreshRefJwtFromSupabaseAuth).
+async function skfRefreshToken(sbUrl, sbAnon) {
+    try {
+        if (typeof supabase === 'undefined') return;
+        var tok = localStorage.getItem('token') || '';
+        if (!tok || tok.indexOf('local-token') === 0) return;
+        var sb = supabase.createClient(sbUrl, sbAnon, {
+            auth: { persistSession: true, storage: localStorage, autoRefreshToken: true, detectSessionInUrl: false }
+        });
+        var r1 = await sb.auth.getSession();
+        var sess = r1.data && r1.data.session;
+        if (!sess) return;
+        var expMs = sess.expires_at ? sess.expires_at * 1000 : 0;
+        if (!expMs || expMs < Date.now() + 120000) {
+            var r2 = await sb.auth.refreshSession();
+            if (r2.data && r2.data.session) sess = r2.data.session;
+        }
+        if (sess && sess.access_token) localStorage.setItem('token', sess.access_token);
+    } catch (e) { console.warn('[SKF] token refresh error:', e); }
+}
+
+
+function rmhSb() {
+    var tok = localStorage.getItem('token');
+    if (!tok) return null;
+    return supabase.createClient(RMH_SB_URL, RMH_SB_ANON, {
+        global: { headers: { Authorization: 'Bearer ' + tok } },
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    });
+}
+
+function escHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function escAttrRmh(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+}
+
+function rmhResolvedPhoto(p) {
+    if (!p) return '';
+    var raw = (typeof skfAvatarRawFromRow === 'function') ? skfAvatarRawFromRow(p) : (p.profile_image_url || p.profile_photo_url || '');
+    if (!raw) return '';
+    var base = (typeof window !== 'undefined' && window.SKF_SUPABASE_URL) ? window.SKF_SUPABASE_URL : RMH_SB_URL;
+    return (typeof skfResolveAvatarUrl === 'function') ? skfResolveAvatarUrl(raw, base) : String(raw);
+}
+
+function setTab(tab, btn) {
+    _rmhTab = tab;
+    document.querySelectorAll('.rmh-tab').forEach(function(b){ b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    renderHistory();
+}
+
+async function loadTournaments() {
+    await skfRefreshToken(RMH_SB_URL, RMH_SB_ANON);
+    var sb = rmhSb(); if (!sb) return;
+    var list = [];
+    var role = _rmhRefRole;
+    if (role === 'referees_plus' || role === 'skf_admin' || role === 'admin') {
+        var q = await sb.from('tournaments').select('id,name').eq('is_active', true).order('start_date', { ascending: false });
+        if (q.error || !q.data) return;
+        list = q.data || [];
+    } else if (role === 'referee' && _rmhRefUserId) {
+        var r = await sb.from('tournament_referees').select('tournament_id').eq('referee_id', _rmhRefUserId);
+        if (r.error) return;
+        var tids = [];
+        (r.data || []).forEach(function (row) {
+            if (row.tournament_id && tids.indexOf(row.tournament_id) < 0) tids.push(row.tournament_id);
+        });
+        if (!tids.length) {
+            document.getElementById('rmhTournamentSelect').innerHTML = '<option value="">No assigned tournaments</option>';
+            return;
+        }
+        var tq = await sb.from('tournaments').select('id,name').in('id', tids).eq('is_active', true).order('start_date', { ascending: false });
+        if (tq.error || !tq.data) return;
+        list = tq.data || [];
+    }
+    var sel = document.getElementById('rmhTournamentSelect');
+    sel.innerHTML = '<option value="">-- Select tournament --</option>'
+        + list.map(function(t){ return '<option value="' + t.id + '">' + escHtml(t.name) + '</option>'; }).join('');
+    var saved = localStorage.getItem('skf_ref_tournament_id');
+    if (saved && list.some(function(t){ return String(t.id) === String(saved); })) { sel.value = saved; onTournamentChange(); }
+}
+
+async function onTournamentChange() {
+    var tid = document.getElementById('rmhTournamentSelect').value;
+    if (!tid) return;
+    localStorage.setItem('skf_ref_tournament_id', tid);
+    var sb = rmhSb();
+    var q = await sb.from('tournament_categories').select('id,event_type,age_category,gender,weight_class,discipline,age_group').eq('tournament_id', tid);
+    _rmhCategories = q.data || [];
+    var catSel = document.getElementById('rmhCategorySelect');
+    catSel.innerHTML = '<option value="">All categories</option>'
+        + _rmhCategories.map(function(c) {
+            var ev = (c.event_type || c.discipline || '').toLowerCase();
+            var age = c.age_category || c.age_group || '';
+            var g = (c.gender || '').charAt(0).toUpperCase();
+            var label = (g ? g + ' ' : '') + (age ? age + ' ' : '');
+            if (ev === 'kumite') label += 'Kumite' + (c.weight_class ? ' ' + c.weight_class : '');
+            else if (ev.indexOf('kata') !== -1) label += 'Kata';
+            else label += ev || 'Category';
+            return '<option value="' + c.id + '">' + escHtml(label) + '</option>';
+        }).join('');
+    var savedCat = localStorage.getItem('skf_ref_category_id');
+    if (savedCat) catSel.value = savedCat;
+    loadHistory();
+}
+
+async function loadHistory() {
+    await skfRefreshToken(RMH_SB_URL, RMH_SB_ANON);
+    var tid = document.getElementById('rmhTournamentSelect').value;
+    var catId = document.getElementById('rmhCategorySelect').value;
+    var list = document.getElementById('rmhList');
+    if (!tid) { list.innerHTML = '<div class="rmh-empty"><p>Select a tournament first.</p></div>'; return; }
+    list.innerHTML = '<div class="rmh-empty"><p>Loading...</p></div>';
+    var sb = rmhSb();
+
+    var query = sb.from('tournament_matches')
+        .select('id,round_number,bracket_position,status,red_user_id,blue_user_id,winner_user_id,red_score,blue_score,mat_label,scheduled_start,category_id')
+        .eq('tournament_id', tid)
+        .order('round_number').order('bracket_position');
+    if (catId) query = query.eq('category_id', catId);
+    var q = await query;
+    if (q.error) {
+        console.error('[RMH]', q.error);
+        list.innerHTML = '<div class="rmh-empty">'
+            + '<p style="color:#c62828;font-weight:700;">Unable to load matches.</p>'
+            + '<p style="font-size:12px;color:#888;">Please try again or contact SKF support.</p>'
+            + '</div>';
+        return;
+    }
+    _rmhMatches = q.data || [];
+
+    // Load player data
+    var ids = [];
+    _rmhMatches.forEach(function(m) {
+        [m.red_user_id, m.blue_user_id, m.winner_user_id].forEach(function(id) {
+            if (id && ids.indexOf(id) === -1) ids.push(id);
+        });
+    });
+    if (ids.length) {
+        var pq = await sb.from('users').select('id,full_name,email,club_name,profile_image_url,profile_photo_url').in('id', ids);
+        if (!pq.error && pq.data) pq.data.forEach(function(p){ _rmhPlayers[p.id] = p; });
+        var aq = await sb.from('profiles').select('user_id,avatar_url').in('user_id', ids);
+        if (!aq.error && aq.data) {
+            aq.data.forEach(function (r) {
+                var pl = _rmhPlayers[r.user_id];
+                if (pl && r.avatar_url) pl.profile_image_url = r.avatar_url;
+            });
+        }
+    }
+
+    updateStats();
+    renderHistory();
+}
+
+function updateStats() {
+    var total = _rmhMatches.length;
+    var completed = _rmhMatches.filter(function(m){ return m.status === 'completed'; }).length;
+    var live = _rmhMatches.filter(function(m){ return m.status === 'live' || m.status === 'in_progress'; }).length;
+    var scheduled = _rmhMatches.filter(function(m){ return !m.status || m.status === 'scheduled' || m.status === 'pending'; }).length;
+    document.getElementById('statTotal').textContent = total;
+    document.getElementById('statCompleted').textContent = completed;
+    document.getElementById('statLive').textContent = live;
+    document.getElementById('statScheduled').textContent = scheduled;
+    document.getElementById('rmhStats').style.display = total ? 'grid' : 'none';
+}
+
+function renderHistory() {
+    var q = (document.getElementById('rmhSearch').value || '').trim().toLowerCase();
+    var list = _rmhMatches.filter(function(m) {
+        if (_rmhTab === 'completed' && m.status !== 'completed') return false;
+        if (_rmhTab === 'live' && m.status !== 'live' && m.status !== 'in_progress') return false;
+        if (_rmhTab === 'scheduled' && m.status !== 'scheduled' && m.status !== 'pending' && m.status) return false;
+        if (!q) return true;
+        var p1 = _rmhPlayers[m.red_user_id];
+        var p2 = _rmhPlayers[m.blue_user_id];
+        return (p1 && ((p1.full_name || '') + ' ' + (p1.email || '')).toLowerCase().indexOf(q) !== -1)
+            || (p2 && ((p2.full_name || '') + ' ' + (p2.email || '')).toLowerCase().indexOf(q) !== -1);
+    });
+
+    var container = document.getElementById('rmhList');
+    if (!list.length) {
+        container.innerHTML = '<div class="rmh-empty"><p>No matches found.</p></div>';
+        return;
+    }
+    container.innerHTML = list.map(function(m) {
+        var p1 = _rmhPlayers[m.red_user_id] || null;
+        var p2 = _rmhPlayers[m.blue_user_id] || null;
+        var p1IsWinner = m.winner_user_id && m.winner_user_id === m.red_user_id;
+        var p2IsWinner = m.winner_user_id && m.winner_user_id === m.blue_user_id;
+        var isDraw = m.winner_user_id === null && m.status === 'completed';
+        var winnerBadge = p1IsWinner ? '<span class="rmh-winner-badge red">Red wins</span>'
+            : p2IsWinner ? '<span class="rmh-winner-badge blue">Blue wins</span>'
+            : (isDraw ? '<span class="rmh-winner-badge draw">Draw</span>' : '');
+        var statusClass = (m.status === 'completed' ? 'completed' : m.status === 'live' ? 'live' : m.status === 'in_progress' ? 'in_progress' : 'scheduled');
+        var catLabel = '';
+        if (m.category_id) {
+            var cat = _rmhCategories.find(function(c){ return c.id === m.category_id; });
+            if (cat) {
+                var ev = (cat.event_type || cat.discipline || '').toLowerCase();
+                var age = cat.age_category || cat.age_group || '';
+                var g = (cat.gender || '').charAt(0).toUpperCase();
+                catLabel = (g ? g + ' ' : '') + (age ? age + ' ' : '');
+                if (ev === 'kumite') catLabel += 'Kumite' + (cat.weight_class ? ' ' + cat.weight_class : '');
+                else if (ev.indexOf('kata') !== -1) catLabel += 'Kata';
+                else catLabel += ev;
+            }
+        }
+
+        var p1Src = rmhResolvedPhoto(p1);
+        var p2Src = rmhResolvedPhoto(p2);
+        var p1Img = p1Src
+            ? '<img class="rmh-fighter-img red-border" src="' + escAttrRmh(p1Src) + '" alt="" referrerpolicy="no-referrer" onerror="this.style.display=\'none\'">'
+            : '<div class="rmh-fighter-placeholder red-border"></div>';
+        var p2Img = p2Src
+            ? '<img class="rmh-fighter-img blue-border" src="' + escAttrRmh(p2Src) + '" alt="" referrerpolicy="no-referrer" onerror="this.style.display=\'none\'">'
+            : '<div class="rmh-fighter-placeholder blue-border"></div>';
+
+        return '<div class="rmh-match-card">'
+            + '<div class="rmh-match-inner">'
+            +   '<div class="rmh-fighter">'
+            +     p1Img
+            +     '<div>'
+            +       '<div class="rmh-fighter-side-label red">RED</div>'
+            +       '<div class="rmh-fighter-name">' + escHtml(p1 ? ((p1.full_name && String(p1.full_name).trim()) || (p1.email && String(p1.email).trim()) || 'Participant') : (m.red_user_id ? 'Participant' : 'To be determined')) + '</div>'
+            +       '<div class="rmh-fighter-club">' + escHtml(p1 ? (p1.club_name || '') : '') + '</div>'
+            +     '</div>'
+            +   '</div>'
+            +   '<div class="rmh-score-centre">'
+            +     '<div class="rmh-scoreline">' + (m.red_score != null ? m.red_score : '—') + ' : ' + (m.blue_score != null ? m.blue_score : '—') + '</div>'
+            +     winnerBadge
+            +   '</div>'
+            +   '<div class="rmh-fighter blue-side">'
+            +     '<div style="text-align:right;">'
+            +       '<div class="rmh-fighter-side-label blue">BLUE</div>'
+            +       '<div class="rmh-fighter-name">' + escHtml(p2 ? ((p2.full_name && String(p2.full_name).trim()) || (p2.email && String(p2.email).trim()) || 'Participant') : (m.blue_user_id ? 'Participant' : 'To be determined')) + '</div>'
+            +       '<div class="rmh-fighter-club">' + escHtml(p2 ? (p2.club_name || '') : '') + '</div>'
+            +     '</div>'
+            +     p2Img
+            +   '</div>'
+            + '</div>'
+            + '<div class="rmh-match-footer">'
+            +   '<span>Round ' + escHtml(String(m.round_number || '—')) + ' · Match ' + escHtml(String(m.bracket_position || '—')) + '</span>'
+            +   (m.mat_label ? '<span>Tatami ' + escHtml(String(m.mat_label)) + '</span>' : '')
+            +   (catLabel ? '<span>' + escHtml(catLabel) + '</span>' : '')
+            +   (m.scheduled_start ? '<span>Time: ' + escHtml(String(m.scheduled_start).slice(11,16) || '') + '</span>' : '')
+            +   '<span class="rmh-status-pill ' + statusClass + '">' + escHtml(m.status || 'scheduled') + '</span>'
+            +   '<button class="action-btn" onclick="openMatchControl(\'' + m.id + '\',\'' + (m.category_id||'') + '\')">'
+            +     (m.status === 'completed' ? 'View' : 'Control')
+            +   '</button>'
+            + '</div>'
+            + '</div>';
+    }).join('');
+}
+
+function openMatchControl(matchId, catId) {
+    var tid = document.getElementById('rmhTournamentSelect').value;
+    localStorage.setItem('skf_ref_match_id', matchId);
+    if (tid) localStorage.setItem('skf_ref_tournament_id', tid);
+    if (catId) localStorage.setItem('skf_ref_category_id', catId);
+    window.location.href = 'referee-match-control.html';
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    var mt = document.getElementById('menuToggle');
+    var nav = document.getElementById('dashboardNav');
+    if (mt && nav) mt.addEventListener('click', function() { this.classList.toggle('active'); nav.classList.toggle('active'); });
+
+    if (typeof SKFRoleLayout !== 'undefined' && !SKFRoleLayout.initRefereePage('match-history')) return;
+    try {
+        var user = JSON.parse(localStorage.getItem('user') || '{}');
+        var nr = (typeof SKFRoleLayout !== 'undefined') ? SKFRoleLayout.normalizeRole(user.role) : '';
+        var el = document.getElementById('userDisplay');
+        if (el) {
+            var who = user.fullName || user.email || 'Referee';
+            el.textContent = 'Welcome, ' + who + (nr === 'referees_plus' ? ' (Referee+)' : ' (Referee)');
+        }
+        _rmhRefRole = nr;
+        _rmhRefUserId = user.id || null;
+        loadTournaments();
+    } catch (e) {
+        window.location.href = 'index.html';
+    }
+});
+</script>
+</body>
+</html>

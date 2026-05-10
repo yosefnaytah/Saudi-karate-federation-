@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SKF — Bout display</title>
+    <style>
+        * { box-sizing: border-box; }
+        body { margin: 0; min-height: 100vh; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+            background: radial-gradient(ellipse at top, #1a2332 0%, #0a0e14 55%); color: #fff; }
+        .skf-disp-meta { text-align: center; padding: 20px 24px 8px; font-size: clamp(0.95rem, 2vw, 1.15rem);
+            color: rgba(255,255,255,0.72); line-height: 1.4; }
+        .skf-disp-meta strong { color: #81c784; font-weight: 700; }
+        .skf-disp-arena { display: grid; grid-template-columns: 1fr minmax(200px, 26vw) 1fr; gap: clamp(12px, 3vw, 28px);
+            align-items: center; max-width: 1500px; margin: 0 auto; padding: 12px clamp(16px, 3vw, 40px) 40px; }
+        @media (max-width: 720px) { .skf-disp-arena { grid-template-columns: 1fr; } }
+        .skf-corner { border-radius: 20px; padding: clamp(20px, 3vw, 36px); text-align: center; min-height: 260px; transition: box-shadow 0.25s ease; }
+        .skf-corner.red { background: linear-gradient(165deg, #3d1518 0%, #1a0a0c 100%); border: 3px solid #e53935; }
+        .skf-corner.blue { background: linear-gradient(165deg, #0d2240 0%, #070d18 100%); border: 3px solid #2196f3; }
+        .skf-corner.win-glow.red { box-shadow: 0 0 48px rgba(229,57,53,0.55); }
+        .skf-corner.win-glow.blue { box-shadow: 0 0 48px rgba(33,150,243,0.55); }
+        .skf-photo { width: clamp(100px, 18vw, 180px); height: clamp(100px, 18vw, 180px); border-radius: 50%; object-fit: cover;
+            margin: 0 auto 12px; display: block; border: 4px solid; }
+        .skf-corner.red .skf-photo { border-color: #ff5252; }
+        .skf-corner.blue .skf-photo { border-color: #64b5f6; }
+        .skf-ph-placeholder { width: clamp(100px, 18vw, 180px); height: clamp(100px, 18vw, 180px); border-radius: 50%; margin: 0 auto 12px;
+            display: flex; align-items: center; justify-content: center; font-size: clamp(2.5rem, 8vw, 4rem); font-weight: 800;
+            border: 4px dashed rgba(255,255,255,0.35); color: rgba(255,255,255,0.5); }
+        .skf-name { font-size: clamp(1.35rem, 4.2vw, 2.6rem); font-weight: 800; line-height: 1.15; margin: 0 0 8px; word-break: break-word; }
+        .skf-club { font-size: clamp(0.95rem, 2.2vw, 1.2rem); color: rgba(255,255,255,0.78); margin-bottom: 12px; min-height: 1.3em; }
+        .skf-senshu { display: none; font-size: clamp(0.8rem, 2.2vw, 1rem); font-weight: 800; letter-spacing: 0.12em;
+            margin: 10px auto 6px; padding: 8px 14px; border-radius: 8px; max-width: 90%; }
+        .skf-corner.red .skf-senshu { color: #ffecb3; background: rgba(255,193,7,0.2); border: 1px solid rgba(255,193,7,0.5); }
+        .skf-corner.blue .skf-senshu { color: #e1f5fe; background: rgba(79,195,247,0.2); border: 1px solid rgba(79,195,247,0.45); }
+        table.skf-warn-table { width: 100%; max-width: 280px; margin: 0 auto 14px; border-collapse: collapse; font-size: clamp(0.75rem, 1.8vw, 0.95rem); }
+        table.skf-warn-table caption { caption-side: top; color: rgba(255,255,255,0.55); font-weight: 700; font-size: 0.72rem;
+            text-transform: uppercase; letter-spacing: 0.08em; padding-bottom: 8px; }
+        table.skf-warn-table th, table.skf-warn-table td { border: 1px solid rgba(255,255,255,0.2); padding: 8px 4px; text-align: center; }
+        table.skf-warn-table th { background: rgba(0,0,0,0.25); color: rgba(255,255,255,0.75); font-weight: 700; }
+        table.skf-warn-table td { color: rgba(255,255,255,0.5); }
+        table.skf-warn-table td.on-red { background: rgba(244,67,54,0.35); color: #ffab91; font-weight: 800; }
+        table.skf-warn-table td.on-blue { background: rgba(33,150,243,0.35); color: #90caf9; font-weight: 800; }
+        .skf-score { font-size: clamp(3.2rem, 14vw, 6.5rem); font-weight: 900; font-variant-numeric: tabular-nums; line-height: 1; }
+        .skf-corner.red .skf-score { color: #ff8a80; }
+        .skf-corner.blue .skf-score { color: #82b1ff; }
+        .skf-center { text-align: center; padding: 16px 8px; }
+        .skf-badge { display: inline-block; padding: 8px 22px; border-radius: 999px; font-weight: 800;
+            font-size: clamp(0.85rem, 2vw, 1.05rem); letter-spacing: 0.06em; background: rgba(255,255,255,0.12); color: #fff; }
+        .skf-badge.live { background: #2e7d32; animation: skfPulse 1.4s ease-in-out infinite; }
+        @keyframes skfPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.82; } }
+        .skf-timer { font-size: clamp(2.4rem, 10vw, 4.8rem); font-weight: 800; font-variant-numeric: tabular-nums; margin: 16px 0 8px; color: #fff; }
+        .skf-round { margin-top: 8px; font-size: clamp(0.95rem, 2.5vw, 1.25rem); color: rgba(255,255,255,0.65); font-weight: 600; }
+        .skf-hint { position: fixed; bottom: 10px; left: 0; right: 0; text-align: center; font-size: 11px; color: rgba(255,255,255,0.38); padding: 0 16px; }
+    </style>
+    <script src="auth.js?v=20260508"></script>
+</head>
+<body>
+    <div class="skf-disp-meta" id="skfDispMeta">
+        <strong>Saudi Karate Federation</strong> — crowd display (open from Match Control).
+    </div>
+    <div class="skf-disp-arena">
+        <div class="skf-corner red" id="skfRedWrap">
+            <div id="skfRedPhotoWrap"></div>
+            <div class="skf-name" id="skfRedName">—</div>
+            <div class="skf-club" id="skfRedClub"></div>
+            <table class="skf-warn-table" id="skfRedWarnTable">
+                <caption>Warnings</caption>
+                <thead><tr><th>C1</th><th>C2</th><th>C3</th><th>C4</th><th>C5</th></tr></thead>
+                <tbody><tr id="skfRedWarnTr"></tr></tbody>
+            </table>
+            <div class="skf-senshu" id="skfRedSenshu" title="First valid score — senshu (先取)">SENSHU</div>
+            <div class="skf-score" id="skfRedScore">0</div>
+        </div>
+        <div class="skf-center">
+            <div class="skf-badge" id="skfPhase">READY</div>
+            <div class="skf-timer" id="skfTimer">03:00</div>
+            <div class="skf-round" id="skfRound"></div>
+        </div>
+        <div class="skf-corner blue" id="skfBlueWrap">
+            <div id="skfBluePhotoWrap"></div>
+            <div class="skf-name" id="skfBlueName">—</div>
+            <div class="skf-club" id="skfBlueClub"></div>
+            <table class="skf-warn-table" id="skfBlueWarnTable">
+                <caption>Warnings</caption>
+                <thead><tr><th>C1</th><th>C2</th><th>C3</th><th>C4</th><th>C5</th></tr></thead>
+                <tbody><tr id="skfBlueWarnTr"></tr></tbody>
+            </table>
+            <div class="skf-senshu" id="skfBlueSenshu" title="First valid score — senshu (先取)">SENSHU</div>
+            <div class="skf-score" id="skfBlueScore">0</div>
+        </div>
+    </div>
+    <p class="skf-hint">Open via <strong>Crowd display</strong> on Match Control. Use the same URL host for both tabs (e.g. only <code>127.0.0.1:5500</code>).</p>
+    <script>
+(function () {
+    var LS = 'skf_crowd_state_v1';
+    var BC_NAME = 'skf-crowd-match-v1';
+    function escAttr(s) {
+        if (s == null) return '';
+        return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+    }
+    function resolveAvatarUrl(raw, base) {
+        var b = (base || (typeof window !== 'undefined' && window.SKF_SUPABASE_URL) || '').replace(/\/$/, '');
+        if (typeof skfResolveAvatarUrl === 'function') {
+            var z = skfResolveAvatarUrl(raw, b || undefined);
+            if (z) return z;
+        }
+        if (raw == null || raw === '') return '';
+        var u = String(raw).trim();
+        if (!u) return '';
+        if (/^https?:\/\//i.test(u) || /^data:/i.test(u) || /^blob:/i.test(u)) return u;
+        if (!b) return u;
+        var path = u.replace(/^\//, '');
+        if (path.indexOf('storage/v1') === 0) return b + '/' + path;
+        return b + '/storage/v1/object/public/' + path;
+    }
+    function initialFromName(name) {
+        var n = (name || '').trim();
+        if (!n || n === '—') return '?';
+        return n.charAt(0).toUpperCase();
+    }
+    function setPhoto(wrapId, url, initial) {
+        var w = document.getElementById(wrapId);
+        if (!w) return;
+        var ph = '<div class="skf-ph-placeholder">' + escAttr(initial || '?') + '</div>';
+        if (!url || !String(url).trim()) {
+            w.innerHTML = ph;
+            return;
+        }
+        var img = new Image();
+        img.className = 'skf-photo';
+        img.alt = '';
+        img.referrerPolicy = 'no-referrer';
+        img.onload = function () { w.innerHTML = ''; w.appendChild(img); };
+        img.onerror = function () { w.innerHTML = ph; };
+        img.src = String(url).trim();
+    }
+    function renderWarnRow(trId, flags, side) {
+        var tr = document.getElementById(trId);
+        if (!tr) return;
+        var html = '';
+        var onClass = side === 'red' ? 'on-red' : 'on-blue';
+        for (var i = 0; i < 5; i++) {
+            if (flags && flags[i]) {
+                html += '<td class="' + onClass + '">C' + (i + 1) + '</td>';
+            } else {
+                html += '<td>·</td>';
+            }
+        }
+        tr.innerHTML = html;
+    }
+    function apply(state) {
+        if (!state || typeof state !== 'object') return;
+        var base = state.storageBase || '';
+        var meta = document.getElementById('skfDispMeta');
+        if (meta) {
+            var bits = [];
+            if (state.tournamentName) bits.push('<strong>' + escAttr(state.tournamentName) + '</strong>');
+            if (state.roundLabel) bits.push(escAttr(state.roundLabel));
+            if (state.categoryLine) bits.push(escAttr(String(state.categoryLine).replace(/Loading match\.{3}/gi, '').trim().slice(0, 120)));
+            if (bits.length) meta.innerHTML = bits.join(' · ');
+        }
+        var rName = (state.red && state.red.name) ? state.red.name : '—';
+        var bName = (state.blue && state.blue.name) ? state.blue.name : '—';
+        document.getElementById('skfRedName').textContent = rName;
+        document.getElementById('skfBlueName').textContent = bName;
+        document.getElementById('skfRedClub').textContent = (state.red && state.red.club) ? state.red.club : '';
+        document.getElementById('skfBlueClub').textContent = (state.blue && state.blue.club) ? state.blue.club : '';
+        var rPhoto = state.red && state.red.photo ? resolveAvatarUrl(state.red.photo, base) : '';
+        var bPhoto = state.blue && state.blue.photo ? resolveAvatarUrl(state.blue.photo, base) : '';
+        setPhoto('skfRedPhotoWrap', rPhoto, initialFromName(rName));
+        setPhoto('skfBluePhotoWrap', bPhoto, initialFromName(bName));
+
+        var rs = document.getElementById('skfRedSenshu');
+        var bs = document.getElementById('skfBlueSenshu');
+        if (rs) rs.style.display = state.senshu === 'red' ? 'block' : 'none';
+        if (bs) bs.style.display = state.senshu === 'blue' ? 'block' : 'none';
+
+        renderWarnRow('skfRedWarnTr', state.redPenalties, 'red');
+        renderWarnRow('skfBlueWarnTr', state.bluePenalties, 'blue');
+
+        document.getElementById('skfRedScore').textContent = (state.red && state.red.score != null) ? String(state.red.score) : '0';
+        document.getElementById('skfBlueScore').textContent = (state.blue && state.blue.score != null) ? String(state.blue.score) : '0';
+        document.getElementById('skfTimer').textContent = state.timerText || '03:00';
+        var ph = document.getElementById('skfPhase');
+        var ptext = (state.phase || 'READY').toUpperCase();
+        ph.textContent = ptext;
+        ph.className = 'skf-badge' + (ptext === 'LIVE' ? ' live' : '');
+        document.getElementById('skfRound').textContent = state.roundLabel || '';
+        var rw = document.getElementById('skfRedWrap');
+        var bw = document.getElementById('skfBlueWrap');
+        rw.classList.remove('win-glow');
+        bw.classList.remove('win-glow');
+        if (state.winner === 'red') rw.classList.add('win-glow');
+        if (state.winner === 'blue') bw.classList.add('win-glow');
+    }
+    function read() {
+        try {
+            var raw = localStorage.getItem(LS);
+            return raw ? JSON.parse(raw) : null;
+        } catch (e) { return null; }
+    }
+    apply(read());
+    if (typeof BroadcastChannel !== 'undefined') {
+        try {
+            var bc = new BroadcastChannel(BC_NAME);
+            bc.onmessage = function (ev) {
+                if (ev && ev.data && typeof ev.data === 'object') apply(ev.data);
+            };
+        } catch (eBc) { /* ignore */ }
+    }
+    window.addEventListener('message', function (e) {
+        try {
+            if (!e.data || !e.data.skfCrowd || typeof e.data.payload !== 'object' || !e.data.payload) return;
+            apply(e.data.payload);
+        } catch (e2) { /* ignore */ }
+    });
+    window.addEventListener('storage', function (e) {
+        if (e.key === LS && e.newValue) { try { apply(JSON.parse(e.newValue)); } catch (err) {} }
+    });
+    setInterval(function () { apply(read()); }, 400);
+})();
+    </script>
+</body>
+</html>

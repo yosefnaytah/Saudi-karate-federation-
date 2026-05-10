@@ -27,6 +27,9 @@ public class User : BaseModel
     [Column("club_name")]
     public string ClubName { get; set; } = string.Empty;
 
+    [Column("profile_image_url")]
+    public string? ProfileImageUrl { get; set; }
+
     [Column("email")]
     public string Email { get; set; } = string.Empty;
 

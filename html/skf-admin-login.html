@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SKF Admin portal — Saudi Karate Federation</title>
+    <title>Federation staff sign-in — Saudi Karate Federation</title>
     <link rel="stylesheet" href="SKF.CSS">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="auth.js" defer></script>
+    <script src="auth.js?v=20260504a" defer></script>
     <style>
-        #adminLoginError, #staffOtpError {
+        #staffOtpError {
             display: none;
             background: #ffeaea;
             color: #c0392b;
@@ -30,65 +30,44 @@
             font-size: 13px;
             text-align: center;
         }
-        .staff-login-tabs {
-            display: flex;
-            gap: 0;
-            margin-bottom: 16px;
-            border-bottom: 1px solid #ddd;
-        }
-        .staff-login-tabs button {
-            flex: 1;
-            padding: 10px 8px;
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            font-size: 14px;
-            color: #555;
-            border-bottom: 3px solid transparent;
-            margin-bottom: -1px;
-        }
-        .staff-login-tabs button:hover { color: #1b5e20; }
+        #staffPasswordPanel code { font-size: 12px; background: #eee; padding: 2px 6px; border-radius: 4px; }
     </style>
 </head>
 <body>
     <div class="login-container">
-        <h2>SKF Admin portal</h2>
+        <h2>Federation staff sign-in</h2>
+        <p id="staffLoginIntro" style="font-size:13px;color:#555;margin:0 0 14px;text-align:center;line-height:1.45;">
+            For <strong>SKF Administrators</strong>, <strong>referees</strong>, and <strong>Referees+</strong>.
+            Sign in with your <strong>email</strong> or your <strong>SKF official ID</strong> (or username). The one-time code is always sent to the <strong>email linked to that account</strong> in the database — same email you used when your account was created.
+        </p>
 
-        <div class="staff-login-tabs" role="tablist">
-            <button type="button" id="tabStaffPassword" role="tab" onclick="showStaffLoginMode('password')">Email or ID &amp; password</button>
-            <button type="button" id="tabStaffEmailCode" role="tab" onclick="showStaffLoginMode('emailcode')">Email code (OTP)</button>
-        </div>
+        <div id="staffOtpError"></div>
+        <div id="staffOtpHint"></div>
 
-        <div id="staffPasswordPanel">
-            <form onsubmit="return handleSkfAdminLogin(event)">
-                <div id="adminLoginError"></div>
-                <label for="skfAdminId">Email or ID</label>
-                <input type="text" id="skfAdminId" name="skf-admin-id" autocomplete="username" required
-                       placeholder="Sign in with email or ID">
-
-                <label for="adminPassword">Password</label>
-                <input type="password" id="adminPassword" name="password" autocomplete="current-password" required>
-
-                <button type="submit">Sign in</button>
-            </form>
-        </div>
-
-        <div id="staffEmailCodePanel" style="display:none;">
-            <div id="staffOtpError"></div>
-            <div id="staffOtpHint"></div>
+        <div id="staffEmailCodePanel">
             <form onsubmit="return handleSendStaffEmailCode(event)">
-                <label for="staffOtpIdField">Email or ID</label>
-                <input type="text" id="staffOtpIdField" autocomplete="username" placeholder="Sign in with email or ID" required>
+                <label for="staffOtpIdField">Email or SKF ID</label>
+                <input type="text" id="staffOtpIdField" autocomplete="username" placeholder="your@email.com or official ID" required>
 
                 <button type="submit" id="staffOtpSendBtn">Send code</button>
             </form>
             <form onsubmit="return handleVerifyStaffEmailCode(event)" style="margin-top:14px;">
                 <div id="staffOtpCodeRow" style="display:none;">
-                    <label for="staffOtpCodeInput">Code</label>
-                    <input type="text" id="staffOtpCodeInput" inputmode="numeric" autocomplete="one-time-code" placeholder="Code" maxlength="8">
+                    <label for="staffOtpCodeInput">Code from email</label>
+                    <input type="text" id="staffOtpCodeInput" inputmode="numeric" autocomplete="one-time-code" placeholder="Enter code" maxlength="8">
 
                     <button type="submit">Verify &amp; sign in</button>
                 </div>
+            </form>
+        </div>
+
+        <div id="staffPasswordPanel" style="display:none;">
+            <form onsubmit="return handleStaffPasswordLogin(event)">
+                <label for="staffPasswordIdentity">Email or SKF ID</label>
+                <input type="text" id="staffPasswordIdentity" autocomplete="username" placeholder="your@email.com or official ID" required>
+                <label for="staffPasswordField" style="display:block;margin-top:10px;">Password</label>
+                <input type="password" id="staffPasswordField" autocomplete="current-password" required>
+                <button type="submit" style="margin-top:14px;">Sign in</button>
             </form>
         </div>
 

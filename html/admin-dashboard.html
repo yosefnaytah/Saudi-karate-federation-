@@ -4,9 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Saudi Karate Federation</title>
-    <link rel="stylesheet" href="./dashboard.css">
+    <link rel="stylesheet" href="./dashboard.css?v=20260417">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="auth.js" defer></script>
+    <script src="skf-role-layout.js?v=20260506"></script>
+    <script src="auth.js?v=20260414" defer></script>
+    <script src="skf-highlights.js?v=20260510"></script>
     <style>
         /* Admin-specific styles */
         .pending-approvals-banner {
@@ -267,6 +269,138 @@
             grid-template-columns: 1fr 1fr;
             gap: 12px;
         }
+        .um-user-cell {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0;
+        }
+        .um-user-text {
+            min-width: 0;
+            line-height: 1.35;
+        }
+        .um-user-text strong {
+            display: block;
+            font-weight: 600;
+            color: #222;
+        }
+        .um-user-text small {
+            display: block;
+            font-size: 12px;
+            color: #666;
+            margin-top: 2px;
+        }
+        .um-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #3a7d44;
+            flex-shrink: 0;
+            background: #f0f7f0;
+        }
+        .um-avatar-ph {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #e8f5e9, #c8e6c9);
+            color: #2e7d32;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 17px;
+            flex-shrink: 0;
+            border: 2px solid #3a7d44;
+        }
+        .user-detail-hero {
+            text-align: center;
+            margin-bottom: 16px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #eee;
+        }
+        .user-detail-hero img {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #3a7d44;
+            display: block;
+            margin: 0 auto 10px;
+        }
+        /* Approval / details avatar sizing (never break layout) */
+        .approval-avatar {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 50%;
+            max-width: 100%;
+            border: 3px solid #3a7d44;
+            background: #f0f7f0;
+            flex-shrink: 0;
+        }
+        .admin-ov-hero {
+            background: linear-gradient(118deg, #e8f5e9, #fff);
+            border: 1px solid #c8e6c9;
+            border-radius: 12px;
+            padding: 16px 20px;
+            margin: 0 0 18px;
+        }
+        .admin-ov-hero h2 { margin: 0 0 6px; color: #1b5e20; font-size: 1.25rem; }
+        .admin-ov-hero p { margin: 0; color: #444; font-size: 14px; line-height: 1.5; }
+        .admin-ov-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 14px;
+            margin-bottom: 22px;
+        }
+        .admin-ov-grid .dashboard-card { margin-bottom: 0; }
+        .admin-ov-role-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 8px;
+            font-size: 13px;
+        }
+        .admin-ov-role-pill {
+            background: #f4fbf4;
+            border: 1px solid #dcedc8;
+            border-radius: 8px;
+            padding: 8px 10px;
+            text-align: center;
+        }
+        .admin-ov-role-pill strong { display: block; font-size: 1.2rem; color: #2e7d32; }
+
+        .user-detail-hero .user-detail-hero-ph {
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #e8f5e9, #c8e6c9);
+            color: #1b5e20;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+            font-weight: 700;
+            margin: 0 auto 10px;
+            border: 3px solid #3a7d44;
+        }
+        .user-detail-hero h3 {
+            margin: 0;
+            font-size: 1.15rem;
+            color: #222;
+        }
+        .user-detail-hero .user-detail-sub {
+            font-size: 13px;
+            color: #666;
+            margin-top: 4px;
+        }
+        /* Keep hamburger above admin modals and long content */
+        .dashboard-container .menu-toggle {
+            z-index: 2100;
+        }
+        .dashboard-container .dashboard-nav.active {
+            z-index: 2000;
+        }
     </style>
 </head>
 <body>
@@ -274,11 +408,12 @@
         <!-- Header with Navigation -->
         <header class="dashboard-header">
             <div class="header-left">
-                <div class="header-logo">Saudi Karate Federation - Admin</div>
+                <img src="full badge.png" alt="Saudi Karate Federation" class="header-badge">
+            <div class="header-fed-name">
+                <span class="header-fed-ar">الاتحاد السعودي للكاراتيه</span>
+                <span class="header-fed-en">Saudi Karate Federation</span>
             </div>
-            
-            <div class="header-center"></div>
-            
+            </div>
             <div class="header-right">
                 <div class="user-role" id="userDisplay">Loading...</div>
                 <div class="vision-logo">
@@ -289,41 +424,58 @@
         </header>
 
         <!-- Menu Toggle Button -->
-        <div class="menu-toggle" id="menuToggle">
+        <div class="menu-toggle" id="menuToggle" title="Menu" aria-label="Open menu">
             <span class="bar"></span>
             <span class="bar"></span>
             <span class="bar"></span>
         </div>
 
-        <!-- Navigation Menu -->
+        <!-- Navigation Menu (same drawer pattern as club / player dashboards) -->
         <nav class="dashboard-nav" id="dashboardNav">
             <ul class="nav-menu">
                 <li class="nav-item">
-                    <a href="#dashboard" class="nav-link active" onclick="showSection('dashboard')">Dashboard</a>
+                    <a href="#" class="nav-link" style="color:#ff4444;font-weight:bold;background-color:rgba(255,0,0,0.1);"
+                       onclick="closeAdminMenu(); return false;">&times; Close Menu</a>
                 </li>
                 <li class="nav-item">
-                    <a href="#user-management" class="nav-link" onclick="showSection('user-management')">User Management</a>
+                    <a href="#dashboard" class="nav-link active" onclick="showSection('dashboard', this); return false;">Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a href="#pending-approvals" class="nav-link" onclick="showSection('pending-approvals')">Pending Approvals</a>
+                    <a href="#user-management" class="nav-link" onclick="showSection('user-management', this); return false;">User Management</a>
                 </li>
                 <li class="nav-item">
-                    <a href="#skf-applications" class="nav-link" onclick="showSection('skf-applications')">SKF access requests</a>
+                    <a href="#pending-approvals" class="nav-link" onclick="showSection('pending-approvals', this); return false;">Pending Approvals</a>
                 </li>
                 <li class="nav-item">
-                    <a href="#tournament-management" class="nav-link" onclick="showSection('tournament-management')">Tournaments</a>
+                    <a href="#club-registration-requests" class="nav-link" onclick="showSection('club-registration-requests', this); return false;">Club registration requests</a>
                 </li>
                 <li class="nav-item">
-                    <a href="#registration-management" class="nav-link" onclick="showSection('registration-management')">Registrations</a>
+                    <a href="#tournament-management" class="nav-link" onclick="showSection('tournament-management', this); return false;">Tournaments</a>
                 </li>
                 <li class="nav-item">
-                    <a href="#club-management" class="nav-link" onclick="showSection('club-management')">Clubs</a>
+                    <a href="transfers.html" class="nav-link" onclick="closeAdminMenu();">Transfer market</a>
                 </li>
                 <li class="nav-item">
-                    <a href="#profile" class="nav-link" onclick="showSection('profile')">Profile</a>
+                    <a href="#transfer-market-skf" class="nav-link" onclick="showSection('transfer-market-skf', this); return false;">Transfer approvals</a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" class="nav-link" onclick="logout()">Logout</a>
+                    <a href="#registration-management" class="nav-link" onclick="showSection('registration-management', this); return false;">Registrations</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#reference-data" class="nav-link" onclick="showSection('reference-data', this); return false;">Reference data</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#club-management" class="nav-link" onclick="showSection('club-management', this); return false;">Clubs</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#belt-test" class="nav-link" onclick="showSection('belt-test', this); return false;">Belt Tests</a>
+                    <a href="#highlights" class="nav-link" onclick="showSection('highlights', this); return false;">Highlights</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#profile" class="nav-link" onclick="showSection('profile', this); return false;">Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link" onclick="closeAdminMenu(); logout(); return false;">Logout</a>
                 </li>
             </ul>
         </nav>
@@ -335,7 +487,10 @@
             <section id="dashboard-section" class="dashboard-section">
                 <!-- Stats Section -->
                 <div class="stats-container">
-                    <div class="stat-card">
+                    <div class="stat-card" id="statCardTotalUsers" role="button" tabindex="0" title="Open full user list"
+                        onclick="showSection('user-management', document.querySelector('#dashboardNav a[href=\'#user-management\']'))"
+                        onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();this.onclick();}"
+                        style="cursor:pointer;">
                         <div class="stat-value" id="totalUsers">0</div>
                         <div class="stat-label">Total Users</div>
                     </div>
@@ -352,6 +507,55 @@
                         <div class="stat-label">Total Registrations</div>
                     </div>
                 </div>
+
+                <div class="admin-ov-hero">
+                    <h2>Federation command center</h2>
+                    <p>Snapshot of accounts, clubs, transfers, and events. Every card links to the detailed section in the side menu when you need to take action.</p>
+                </div>
+                <div class="admin-ov-grid">
+                    <div class="dashboard-card">
+                        <div class="dashboard-card-header">
+                            <h2 class="dashboard-card-title">Users by role</h2>
+                        </div>
+                        <div style="padding:8px 20px 20px;">
+                            <div id="adminOvRoleBreakdown" class="admin-ov-role-grid" style="min-height:48px;">
+                                <p style="grid-column:1/-1;color:#666;font-size:14px;margin:0;">Loading…</p>
+                            </div>
+                            <button type="button" class="btn-secondary" style="margin-top:12px;" onclick="showSection('user-management', document.querySelector('#dashboardNav a[href=\'#user-management\']'))">Open user management</button>
+                        </div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="dashboard-card-header">
+                            <h2 class="dashboard-card-title">Clubs &amp; onboarding</h2>
+                        </div>
+                        <div id="adminOvClubsPanel" style="padding:8px 20px 20px;font-size:14px;color:#555;line-height:1.5;min-height:80px;">Loading…</div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="dashboard-card-header">
+                            <h2 class="dashboard-card-title">Transfers &amp; contracts</h2>
+                        </div>
+                        <div id="adminOvTransfersPanel" style="padding:8px 20px 20px;font-size:14px;color:#555;line-height:1.5;min-height:80px;">Loading…</div>
+                    </div>
+                    <div class="dashboard-card">
+                        <div class="dashboard-card-header">
+                            <h2 class="dashboard-card-title">Tournament pulse</h2>
+                        </div>
+                        <div id="adminOvTournamentPulse" style="padding:8px 20px 20px;font-size:14px;color:#555;line-height:1.5;min-height:80px;">Loading…</div>
+                    </div>
+                    <div class="dashboard-card" style="grid-column:1/-1;">
+                        <div class="dashboard-card-header">
+                            <h2 class="dashboard-card-title">Alerts &amp; attention queue</h2>
+                        </div>
+                        <div id="adminOvAlerts" style="padding:8px 20px 20px;font-size:14px;color:#555;line-height:1.5;min-height:60px;">Loading…</div>
+                    </div>
+                </div>
+
+                <p style="font-size:14px;color:#444;margin:0 0 16px;padding:0 4px;line-height:1.5;">
+                    The full list of every account is in <strong>User Management</strong> (side menu), or use <strong>Open user list</strong> below. Sign in with SKF Admin so the table can load.
+                </p>
+                <p style="margin:0 0 20px;">
+                    <button type="button" class="btn-primary" onclick="showSection('user-management', document.querySelector('#dashboardNav a[href=\'#user-management\']'))">Open user list</button>
+                </p>
 
                 <!-- Pending Approvals Banner -->
                 <div class="pending-approvals-banner" id="pendingBanner" style="display: none;">
@@ -396,9 +600,13 @@
             <section id="user-management-section" class="dashboard-section" style="display: none;">
                 <div class="dashboard-card">
                     <div class="dashboard-card-header">
-                        <h2 class="dashboard-card-title">User Management</h2>
-                        <button class="btn-primary" onclick="openCreateUserModal()">+ Add User</button>
+                        <h2 class="dashboard-card-title">User Management — all platform users</h2>
+                        <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+                            <button type="button" class="btn-secondary" onclick="loadUsers()">Refresh list</button>
+                            <button class="btn-primary" onclick="openCreateUserModal()">+ Add User</button>
+                        </div>
                     </div>
+                    <p style="font-size:13px;color:#666;margin:0 20px 12px;">Every account you are allowed to see appears in the table below. Use search and filters. If the list stays empty, tap <strong>Refresh list</strong> or sign out and sign in again as SKF Admin.</p>
                     
                     <div class="filter-section">
                         <select id="filterRole" onchange="filterUsers()">
@@ -409,20 +617,21 @@
                             <option value="club_admin">Club Admin</option>
                             <option value="referees_plus">Referees +</option>
                             <option value="skf_admin">SKF Admin</option>
+                            <option value="admin">Admin (legacy)</option>
                         </select>
                         <select id="filterStatus" onchange="filterUsers()">
                             <option value="">All Status</option>
                             <option value="true">Active</option>
                             <option value="false">Inactive</option>
                         </select>
-                        <input type="text" id="searchUsers" placeholder="Search by name, email, or ID..." onkeyup="filterUsers()" style="flex: 1; min-width: 200px;">
+                        <input type="text" id="searchUsers" placeholder="Search name, email, national ID, SKF ID, UUID…" onkeyup="filterUsers()" style="flex: 1; min-width: 200px;">
                     </div>
 
                     <div class="data-table-container">
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Name</th>
+                                    <th>User</th>
                                     <th>Email</th>
                                     <th>Role</th>
                                     <th>Club</th>
@@ -453,7 +662,7 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
-                                    <th>Name</th>
+                                    <th>User</th>
                                     <th>Email</th>
                                     <th>Role</th>
                                     <th>Club</th>
@@ -473,30 +682,58 @@
                 </div>
             </section>
 
-            <section id="skf-applications-section" class="dashboard-section" style="display: none;">
+            <section id="club-registration-requests-section" class="dashboard-section" style="display: none;">
                 <div class="dashboard-card">
                     <div class="dashboard-card-header">
-                        <h2 class="dashboard-card-title">SKF staff access (register → approve)</h2>
+                        <h2 class="dashboard-card-title">Club registration requests</h2>
+                        <button type="button" class="btn-secondary" onclick="loadClubRegistrationRequests()">Refresh</button>
                     </div>
-                    <p style="font-size:13px;color:#666;padding:0 20px;">Applicants use the <strong>federation staff registration</strong> page (SKF Admin &amp; Referees+ only). This queue is not for coaches or club admins. Approve assigns the <strong>SKF ID</strong> and activates the profile (registrants keep their chosen password). Copy the API response and email the SKF ID. Requires the <strong>.NET API</strong> running.</p>
+                    <p style="font-size:13px;color:#666;padding:0 20px 12px;">Club admins submit registration requests from their dashboard. <strong>Approving</strong> a request creates the official club record, links the applicant to their club, and closes the request.</p>
                     <div class="data-table-container">
                         <table class="data-table">
                             <thead>
                                 <tr>
                                     <th>Submitted</th>
-                                    <th>Name</th>
-                                    <th>Email</th>
-                                    <th>Role</th>
-                                    <th>Account</th>
+                                    <th>Proposed club</th>
+                                    <th>Location</th>
+                                    <th>Players (est.)</th>
+                                    <th>Applicant</th>
+                                    <th>Status</th>
+                                    <th>Result club</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
-                            <tbody id="skfApplicationsBody">
-                                <tr><td colspan="6" style="text-align:center;padding:20px;color:#888;">Loading…</td></tr>
+                            <tbody id="clubRegRequestsBody">
+                                <tr><td colspan="8" style="text-align:center;padding:20px;color:#888;">Open this section to load requests…</td></tr>
                             </tbody>
                         </table>
                     </div>
-                    <div id="skfApproveResult" style="display:none;margin:16px 20px;padding:12px;background:#f5f5f5;border-radius:8px;font-size:13px;white-space:pre-wrap;"></div>
+                </div>
+            </section>
+
+            <section id="transfer-market-skf-section" class="dashboard-section" style="display: none;">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header">
+                        <h2 class="dashboard-card-title">Transfer market — SKF approvals</h2>
+                        <button type="button" class="btn-secondary" onclick="loadTransferSkfQueue()">Refresh</button>
+                    </div>
+                    <p style="font-size:13px;color:#666;padding:0 20px 12px;">After a player accepts a club offer, the transfer request appears here for final SKF approval. <strong>Approving</strong> ends any prior active contracts and officially moves the player to the new club.</p>
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>From → To club</th>
+                                    <th>Submitted</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transferSkfQueueBody">
+                                <tr><td colspan="5" style="text-align:center;padding:20px;color:#888;">Open this section to load.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </section>
 
@@ -592,6 +829,54 @@
                 </div>
             </section>
 
+            <!-- Reference data (Sprint A): canonical age / weight categories -->
+            <section id="reference-data-section" class="dashboard-section" style="display: none;">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header">
+                        <h2 class="dashboard-card-title">Age categories</h2>
+                        <button type="button" class="btn-primary" onclick="openAgeCategoryModal(null)">+ Add age category</button>
+                    </div>
+                    <p style="font-size:13px;color:#666;margin:-8px 12px 12px;">Used by player profiles and tournament reference data. Codes should stay stable once published.</p>
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Label (EN)</th>
+                                    <th>Sort</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ageCategoriesTableBody">
+                                <tr><td colspan="4" style="text-align:center;padding:20px;color:#666;">Loading…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header">
+                        <h2 class="dashboard-card-title">Weight categories</h2>
+                        <button type="button" class="btn-primary" onclick="openWeightCategoryModal(null)">+ Add weight category</button>
+                    </div>
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Code</th>
+                                    <th>Label (EN)</th>
+                                    <th>Gender</th>
+                                    <th>Sort</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="weightCategoriesTableBody">
+                                <tr><td colspan="5" style="text-align:center;padding:20px;color:#666;">Loading…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
             <!-- Club Management Section -->
             <section id="club-management-section" class="dashboard-section" style="display: none;">
                 <div class="dashboard-card">
@@ -607,18 +892,194 @@
                                     <th>Location</th>
                                     <th>Contact</th>
                                     <th>Members</th>
-                                    <th>Status</th>
+                                    <th>Federation</th>
+                                    <th>Listed</th>
                                     <th>Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="clubsTableBody">
                                 <tr>
-                                    <td colspan="6" style="text-align: center; padding: 20px; color: #666;">
+                                    <td colspan="7" style="text-align: center; padding: 20px; color: #666;">
                                         Loading clubs...
                                     </td>
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header">
+                        <h2 class="dashboard-card-title">Player–club contracts</h2>
+                        <button type="button" class="btn-primary" onclick="openCreateContractModal()">+ Add contract</button>
+                    </div>
+                    <p style="font-size:13px;color:#666;margin:-8px 12px 12px;">Each player may have only one <strong>active</strong> contract at a time. Use transfers to move a player between clubs.</p>
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Email</th>
+                                    <th>Club</th>
+                                    <th>Effective</th>
+                                    <th>Status</th>
+                                    <th>Notes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clubContractsTableBody">
+                                <tr>
+                                    <td colspan="7" style="text-align: center; padding: 20px; color: #666;">
+                                        Loading contracts...
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Belt Tests Section -->
+            <section id="belt-test-section" class="dashboard-section" style="display: none;">
+                <!-- Event management card -->
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header">
+                        <h2 class="dashboard-card-title">Belt Test Events</h2>
+                        <button type="button" class="btn-primary" onclick="btAdminOpenEventModal(null)">+ New Event</button>
+                    </div>
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Date</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="btAdminEventsTbody">
+                                <tr><td colspan="5" style="text-align:center;padding:16px;color:#888;">Open this section to load events…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Candidates for selected event -->
+                <div class="dashboard-card" style="margin-top:16px;" id="btAdminCandidatesCard" style="display:none;">
+                    <div class="dashboard-card-header">
+                        <h2 class="dashboard-card-title" id="btAdminCandidatesTitle">Candidates</h2>
+                    </div>
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Player</th>
+                                    <th>Current rank</th>
+                                    <th>Requested rank</th>
+                                    <th>Notes</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="btAdminCandidatesTbody">
+                                <tr><td colspan="6" style="text-align:center;padding:16px;color:#888;">Select an event above to view candidates.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Create / edit event modal -->
+                <div id="btAdminEventModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:3000;align-items:center;justify-content:center;">
+                    <div style="background:#fff;border-radius:12px;padding:28px 24px;max-width:460px;width:92%;box-shadow:0 8px 32px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto;">
+                        <h3 id="btAdminModalTitle" style="margin:0 0 18px;color:#1b5e20;">New Belt Test Event</h3>
+                        <input type="hidden" id="btAdminEventId">
+                        <label style="font-size:13px;font-weight:600;">Title *</label>
+                        <input type="text" id="btAdminEvTitle" placeholder="e.g. Kyu Grading — May 2026" style="display:block;width:100%;margin:5px 0 12px;padding:10px 12px;border:1px solid #ccc;border-radius:8px;font-size:14px;box-sizing:border-box;">
+                        <label style="font-size:13px;font-weight:600;">Date &amp; time *</label>
+                        <input type="datetime-local" id="btAdminEvDate" style="display:block;width:100%;margin:5px 0 12px;padding:10px 12px;border:1px solid #ccc;border-radius:8px;font-size:14px;box-sizing:border-box;">
+                        <label style="font-size:13px;font-weight:600;">Location</label>
+                        <input type="text" id="btAdminEvLocation" placeholder="Venue / city" style="display:block;width:100%;margin:5px 0 12px;padding:10px 12px;border:1px solid #ccc;border-radius:8px;font-size:14px;box-sizing:border-box;">
+                        <label style="font-size:13px;font-weight:600;">Status</label>
+                        <select id="btAdminEvStatus" style="display:block;width:100%;margin:5px 0 12px;padding:10px 12px;border:1px solid #ccc;border-radius:8px;font-size:14px;box-sizing:border-box;">
+                            <option value="draft">Draft</option>
+                            <option value="open">Open (players can apply)</option>
+                            <option value="closed">Closed</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                        <label style="font-size:13px;font-weight:600;">Notes</label>
+                        <textarea id="btAdminEvNotes" rows="3" placeholder="Optional notes for players…" style="display:block;width:100%;margin:5px 0 16px;padding:10px 12px;border:1px solid #ccc;border-radius:8px;font-size:14px;box-sizing:border-box;resize:vertical;"></textarea>
+                        <div style="display:flex;gap:10px;justify-content:flex-end;">
+                            <button type="button" style="padding:10px 18px;border:1px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;" onclick="btAdminCloseEventModal()">Cancel</button>
+                            <button type="button" id="btAdminSaveBtn" style="padding:10px 18px;border:none;border-radius:8px;background:#2e7d32;color:#fff;font-weight:600;cursor:pointer;font-size:14px;" onclick="btAdminSaveEvent()">Save</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Result modal -->
+                <div id="btAdminResultModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:3000;align-items:center;justify-content:center;">
+                    <div style="background:#fff;border-radius:12px;padding:28px 24px;max-width:400px;width:92%;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+                        <h3 style="margin:0 0 16px;color:#1b5e20;" id="btAdminResultTitle">Record Result</h3>
+                        <input type="hidden" id="btAdminResultCandidateId">
+                        <label style="font-size:13px;font-weight:600;">Result</label>
+                        <select id="btAdminResultValue" style="display:block;width:100%;margin:5px 0 12px;padding:10px 12px;border:1px solid #ccc;border-radius:8px;font-size:14px;box-sizing:border-box;">
+                            <option value="passed">Passed</option>
+                            <option value="failed">Failed</option>
+                        </select>
+                        <label style="font-size:13px;font-weight:600;">Examiner notes (optional)</label>
+                        <textarea id="btAdminResultNotes" rows="3" style="display:block;width:100%;margin:5px 0 16px;padding:10px 12px;border:1px solid #ccc;border-radius:8px;font-size:14px;box-sizing:border-box;resize:vertical;"></textarea>
+                        <div style="display:flex;gap:10px;justify-content:flex-end;">
+                            <button type="button" style="padding:10px 18px;border:1px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;" onclick="btAdminCloseResultModal()">Cancel</button>
+                            <button type="button" id="btAdminResultSaveBtn" style="padding:10px 18px;border:none;border-radius:8px;background:#2e7d32;color:#fff;font-weight:600;cursor:pointer;font-size:14px;" onclick="btAdminRecordResult()">Save Result</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Highlights Section -->
+            <section id="highlights-section" class="dashboard-section" style="display: none;">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header">
+                        <h2 class="dashboard-card-title">Highlights &amp; News</h2>
+                    </div>
+                    <p style="margin:0 20px 14px;font-size:13px;color:#555;">Upload images that appear as a scrolling banner on every player, coach, club admin, and referee dashboard. Max 5 MB per image (JPEG / PNG / WebP).</p>
+
+                    <!-- Upload form -->
+                    <div style="background:#f9fbe7;border:1px solid #c5e1a5;border-radius:10px;padding:16px 20px;margin:0 20px 20px;">
+                        <h3 style="margin:0 0 12px;font-size:14px;color:#33691e;">Add new highlight</h3>
+                        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;">
+                            <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:#555;flex:1;min-width:180px;">
+                                Title *
+                                <input type="text" id="hlTitle" placeholder="e.g. Kingdom Championship 2026" maxlength="100"
+                                    style="padding:8px 10px;border:1px solid #ddd;border-radius:7px;font-size:13px;">
+                            </label>
+                            <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:#555;flex:1;min-width:200px;">
+                                Caption (optional)
+                                <input type="text" id="hlCaption" placeholder="Short description or achievement text" maxlength="200"
+                                    style="padding:8px 10px;border:1px solid #ddd;border-radius:7px;font-size:13px;">
+                            </label>
+                            <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:#555;width:80px;">
+                                Order
+                                <input type="number" id="hlOrder" value="0" min="0" max="99"
+                                    style="padding:8px 10px;border:1px solid #ddd;border-radius:7px;font-size:13px;">
+                            </label>
+                            <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:#555;">
+                                Image *
+                                <input type="file" id="hlFile" accept="image/jpeg,image/png,image/webp"
+                                    style="font-size:12px;padding:4px 0;">
+                            </label>
+                            <button type="button" onclick="hlUpload()"
+                                style="padding:10px 20px;background:#2e7d32;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;align-self:flex-end;">
+                                Upload &amp; Publish
+                            </button>
+                        </div>
+                        <div id="hlUploadStatus" style="margin-top:10px;font-size:13px;display:none;"></div>
+                    </div>
+
+                    <!-- Existing highlights table -->
+                    <div style="padding:0 20px 20px;">
+                        <div id="hlTableWrap">
+                            <p style="color:#888;font-size:13px;">Loading highlights…</p>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -665,6 +1126,38 @@
             });
         }
 
+        /**
+         * Admin pages only store access_token in `token`. When it expires, sync/refresh from
+         * Supabase Auth's persisted session (same browser) so lists keep working without re-login.
+         */
+        async function refreshAdminJwtFromSupabaseAuth() {
+            if (isLocalDevToken()) return;
+            if (typeof supabase === 'undefined') return;
+            try {
+                var sb = supabase.createClient(SKF_SUPABASE_URL, SKF_SUPABASE_ANON, {
+                    auth: {
+                        persistSession: true,
+                        storage: localStorage,
+                        autoRefreshToken: true,
+                        detectSessionInUrl: false
+                    }
+                });
+                var r1 = await sb.auth.getSession();
+                var sess = r1.data && r1.data.session;
+                if (!sess) return;
+                var expMs = sess.expires_at ? sess.expires_at * 1000 : 0;
+                if (!expMs || expMs < Date.now() + 120000) {
+                    var r2 = await sb.auth.refreshSession();
+                    if (r2.data && r2.data.session) sess = r2.data.session;
+                }
+                if (sess && sess.access_token) {
+                    localStorage.setItem('token', sess.access_token);
+                }
+            } catch (e) {
+                console.warn('refreshAdminJwtFromSupabaseAuth:', e);
+            }
+        }
+
         function normalizeTournamentRow(t) {
             if (!t) return t;
             return {
@@ -699,12 +1192,42 @@
         function isSafeProfilePhotoUrl(s) {
             if (!s || typeof s !== 'string') return false;
             if (s.length > 950000) return false;
-            return /^data:image\/(jpeg|jpg|png);base64,/i.test(s) || /^https:\/\//i.test(s);
+            var t = s.trim();
+            if (/^javascript:/i.test(t)) return false;
+            return /^data:image\/(jpeg|jpg|png);base64,/i.test(t) || /^https?:\/\//i.test(t) || /^blob:/i.test(t)
+                || (/^[a-zA-Z0-9._\/-]+$/.test(t) && t.indexOf('..') === -1 && t.length <= 500);
+        }
+
+        function isPdfUrl(s) {
+            if (!s || typeof s !== 'string') return false;
+            var t = String(s).trim();
+            return /^data:application\/pdf/i.test(t) || /\.pdf(\?|$)/i.test(t);
+        }
+
+        /** Only return true for actual images (not PDFs/docs). */
+        function isDisplayableImageUrl(s) {
+            if (!s || typeof s !== 'string') return false;
+            var disp = (typeof skfResolveAvatarUrl === 'function') ? skfResolveAvatarUrl(s.trim(), window.SKF_SUPABASE_URL) : s.trim();
+            return isSafeProfilePhotoUrl(disp) && !isPdfUrl(disp);
+        }
+
+        /** Prefer profiles.avatar_url (Supabase embed) then users.profile_image_url / profile_photo_url. */
+        function resolveUserAvatarUrl(u) {
+            if (!u) return '';
+            var prof = u.profiles;
+            if (Array.isArray(prof)) prof = prof.length ? prof[0] : null;
+            var fromP = prof && prof.avatar_url ? String(prof.avatar_url).trim() : '';
+            var img = (u.profile_image_url || u.ProfileImageUrl || '').trim();
+            var legacy = (u.profile_photo_url || u.ProfilePhotoUrl || '').trim();
+            if (fromP) return fromP;
+            if (img) return img;
+            return legacy || '';
         }
 
         /** Normalize a user row from Supabase (snake_case) or API (PascalCase). */
         function normalizeUserRow(u) {
             if (!u) return u;
+            var avatar_url = resolveUserAvatarUrl(u);
             return {
                 id: u.id,
                 full_name: u.full_name || u.FullName || '',
@@ -713,6 +1236,7 @@
                 player_id_card: u.player_id_card != null ? u.player_id_card : u.PlayerIdCard,
                 phone: u.phone || u.Phone || '',
                 club_name: u.club_name || u.ClubName || '',
+                club_id: u.club_id || u.ClubId || null,
                 email: u.email || u.Email || '',
                 username: u.username || u.Username || '',
                 age_group: u.age_group || u.AgeGroup || '',
@@ -720,11 +1244,43 @@
                 player_category: u.player_category || u.PlayerCategory || '',
                 profile_bio: u.profile_bio || u.ProfileBio || '',
                 profile_photo_url: u.profile_photo_url || u.ProfilePhotoUrl || '',
+                profile_image_url: u.profile_image_url || u.ProfileImageUrl || '',
+                avatar_url: avatar_url,
+                skf_official_id: u.skf_official_id || u.SkfOfficialId || '',
                 role: (u.role || u.Role || '').toLowerCase(),
                 is_active: u.is_active !== false && u.IsActive !== false,
                 created_at: u.created_at || u.CreatedAt,
                 updated_at: u.updated_at || u.UpdatedAt
             };
+        }
+
+        function userAvatarImgSrc(raw) {
+            if (!raw || typeof raw !== 'string') return '';
+            if (!isDisplayableImageUrl(raw)) return '';
+            return (typeof skfResolveAvatarUrl === 'function')
+                ? skfResolveAvatarUrl(raw.trim(), window.SKF_SUPABASE_URL)
+                : raw.trim();
+        }
+
+        function userMgmtAvatarHtml(user) {
+            var url = (user.avatar_url || user.profile_image_url || user.profile_photo_url || '').trim();
+            var initial = (user.full_name || user.email || '?').trim().charAt(0).toUpperCase() || '?';
+            var src = userAvatarImgSrc(url);
+            if (src) {
+                return '<img class="um-avatar" src="' + escapeAttr(src) + '" alt="" loading="lazy" referrerpolicy="no-referrer">';
+            }
+            return '<span class="um-avatar-ph">' + escapeHtml(initial) + '</span>';
+        }
+
+        function userMgmtNameCellHtml(user) {
+            var sub = user.email ? escapeHtml(user.email) : '';
+            var skf = (user.skf_official_id || '').trim();
+            if (skf) sub = (sub ? sub + ' · ' : '') + 'SKF ID ' + escapeHtml(skf);
+            return '<div class="um-user-cell">'
+                + userMgmtAvatarHtml(user)
+                + '<div class="um-user-text"><strong>' + escapeHtml(user.full_name || '—') + '</strong>'
+                + (sub ? '<small>' + sub + '</small>' : '')
+                + '</div></div>';
         }
 
         /** Flatten Supabase `tournament_registrations` rows with joined user/tournament names. */
@@ -750,10 +1306,14 @@
         }
 
         let allUsers = [];
+        /** Set when user list fails to load (Supabase/API); cleared on success. */
+        let userListLoadError = '';
         let allTournaments = [];
         let allRegistrations = [];
         let allClubs = [];
+        let allClubContracts = [];
         let allCategoriesByTournament = {};
+        let allMasterCategories = [];
 
         // Persist categories to localStorage so referee dashboard can read them offline
         function persistCategories(tournamentId, cats) {
@@ -795,25 +1355,25 @@
                 const dateStr = d.toLocaleDateString('en-SA', { month:'short', day:'numeric', year:'numeric' })
                               + ' ' + d.toLocaleTimeString('en-SA', { hour:'2-digit', minute:'2-digit' });
                 const iconMap = {
-                    'Tournament Created':  '🏟️',
-                    'Tournament Updated':  '✏️',
-                    'Category Added':      '📂',
-                    'Category Deleted':    '🗑️',
-                    'Referee Assigned':    '👨‍⚖️',
-                    'Referee Removed':     '❌',
-                    'Registration Approved': '✅',
-                    'Registration Rejected': '🚫',
-                    'User Approved':       '✅',
-                    'User Activated':      '✅',
-                    'User Deactivated':    '⏸️',
-                    'User Rejected':       '🚫',
-                    'User Created':        '👤',
+                    'Tournament Created':  '',
+                    'Tournament Updated':  '',
+                    'Category Added':      '',
+                    'Category Deleted':    '',
+                    'Referee Assigned':    '',
+                    'Referee Removed':     '',
+                    'Registration Approved': '',
+                    'Registration Rejected': '',
+                    'User Approved':       '',
+                    'User Activated':      '',
+                    'User Deactivated':    '',
+                    'User Rejected':       '',
+                    'User Created':        '',
                 };
-                const icon = iconMap[entry.action] || '📋';
+                const icon = iconMap[entry.action] || '';
                 return '<tr>'
                     + '<td style="white-space:nowrap;font-size:12px;color:#888;">' + dateStr + '</td>'
                     + '<td>' + (entry.user || '—') + '</td>'
-                    + '<td><span style="font-size:14px;">' + icon + '</span> ' + entry.action + '</td>'
+                    + '<td>' + (icon ? '<span style="font-size:14px;">' + icon + '</span> ' : '') + entry.action + '</td>'
                     + '<td style="color:#555;font-size:13px;">' + (entry.details || '—') + '</td>'
                     + '</tr>';
             }).join('');
@@ -855,12 +1415,22 @@
 
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', function() {
-            checkAdminAuth();
-            initializeMenu();
-            loadDashboardStats();
-            loadAllData();
-            animateCards();
-            renderActivity();
+            refreshAdminJwtFromSupabaseAuth().finally(function () {
+                checkAdminAuth();
+                initializeMenu();
+                loadDashboardStats();
+                loadAllData();
+                animateCards();
+                renderActivity();
+                (function adminHashSection() {
+                    var h = (window.location.hash || '').replace(/^#/, '');
+                    if (!h || !/^[a-z0-9-]+$/i.test(h)) return;
+                    var link = document.querySelector('#dashboardNav a[href="#' + h + '"]');
+                    if (typeof showSection === 'function') {
+                        showSection(h, link || null);
+                    }
+                })();
+            });
         });
 
         // Check if user is admin
@@ -879,22 +1449,11 @@
             
             if (userRole !== 'admin' && userRole !== 'skf_admin') {
                 alert('Access denied. This dashboard is for SKF Admins only.');
-                // Redirect to appropriate dashboard
-                let dashboardUrl = 'index.html';
-                switch(userRole) {
-                    case 'player':
-                        dashboardUrl = 'player-dashboard.html';
-                        break;
-                    case 'coach':
-                        dashboardUrl = 'player-dashboard.html';
-                        break;
-                    case 'referee':
-                    case 'referees_plus':
-                        dashboardUrl = 'referee-dashboard.html';
-                        break;
-                    case 'club_admin':
-                        dashboardUrl = 'player-dashboard.html';
-                        break;
+                var dashboardUrl = 'index.html';
+                if (typeof SKFRoleLayout !== 'undefined' && SKFRoleLayout.dashboardForRole) {
+                    dashboardUrl = SKFRoleLayout.dashboardForRole(user.role);
+                } else if (typeof getDashboardUrl === 'function') {
+                    dashboardUrl = getDashboardUrl(user.role);
                 }
                 window.location.href = dashboardUrl;
                 return;
@@ -913,47 +1472,43 @@
             }
         }
 
+        function closeAdminMenu() {
+            const dashboardNav = document.getElementById('dashboardNav');
+            const menuToggle = document.getElementById('menuToggle');
+            if (dashboardNav) dashboardNav.classList.remove('active');
+            if (menuToggle) menuToggle.classList.remove('active');
+        }
+
         // Initialize menu toggle
         function initializeMenu() {
             const menuToggle = document.getElementById('menuToggle');
             const dashboardNav = document.getElementById('dashboardNav');
-            
-            menuToggle.addEventListener('click', function() {
+            if (!menuToggle || !dashboardNav) return;
+            menuToggle.addEventListener('click', function () {
                 this.classList.toggle('active');
                 dashboardNav.classList.toggle('active');
             });
         }
 
-        // Show section
-        function showSection(sectionName) {
-            // Hide all sections
+        // Show section (el = nav link for active styling; same behavior as club dashboard drawer)
+        function showSection(sectionName, el) {
+            closeAdminMenu();
+
             document.querySelectorAll('.dashboard-section').forEach(section => {
                 section.style.display = 'none';
             });
-            
-            // Remove active class from all nav links
-            document.querySelectorAll('.nav-link').forEach(link => {
+
+            document.querySelectorAll('#dashboardNav .nav-link').forEach(link => {
                 link.classList.remove('active');
             });
-            
-            // Show selected section
+
             const section = document.getElementById(sectionName + '-section');
             if (section) {
                 section.style.display = 'block';
-                // Animate newly-visible cards in this section
                 setTimeout(animateCards, 20);
             }
-            
-            // Add active class to clicked nav link
-            if (event && event.target) event.target.classList.add('active');
-            
-            // Close menu on mobile
-            const dashboardNav = document.getElementById('dashboardNav');
-            const menuToggle = document.getElementById('menuToggle');
-            if (window.innerWidth <= 768) {
-                dashboardNav.classList.remove('active');
-                menuToggle.classList.remove('active');
-            }
+
+            if (el && el.classList) el.classList.add('active');
             
             // Load section data
             switch(sectionName) {
@@ -963,8 +1518,11 @@
                 case 'pending-approvals':
                     loadPendingApprovals();
                     break;
-                case 'skf-applications':
-                    loadSkfApplications();
+                case 'club-registration-requests':
+                    loadClubRegistrationRequests();
+                    break;
+                case 'transfer-market-skf':
+                    loadTransferSkfQueue();
                     break;
                 case 'tournament-management':
                     loadTournaments();
@@ -972,8 +1530,18 @@
                 case 'registration-management':
                     loadRegistrations();
                     break;
+                case 'reference-data':
+                    loadReferenceData();
+                    break;
                 case 'club-management':
                     loadClubs();
+                    loadClubContracts();
+                    break;
+                case 'belt-test':
+                    loadBtAdminEvents();
+                    break;
+                case 'highlights':
+                    loadAdminHighlights();
                     break;
                 case 'profile':
                     loadProfile();
@@ -1037,9 +1605,116 @@
                 } else {
                     document.getElementById('totalRegistrations').textContent = String((allRegistrations && allRegistrations.length) || 0);
                 }
-                
+
+                await loadAdminOverviewPanels();
+
             } catch (error) {
                 console.error('Error loading dashboard stats:', error);
+            }
+        }
+
+        function safeCount(res) { return (!res.error && res.count != null) ? res.count : null; }
+
+        async function loadAdminOverviewPanels() {
+            var roleEl  = document.getElementById('adminOvRoleBreakdown');
+            var clubsEl = document.getElementById('adminOvClubsPanel');
+            var xferEl  = document.getElementById('adminOvTransfersPanel');
+            var tourEl  = document.getElementById('adminOvTournamentPulse');
+            var alertEl = document.getElementById('adminOvAlerts');
+            var sb = getAdminSupabase();
+            if (!sb) {
+                [roleEl, clubsEl, xferEl, tourEl, alertEl].forEach(function (el) {
+                    if (el) el.innerHTML = '<p style="margin:0;color:#888;">Sign in with SKF Admin to load panels.</p>';
+                });
+                return;
+            }
+
+            var roleRows = [
+                { key: 'player',       label: 'Players' },
+                { key: 'coach',        label: 'Coaches' },
+                { key: 'referee',      label: 'Referees' },
+                { key: 'referees_plus',label: 'Referee+' },
+                { key: 'club_admin',   label: 'Club admins' },
+                { key: 'skf_admin',    label: 'SKF admins' },
+                { key: 'admin',        label: 'Admin (legacy)' }
+            ];
+
+            // Run ALL queries in parallel — one slow/failing query won't block the others
+            var roleCounts = {};
+            var results = await Promise.all([
+                // Role breakdown (7 parallel inside)
+                Promise.all(roleRows.map(function (rr) {
+                    return sb.from('users').select('id', { count: 'exact', head: true }).eq('role', rr.key)
+                        .then(function (r) { roleCounts[rr.key] = safeCount(r); });
+                })),
+                sb.from('clubs').select('id', { count: 'exact', head: true }),
+                sb.from('club_registration_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+                sb.from('transfer_approval_requests').select('id', { count: 'exact', head: true }).eq('status', 'pending_skf'),
+                sb.from('player_club_contracts').select('id', { count: 'exact', head: true }).eq('contract_status', 'active'),
+                sb.from('tournament_matches').select('id', { count: 'exact', head: true }).in('status', ['live', 'paused']),
+                sb.from('tournament_registrations').select('id', { count: 'exact', head: true }).eq('status', 'pending'),
+                sb.from('tournaments').select('id', { count: 'exact', head: true }).eq('is_active', true)
+            ]);
+
+            var clubCount       = safeCount(results[1]);
+            var pendClub        = safeCount(results[2]);
+            var pendXfer        = safeCount(results[3]);
+            var activeContracts = safeCount(results[4]);
+            var liveMat         = safeCount(results[5]);
+            var pendReg         = safeCount(results[6]);
+            var activeTour      = safeCount(results[7]);
+
+            // Render role breakdown
+            if (roleEl) {
+                roleEl.innerHTML = roleRows.map(function (rr) {
+                    var val = roleCounts[rr.key] == null ? '—' : String(roleCounts[rr.key]);
+                    return '<div class="admin-ov-role-pill"><strong>' + escapeHtml(val) + '</strong>'
+                        + '<span style="font-size:11px;color:#555;">' + escapeHtml(rr.label) + '</span></div>';
+                }).join('');
+            }
+
+            // Clubs panel
+            if (clubsEl) {
+                clubsEl.innerHTML = '<p style="margin:0 0 10px;"><strong>' + (clubCount == null ? '—' : clubCount) + '</strong> club record(s).</p>'
+                    + '<p style="margin:0 0 12px;"><strong>' + (pendClub == null ? '—' : pendClub) + '</strong> pending club registration request(s).</p>'
+                    + '<div style="display:flex;flex-wrap:wrap;gap:8px;">'
+                    + '<button type="button" class="btn-secondary" onclick="showSection(\'club-management\',null)">Clubs</button>'
+                    + '<button type="button" class="btn-secondary" onclick="showSection(\'club-registration-requests\',null)">Club requests</button></div>';
+            }
+
+            // Transfers panel
+            if (xferEl) {
+                xferEl.innerHTML = '<p style="margin:0 0 10px;"><strong>' + (pendXfer == null ? '—' : pendXfer) + '</strong> transfer(s) awaiting SKF approval.</p>'
+                    + '<p style="margin:0 0 12px;"><strong>' + (activeContracts == null ? '—' : activeContracts) + '</strong> active player–club contract(s).</p>'
+                    + '<button type="button" class="btn-secondary" onclick="showSection(\'transfer-market-skf\',null)">Transfer approvals</button>'
+                    + ' <button type="button" class="btn-secondary" onclick="showSection(\'club-management\',null)">Contracts</button>';
+            }
+
+            // Tournament pulse
+            if (tourEl) {
+                tourEl.innerHTML = '<p style="margin:0 0 10px;"><strong>' + (liveMat == null ? '—' : liveMat) + '</strong> match(es) live / paused.</p>'
+                    + '<p style="margin:0 0 10px;"><strong>' + (pendReg == null ? '—' : pendReg) + '</strong> registration(s) pending.</p>'
+                    + '<p style="margin:0 0 12px;"><strong>' + (activeTour == null ? '—' : activeTour) + '</strong> active tournament(s).</p>'
+                    + '<div style="display:flex;flex-wrap:wrap;gap:8px;">'
+                    + '<button type="button" class="btn-secondary" onclick="showSection(\'tournament-management\',null)">Tournaments</button>'
+                    + '<button type="button" class="btn-secondary" onclick="showSection(\'registration-management\',null)">Registrations</button></div>';
+            }
+
+            // Alerts
+            if (alertEl) {
+                var lines = [];
+                var pendingStaff = parseInt((document.getElementById('pendingApprovals') || {}).textContent, 10);
+                if (!isNaN(pendingStaff) && pendingStaff > 0)
+                    lines.push('<div style="margin-bottom:10px;padding:10px 12px;background:#fff8e1;border-radius:8px;border:1px solid #ffcc80;"><strong>' + pendingStaff + '</strong> staff account(s) await activation. <button type="button" class="btn-primary" onclick="showSection(\'pending-approvals\',null)" style="margin-left:8px;">Review</button></div>');
+                if (pendClub > 0)
+                    lines.push('<div style="margin-bottom:10px;padding:10px 12px;background:#e3f2fd;border-radius:8px;border:1px solid #90caf9;"><strong>' + pendClub + '</strong> club registration request(s). <button type="button" class="btn-secondary" onclick="showSection(\'club-registration-requests\',null)">Open</button></div>');
+                if (pendXfer > 0)
+                    lines.push('<div style="margin-bottom:10px;padding:10px 12px;background:#fce4ec;border-radius:8px;border:1px solid #f48fb1;"><strong>' + pendXfer + '</strong> transfer approval(s). <button type="button" class="btn-secondary" onclick="showSection(\'transfer-market-skf\',null)">Open</button></div>');
+                if (liveMat > 0)
+                    lines.push('<div style="margin-bottom:10px;padding:10px 12px;background:#e8f5e9;border-radius:8px;border:1px solid #a5d6a7;"><strong>' + liveMat + '</strong> bout(s) live / paused.</div>');
+                if (!lines.length)
+                    lines.push('<p style="margin:0;color:#666;">No urgent items. All clear.</p>');
+                alertEl.innerHTML = lines.join('');
             }
         }
 
@@ -1058,15 +1733,34 @@
 
         // Load users (Supabase → .NET admin API)
         async function loadUsers() {
+            userListLoadError = '';
+            await refreshAdminJwtFromSupabaseAuth();
             var sb = getAdminSupabase();
-            if (sb) {
-                var q = await sb.from('users').select('*').order('created_at', { ascending: false });
-                if (!q.error && q.data) {
-                    allUsers = q.data.map(normalizeUserRow);
-                    displayUsers(allUsers);
-                    return;
-                }
-                if (q.error) console.warn('Supabase users:', q.error.message || q.error);
+            if (!sb) {
+                userListLoadError = 'Session expired or invalid. Please sign out and sign in again with your SKF administrator account.';
+                allUsers = [];
+                displayUsers([]);
+                return;
+            }
+
+            var q = await sb.from('users').select('*, profiles(avatar_url)').order('created_at', { ascending: false });
+            if (q.error) {
+                console.warn('Supabase users (with profiles):', q.error.message || q.error);
+                q = await sb.from('users').select('*').order('created_at', { ascending: false });
+            }
+            if (!q.error && q.data != null) {
+                allUsers = q.data.map(normalizeUserRow);
+                filterUsers();
+                return;
+            }
+
+            var errMsg = (q && q.error && (q.error.message || q.error.details || q.error.hint)) ? String(q.error.message || q.error.details || q.error.hint) : 'Supabase users query failed.';
+            console.warn('Supabase users:', errMsg);
+            var emLow = errMsg.toLowerCase();
+            if (/jwt|expired|session|invalid.*token|pgrst301/.test(emLow)) {
+                userListLoadError = 'Your sign-in has expired. Use Logout, then sign in again. (If this keeps happening, clear site data for this origin and log in once more.)';
+            } else {
+                userListLoadError = 'Supabase: ' + errMsg + ' — If you are sure you are signed in, run database/fix_rls_users_infinite_recursion.sql so SKF admins can SELECT public.users.';
             }
 
             try {
@@ -1079,17 +1773,18 @@
 
                 if (response.ok) {
                     var raw = await response.json();
+                    userListLoadError = '';
                     allUsers = (raw || []).map(normalizeUserRow);
-                    displayUsers(allUsers);
-                } else {
-                    allUsers = [];
-                    displayUsers([]);
+                    filterUsers();
+                    return;
                 }
+                userListLoadError += ' .NET API returned HTTP ' + response.status + '.';
             } catch (error) {
                 console.error('Error loading users:', error);
-                allUsers = [];
-                displayUsers([]);
+                userListLoadError += ' .NET API unreachable (' + (error && error.message ? error.message : 'network') + ').';
             }
+            allUsers = [];
+            displayUsers([]);
         }
 
         // Display users
@@ -1098,22 +1793,24 @@
             if (!tbody) return;
             
             if (users.length === 0) {
-                tbody.innerHTML = `
-                    <tr>
-                        <td colspan="7" style="text-align: center; padding: 20px; color: #666;">
-                            No users found. API endpoint may need to be implemented.
-                        </td>
-                    </tr>
-                `;
+                var msg;
+                if (userListLoadError) {
+                    msg = userListLoadError;
+                } else if (allUsers.length > 0) {
+                    msg = 'No users match the current filters. Clear the search box or set Role / Status to “All”.';
+                } else {
+                    msg = 'No users found, or your account does not have access. Please verify your administrator credentials.';
+                }
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#666;line-height:1.5;">'
+                    + escapeHtml(msg) + '</td></tr>';
                 return;
             }
             
             tbody.innerHTML = users.map(function (user) {
-                var nm = user.full_name || 'N/A';
                 var em = user.email || 'N/A';
                 var act = user.is_active ? 'Deactivate' : 'Activate';
                 return '<tr>'
-                    + '<td>' + escapeHtml(nm) + '</td>'
+                    + '<td>' + userMgmtNameCellHtml(user) + '</td>'
                     + '<td>' + escapeHtml(em) + '</td>'
                     + '<td>' + escapeHtml(formatRoleName(user.role)) + '</td>'
                     + '<td>' + escapeHtml(user.club_name || 'N/A') + '</td>'
@@ -1132,7 +1829,8 @@
         function filterUsers() {
             const roleFilter = document.getElementById('filterRole').value;
             const statusFilter = document.getElementById('filterStatus').value;
-            const searchTerm = document.getElementById('searchUsers').value.toLowerCase();
+            const searchRaw = document.getElementById('searchUsers') ? document.getElementById('searchUsers').value : '';
+            const searchTerm = String(searchRaw).trim().toLowerCase();
             
             let filtered = allUsers;
             
@@ -1150,7 +1848,9 @@
                         || (u.email && u.email.toLowerCase().includes(searchTerm))
                         || (u.username && String(u.username).toLowerCase().includes(searchTerm))
                         || (u.national_id && String(u.national_id).includes(searchTerm))
-                        || (u.player_id && String(u.player_id).toLowerCase().includes(searchTerm));
+                        || (u.player_id && String(u.player_id).toLowerCase().includes(searchTerm))
+                        || (u.skf_official_id && String(u.skf_official_id).toLowerCase().includes(searchTerm))
+                        || (u.id && String(u.id).toLowerCase().includes(searchTerm));
                 });
             }
             
@@ -1161,7 +1861,10 @@
         async function loadPendingApprovals() {
             var sb = getAdminSupabase();
             if (sb) {
-                var q = await sb.from('users').select('*').eq('is_active', false).order('created_at', { ascending: false });
+                var q = await sb.from('users').select('*, profiles(avatar_url)').eq('is_active', false).order('created_at', { ascending: false });
+                if (q.error) {
+                    q = await sb.from('users').select('*').eq('is_active', false).order('created_at', { ascending: false });
+                }
                 if (!q.error && q.data) {
                     var pending = q.data.map(normalizeUserRow).filter(function (u) {
                         return (u.role || '').toLowerCase() !== 'player';
@@ -1195,107 +1898,6 @@
             }
         }
 
-        async function loadSkfApplications() {
-            var tbody = document.getElementById('skfApplicationsBody');
-            var out = document.getElementById('skfApproveResult');
-            if (out) { out.style.display = 'none'; out.textContent = ''; }
-            if (!tbody) return;
-            var tok = localStorage.getItem('token');
-            if (!tok || tok.indexOf('local-token') === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#888;">Sign in with a real SKF Admin session to load requests.</td></tr>';
-                return;
-            }
-            try {
-                var res = await fetch(API_BASE_URL + '/SkfApplications?status=pending', {
-                    headers: { 'Authorization': 'Bearer ' + tok }
-                });
-                var data = await res.json().catch(function () { return []; });
-                if (!res.ok) {
-                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#c62828;">'
-                        + (data.message || 'Could not load (start .NET API and run database/skf_applications.sql).') + '</td></tr>';
-                    return;
-                }
-                displaySkfApplications(Array.isArray(data) ? data : []);
-            } catch (e) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#c62828;">Network error loading requests.</td></tr>';
-            }
-        }
-
-        function displaySkfApplications(rows) {
-            var tbody = document.getElementById('skfApplicationsBody');
-            if (!tbody) return;
-            if (!rows || rows.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#888;">No pending access requests.</td></tr>';
-                return;
-            }
-            tbody.innerHTML = rows.map(function (a) {
-                var dt = a.created_at || a.createdAt || '';
-                var name = escapeHtml(a.full_name || a.fullName || '');
-                var em = escapeHtml(a.email || '');
-                var role = escapeHtml(a.requested_role || a.requestedRole || '');
-                var id = a.id || '';
-                var hasAuth = !!(a.auth_user_id || a.authUserId);
-                var acct = hasAuth ? '<span title="They registered with email + password on the site">Yes</span>' : '<span title="Legacy: no Auth user until you approve">No</span>';
-                return '<tr>'
-                    + '<td style="white-space:nowrap;font-size:12px;color:#666;">' + escapeHtml(String(dt).slice(0, 16)) + '</td>'
-                    + '<td>' + name + '</td>'
-                    + '<td>' + em + '</td>'
-                    + '<td>' + role + '</td>'
-                    + '<td style="font-size:12px;">' + acct + '</td>'
-                    + '<td>'
-                    + '<button class="btn-success" onclick="approveSkfApplication(\'' + id + '\')" style="margin-right:6px;">Approve</button>'
-                    + '<button class="btn-danger" onclick="rejectSkfApplication(\'' + id + '\')">Reject</button>'
-                    + '</td></tr>';
-            }).join('');
-        }
-
-        async function approveSkfApplication(id) {
-            if (!confirm('Approve this request? If they already registered on the site, their password stays the same — only the SKF ID is assigned.')) return;
-            var tok = localStorage.getItem('token');
-            var out = document.getElementById('skfApproveResult');
-            try {
-                var res = await fetch(API_BASE_URL + '/SkfApplications/' + id + '/approve', {
-                    method: 'POST',
-                    headers: { 'Authorization': 'Bearer ' + tok }
-                });
-                var data = await res.json().catch(function () { return {}; });
-                if (!res.ok) {
-                    alert(data.message || data.detail || 'Approve failed');
-                    return;
-                }
-                if (out) {
-                    out.style.display = 'block';
-                    out.textContent = 'Send to applicant securely:\n  SKF ID: ' + (data.assignedSkfId || '')
-                        + (data.temporaryPassword ? '\n  One-time password (legacy row only): ' + data.temporaryPassword : '\n  Password: unchanged — the one they set at staff registration.')
-                        + '\n\n' + (data.emailNote || '');
-                }
-                logActivity('SKF access approved', data.assignedSkfId + ' — ' + (data.message || ''));
-                await loadSkfApplications();
-            } catch (e) {
-                alert('Request failed. Is the API running?');
-            }
-        }
-
-        async function rejectSkfApplication(id) {
-            if (!confirm('Reject this access request?')) return;
-            var tok = localStorage.getItem('token');
-            try {
-                var res = await fetch(API_BASE_URL + '/SkfApplications/' + id + '/reject', {
-                    method: 'POST',
-                    headers: { 'Authorization': 'Bearer ' + tok }
-                });
-                if (!res.ok) {
-                    var data = await res.json().catch(function () { return ({}); });
-                    alert(data.message || 'Reject failed');
-                    return;
-                }
-                logActivity('SKF access rejected', id);
-                await loadSkfApplications();
-            } catch (e) {
-                alert('Request failed.');
-            }
-        }
-
         // Display pending approvals
         function displayPendingApprovals(users) {
             const tbody = document.getElementById('pendingApprovalsBody');
@@ -1314,7 +1916,7 @@
             
             tbody.innerHTML = users.map(function (user) {
                 return '<tr>'
-                    + '<td>' + escapeHtml(user.full_name || 'N/A') + '</td>'
+                    + '<td>' + userMgmtNameCellHtml(user) + '</td>'
                     + '<td>' + escapeHtml(user.email || 'N/A') + '</td>'
                     + '<td>' + escapeHtml(formatRoleName(user.role)) + '</td>'
                     + '<td>' + escapeHtml(user.club_name || 'N/A') + '</td>'
@@ -1652,12 +2254,49 @@
             displayRegistrations(filtered);
         }
 
+        function clubStatusBadgeClass(st) {
+            var s = (st || 'pending').toLowerCase();
+            if (s === 'approved') return 'status-approved';
+            if (s === 'pending') return 'status-pending';
+            if (s === 'rejected') return 'status-rejected';
+            return 'status-inactive';
+        }
+
+        function formatClubStatusLabel(st) {
+            var s = (st || 'pending').toLowerCase();
+            return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+
         // Load clubs
         async function loadClubs() {
+            var sb = getAdminSupabase();
+            if (sb) {
+                var q = await sb.from('clubs').select('*').order('name');
+                if (q.error) {
+                    console.error(q.error);
+                    allClubs = [];
+                    displayClubs([]);
+                    return;
+                }
+                var clubs = q.data || [];
+                for (var i = 0; i < clubs.length; i++) {
+                    if (clubs[i].club_status == null) clubs[i].club_status = 'approved';
+                }
+                await Promise.all(clubs.map(function (c) {
+                    return sb.from('users').select('id', { count: 'exact', head: true }).eq('club_id', c.id).then(function (ct) {
+                        if (!ct.error && ct.count != null) c._member_count = ct.count;
+                        else c._member_count = null;
+                    });
+                }));
+                allClubs = clubs;
+                displayClubs(allClubs);
+                return;
+            }
             try {
                 const response = await fetch(`${API_BASE_URL}/clubs`);
                 if (response.ok) {
                     allClubs = await response.json();
+                    allClubs.forEach(function (c) { if (c.club_status == null) c.club_status = 'approved'; });
                     displayClubs(allClubs);
                 } else {
                     allClubs = [];
@@ -1673,31 +2312,841 @@
         function displayClubs(clubs) {
             const tbody = document.getElementById('clubsTableBody');
             if (!tbody) return;
-            
+
             if (clubs.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" style="text-align: center; padding: 20px; color: #666;">
-                            No clubs found. API endpoint may need to be implemented.
+                        <td colspan="7" style="text-align: center; padding: 20px; color: #666;">
+                            No clubs registered yet. Use the form below to create a new club.
                         </td>
                     </tr>
                 `;
                 return;
             }
-            
-            tbody.innerHTML = clubs.map(club => `
+
+            tbody.innerHTML = clubs.map(function (club) {
+                var fed = club.club_status || 'approved';
+                var listed = club.is_active !== false;
+                var mc = club._member_count;
+                var sid = escapeAttr(String(club.id));
+                return `
                 <tr>
-                    <td>${club.name || 'N/A'}</td>
-                    <td>${club.location || 'N/A'}</td>
-                    <td>${club.contact_email || 'N/A'}</td>
-                    <td>0</td>
-                    <td><span class="status-badge ${club.is_active ? 'status-active' : 'status-inactive'}">${club.is_active ? 'Active' : 'Inactive'}</span></td>
+                    <td>${escapeHtml(club.name || 'N/A')}</td>
+                    <td>${escapeHtml(club.location || 'N/A')}</td>
+                    <td>${escapeHtml(club.contact_email || club.contact_phone || '—')}</td>
+                    <td>${mc != null ? mc : '—'}</td>
+                    <td><span class="status-badge ${clubStatusBadgeClass(fed)}">${escapeHtml(formatClubStatusLabel(fed))}</span></td>
+                    <td><span class="status-badge ${listed ? 'status-active' : 'status-inactive'}">${listed ? 'Yes' : 'No'}</span></td>
                     <td>
-                        <button class="btn-secondary" onclick="viewClub('${club.id}')" style="margin-right: 5px;">View</button>
-                        <button class="btn-primary" onclick="editClub('${club.id}')" style="margin-right: 5px;">Edit</button>
+                        <button class="btn-secondary" onclick="viewClub('${sid}')" style="margin-right: 5px;">View</button>
+                        <button class="btn-primary" onclick="editClub('${sid}')" style="margin-right: 5px;">Edit</button>
                     </td>
                 </tr>
-            `).join('');
+            `;
+            }).join('');
+        }
+
+        // ── Sprint A: reference categories ─────────────────────────────
+        async function loadReferenceData() {
+            var ageBody = document.getElementById('ageCategoriesTableBody');
+            var wtBody = document.getElementById('weightCategoriesTableBody');
+            var sb = getAdminSupabase();
+            if (!sb) {
+                var msg = '<tr><td colspan="4" style="text-align:center;padding:16px;color:#666;">Sign in with a real admin session (not local-token) to edit reference data.</td></tr>';
+                var msgW = '<tr><td colspan="5" style="text-align:center;padding:16px;color:#666;">Sign in with a real admin session (not local-token) to edit reference data.</td></tr>';
+                if (ageBody) ageBody.innerHTML = msg;
+                if (wtBody) wtBody.innerHTML = msgW;
+                return;
+            }
+            var a = await sb.from('age_categories').select('*').order('sort_order', { ascending: true });
+            var w = await sb.from('weight_categories').select('*').order('sort_order', { ascending: true });
+            if (a.error && ageBody) {
+                ageBody.innerHTML = '<tr><td colspan="4" style="padding:16px;color:#c62828;">' + escapeHtml(a.error.message) + '</td></tr>';
+            } else if (ageBody) {
+                displayAgeCategoriesTable(a.data || []);
+            }
+            if (w.error && wtBody) {
+                wtBody.innerHTML = '<tr><td colspan="5" style="padding:16px;color:#c62828;">' + escapeHtml(w.error.message) + '</td></tr>';
+            } else if (wtBody) {
+                displayWeightCategoriesTable(w.data || []);
+            }
+        }
+
+        function displayAgeCategoriesTable(rows) {
+            var tbody = document.getElementById('ageCategoriesTableBody');
+            if (!tbody) return;
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:16px;color:#666;">No age categories defined yet. Add one using the form below.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = rows.map(function (r) {
+                var id = Number(r.id);
+                return '<tr><td>' + escapeHtml(r.code) + '</td><td>' + escapeHtml(r.label_en) + '</td><td>' + escapeHtml(String(r.sort_order)) + '</td><td>'
+                    + '<button type="button" class="btn-secondary" style="margin-right:6px;" onclick="openAgeCategoryModal(' + id + ')">Edit</button>'
+                    + '<button type="button" class="btn-danger" onclick="deleteAgeCategory(' + id + ')">Delete</button>'
+                    + '</td></tr>';
+            }).join('');
+        }
+
+        function displayWeightCategoriesTable(rows) {
+            var tbody = document.getElementById('weightCategoriesTableBody');
+            if (!tbody) return;
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:16px;color:#666;">No weight categories.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = rows.map(function (r) {
+                var id = Number(r.id);
+                return '<tr><td>' + escapeHtml(r.code) + '</td><td>' + escapeHtml(r.label_en) + '</td><td>' + escapeHtml(r.gender || '—') + '</td><td>' + escapeHtml(String(r.sort_order)) + '</td><td>'
+                    + '<button type="button" class="btn-secondary" style="margin-right:6px;" onclick="openWeightCategoryModal(' + id + ')">Edit</button>'
+                    + '<button type="button" class="btn-danger" onclick="deleteWeightCategory(' + id + ')">Delete</button>'
+                    + '</td></tr>';
+            }).join('');
+        }
+
+        function openAgeCategoryModal(existingId) {
+            var sb = getAdminSupabase();
+            if (!sb) {
+                alert('Administrator session required. Please sign in with your SKF admin account.');
+                return;
+            }
+            (async function () {
+                var row = null;
+                if (existingId != null) {
+                    var q = await sb.from('age_categories').select('*').eq('id', existingId).maybeSingle();
+                    if (!q.error && q.data) row = q.data;
+                }
+                var modalContainer = document.getElementById('modalContainer');
+                if (!modalContainer) return;
+                modalContainer.innerHTML = `
+                <div class="modal" style="display:block;">
+                    <div class="modal-content" style="max-width:480px;">
+                        <div class="modal-header">
+                            <h2>${existingId ? 'Edit' : 'Add'} age category</h2>
+                            <span class="close" onclick="closeModal()">&times;</span>
+                        </div>
+                        <form onsubmit="saveAgeCategory(event, ${existingId != null ? existingId : 'null'})">
+                            <div class="form-group">
+                                <label for="ac_code">Code *</label>
+                                <input type="text" id="ac_code" required maxlength="64" value="${row ? escapeAttr(row.code) : ''}" placeholder="e.g. U12">
+                            </div>
+                            <div class="form-group">
+                                <label for="ac_label">Label (EN) *</label>
+                                <input type="text" id="ac_label" required maxlength="200" value="${row ? escapeAttr(row.label_en) : ''}">
+                            </div>
+                            <div class="form-group">
+                                <label for="ac_sort">Sort order *</label>
+                                <input type="number" id="ac_sort" required step="1" value="${row ? escapeAttr(String(row.sort_order)) : '0'}">
+                            </div>
+                            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+                                <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                                <button type="submit" class="btn-primary">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>`;
+            })();
+        }
+
+        async function saveAgeCategory(ev, existingId) {
+            ev.preventDefault();
+            var sb = getAdminSupabase();
+            if (!sb) return;
+            var payload = {
+                code: document.getElementById('ac_code').value.trim(),
+                label_en: document.getElementById('ac_label').value.trim(),
+                sort_order: parseInt(document.getElementById('ac_sort').value, 10) || 0
+            };
+            var res = existingId != null
+                ? await sb.from('age_categories').update(payload).eq('id', existingId)
+                : await sb.from('age_categories').insert(payload);
+            if (res.error) {
+                alert(res.error.message || 'Save failed.');
+                return;
+            }
+            logActivity('Reference Data', 'Age category ' + (existingId ? 'updated' : 'created'));
+            closeModal();
+            await loadReferenceData();
+        }
+
+        async function deleteAgeCategory(id) {
+            if (!confirm('Delete this age category? It must not be in use by player_profiles.')) return;
+            var sb = getAdminSupabase();
+            if (!sb) return;
+            var res = await sb.from('age_categories').delete().eq('id', id);
+            if (res.error) {
+                alert(res.error.message || 'Delete failed (likely still referenced).');
+                return;
+            }
+            logActivity('Reference Data', 'Age category deleted — ' + id);
+            await loadReferenceData();
+        }
+
+        function openWeightCategoryModal(existingId) {
+            var sb = getAdminSupabase();
+            if (!sb) {
+                alert('Administrator session required. Please sign in with your SKF admin account.');
+                return;
+            }
+            (async function () {
+                var row = null;
+                if (existingId != null) {
+                    var q = await sb.from('weight_categories').select('*').eq('id', existingId).maybeSingle();
+                    if (!q.error && q.data) row = q.data;
+                }
+                var modalContainer = document.getElementById('modalContainer');
+                if (!modalContainer) return;
+                var g = row && row.gender ? row.gender : 'all';
+                modalContainer.innerHTML = `
+                <div class="modal" style="display:block;">
+                    <div class="modal-content" style="max-width:480px;">
+                        <div class="modal-header">
+                            <h2>${existingId ? 'Edit' : 'Add'} weight category</h2>
+                            <span class="close" onclick="closeModal()">&times;</span>
+                        </div>
+                        <form onsubmit="saveWeightCategory(event, ${existingId != null ? existingId : 'null'})">
+                            <div class="form-group">
+                                <label for="wc_code">Code *</label>
+                                <input type="text" id="wc_code" required maxlength="64" value="${row ? escapeAttr(row.code) : ''}">
+                            </div>
+                            <div class="form-group">
+                                <label for="wc_label">Label (EN) *</label>
+                                <input type="text" id="wc_label" required maxlength="200" value="${row ? escapeAttr(row.label_en) : ''}">
+                            </div>
+                            <div class="form-group">
+                                <label for="wc_gender">Gender</label>
+                                <select id="wc_gender">
+                                    <option value="all" ${g === 'all' ? 'selected' : ''}>all</option>
+                                    <option value="male" ${g === 'male' ? 'selected' : ''}>male</option>
+                                    <option value="female" ${g === 'female' ? 'selected' : ''}>female</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="wc_sort">Sort order *</label>
+                                <input type="number" id="wc_sort" required step="1" value="${row ? escapeAttr(String(row.sort_order)) : '0'}">
+                            </div>
+                            <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+                                <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                                <button type="submit" class="btn-primary">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>`;
+            })();
+        }
+
+        async function saveWeightCategory(ev, existingId) {
+            ev.preventDefault();
+            var sb = getAdminSupabase();
+            if (!sb) return;
+            var payload = {
+                code: document.getElementById('wc_code').value.trim(),
+                label_en: document.getElementById('wc_label').value.trim(),
+                gender: document.getElementById('wc_gender').value,
+                sort_order: parseInt(document.getElementById('wc_sort').value, 10) || 0
+            };
+            var res = existingId != null
+                ? await sb.from('weight_categories').update(payload).eq('id', existingId)
+                : await sb.from('weight_categories').insert(payload);
+            if (res.error) {
+                alert(res.error.message || 'Save failed.');
+                return;
+            }
+            logActivity('Reference Data', 'Weight category ' + (existingId ? 'updated' : 'created'));
+            closeModal();
+            await loadReferenceData();
+        }
+
+        async function deleteWeightCategory(id) {
+            if (!confirm('Delete this weight category? It must not be in use by player_profiles.')) return;
+            var sb = getAdminSupabase();
+            if (!sb) return;
+            var res = await sb.from('weight_categories').delete().eq('id', id);
+            if (res.error) {
+                alert(res.error.message || 'Delete failed (likely still referenced).');
+                return;
+            }
+            logActivity('Reference Data', 'Weight category deleted — ' + id);
+            await loadReferenceData();
+        }
+
+        // ── Sprint B: contracts list ───────────────────────────────────
+        async function loadClubContracts() {
+            var tbody = document.getElementById('clubContractsTableBody');
+            if (!tbody) return;
+            var sb = getAdminSupabase();
+            if (!sb) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:16px;color:#666;">Sign in with a real admin session to view contracts.</td></tr>';
+                return;
+            }
+            var q = await sb.from('player_club_contracts').select('*').order('created_at', { ascending: false }).limit(400);
+            if (q.error) {
+                tbody.innerHTML = '<tr><td colspan="7" style="padding:16px;color:#c62828;">'
+                    + escapeHtml(q.error.message)
+                    + '</td></tr>';
+                return;
+            }
+            var rows = q.data || [];
+            allClubContracts = rows;
+            var uids = [];
+            var cids = [];
+            rows.forEach(function (r) {
+                if (uids.indexOf(r.player_user_id) < 0) uids.push(r.player_user_id);
+                if (cids.indexOf(r.club_id) < 0) cids.push(r.club_id);
+            });
+            var userMap = {};
+            var clubMap = {};
+            if (uids.length) {
+                var uq = await sb.from('users').select('id,full_name,email').in('id', uids);
+                if (!uq.error && uq.data) uq.data.forEach(function (u) { userMap[u.id] = u; });
+            }
+            if (cids.length) {
+                var cq = await sb.from('clubs').select('id,name,location').in('id', cids);
+                if (!cq.error && cq.data) cq.data.forEach(function (c) { clubMap[c.id] = c; });
+            }
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:16px;color:#666;">No contracts yet.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = rows.map(function (r) {
+                var u = userMap[r.player_user_id] || {};
+                var c = clubMap[r.club_id] || {};
+                var rid = escapeAttr(String(r.id));
+                var eff = r.effective_from ? formatDate(r.effective_from) : '—';
+                return '<tr>'
+                    + '<td>' + escapeHtml(u.full_name || '—') + '</td>'
+                    + '<td>' + escapeHtml(u.email || '—') + '</td>'
+                    + '<td>' + escapeHtml(c.name || r.club_id) + '</td>'
+                    + '<td>' + escapeHtml(eff) + '</td>'
+                    + '<td><span class="status-badge ' + (r.contract_status === 'active' ? 'status-approved' : 'status-pending') + '">' + escapeHtml(r.contract_status || '—') + '</span></td>'
+                    + '<td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;" title="' + escapeAttr(r.notes || '') + '">' + escapeHtml(r.notes ? (r.notes.length > 40 ? r.notes.slice(0, 40) + '…' : r.notes) : '—') + '</td>'
+                    + '<td>'
+                    + (r.contract_status !== 'active' ? '<button type="button" class="btn-success" style="margin-right:4px;" onclick="setContractStatusActive(\'' + rid + '\')">Activate</button>' : '<button type="button" class="btn-secondary" style="margin-right:4px;" onclick="setContractStatusEnded(\'' + rid + '\')">End</button>')
+                    + '<button type="button" class="btn-danger" onclick="deleteClubContract(\'' + rid + '\')">Delete</button>'
+                    + '</td></tr>';
+            }).join('');
+        }
+
+        async function setContractStatusActive(contractId) {
+            var sb = getAdminSupabase();
+            if (!sb) return;
+            if (!confirm('Set this contract to active? Other active contracts for this player will be superseded.')) return;
+            var up = await sb.from('player_club_contracts').update({
+                contract_status: 'active',
+                updated_at: new Date().toISOString()
+            }).eq('id', contractId);
+            if (up.error) {
+                alert(up.error.message || 'Update failed.');
+                return;
+            }
+            logActivity('Club contract', 'Activated — ' + contractId);
+            await loadClubContracts();
+        }
+
+        async function setContractStatusEnded(contractId) {
+            var sb = getAdminSupabase();
+            if (!sb) return;
+            if (!confirm('End this contract (status ended)?')) return;
+            var up = await sb.from('player_club_contracts').update({
+                contract_status: 'ended',
+                effective_to: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            }).eq('id', contractId);
+            if (up.error) {
+                alert(up.error.message || 'Update failed.');
+                return;
+            }
+            logActivity('Club contract', 'Ended — ' + contractId);
+            await loadClubContracts();
+        }
+
+        async function deleteClubContract(contractId) {
+            if (!confirm('Delete this contract row?')) return;
+            var sb = getAdminSupabase();
+            if (!sb) return;
+            var res = await sb.from('player_club_contracts').delete().eq('id', contractId);
+            if (res.error) {
+                alert(res.error.message || 'Delete failed.');
+                return;
+            }
+            logActivity('Club contract', 'Deleted — ' + contractId);
+            await loadClubContracts();
+        }
+
+        function openCreateContractModal() {
+            var sb = getAdminSupabase();
+            if (!sb) {
+                alert('Administrator session required. Please sign in with your SKF admin account.');
+                return;
+            }
+            if (!allClubs.length) {
+                alert('Load clubs first (open the Clubs section).');
+                return;
+            }
+            var modalContainer = document.getElementById('modalContainer');
+            if (!modalContainer) return;
+            var opts = allClubs.map(function (c) {
+                return '<option value="' + escapeAttr(String(c.id)) + '">' + escapeHtml(c.name) + '</option>';
+            }).join('');
+            modalContainer.innerHTML = `
+            <div class="modal" style="display:block;">
+                <div class="modal-content" style="max-width:520px;">
+                    <div class="modal-header">
+                        <h2>Add player–club contract</h2>
+                        <span class="close" onclick="closeModal()">&times;</span>
+                    </div>
+                    <form onsubmit="saveNewClubContract(event)">
+                        <div class="form-group">
+                            <label for="cc_player_email">Player email *</label>
+                            <input type="email" id="cc_player_email" required placeholder="player@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="cc_club">Club *</label>
+                            <select id="cc_club" required>${opts}</select>
+                        </div>
+                        <div class="form-group">
+                            <label for="cc_notes">Notes</label>
+                            <textarea id="cc_notes" rows="2"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label><input type="checkbox" id="cc_active" checked> Save as <strong>active</strong> (supersedes other active contracts)</label>
+                        </div>
+                        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+                            <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                            <button type="submit" class="btn-primary">Create</button>
+                        </div>
+                    </form>
+                </div>
+            </div>`;
+        }
+
+        async function saveNewClubContract(ev) {
+            ev.preventDefault();
+            var sb = getAdminSupabase();
+            if (!sb) return;
+            var email = document.getElementById('cc_player_email').value.trim().toLowerCase();
+            var clubId = document.getElementById('cc_club').value;
+            var notes = (document.getElementById('cc_notes') && document.getElementById('cc_notes').value) || null;
+            var wantActive = document.getElementById('cc_active').checked;
+            var uq = await sb.from('users').select('id,role').eq('email', email).maybeSingle();
+            if (uq.error || !uq.data) {
+                alert(uq.error ? uq.error.message : 'No user with that email.');
+                return;
+            }
+            if (String(uq.data.role || '').toLowerCase() !== 'player') {
+                if (!confirm('That account is not role=player. Continue anyway?')) return;
+            }
+            var payload = {
+                player_user_id: uq.data.id,
+                club_id: clubId,
+                effective_from: new Date().toISOString(),
+                contract_status: wantActive ? 'active' : 'draft',
+                notes: notes
+            };
+            var ins = await sb.from('player_club_contracts').insert(payload);
+            if (ins.error) {
+                alert(ins.error.message || 'Insert failed.');
+                return;
+            }
+            logActivity('Club contract', 'Created for ' + email);
+            closeModal();
+            await loadClubContracts();
+            await loadClubs();
+        }
+
+        function clubEditFormFields(c) {
+            var st = c.club_status || 'pending';
+            var est = c.established_date ? String(c.established_date).slice(0, 10) : '';
+            return `
+                <div class="form-group">
+                    <label for="club_name">Name *</label>
+                    <input type="text" id="club_name" required value="${escapeAttr(c.name || '')}">
+                </div>
+                <div class="form-group">
+                    <label for="club_location">Location *</label>
+                    <input type="text" id="club_location" required value="${escapeAttr(c.location || '')}">
+                </div>
+                <div class="form-group">
+                    <label for="club_contact_person">Contact person</label>
+                    <input type="text" id="club_contact_person" value="${escapeAttr(c.contact_person || '')}">
+                </div>
+                <div class="form-group">
+                    <label for="club_contact_email">Contact email</label>
+                    <input type="email" id="club_contact_email" value="${escapeAttr(c.contact_email || '')}">
+                </div>
+                <div class="form-group">
+                    <label for="club_contact_phone">Contact phone</label>
+                    <input type="text" id="club_contact_phone" value="${escapeAttr(c.contact_phone || '')}">
+                </div>
+                <div class="form-group">
+                    <label for="club_established">Established (date)</label>
+                    <input type="date" id="club_established" value="${escapeAttr(est)}">
+                </div>
+                <div class="form-group">
+                    <label for="club_club_status">Federation status *</label>
+                    <select id="club_club_status">
+                        <option value="pending" ${st === 'pending' ? 'selected' : ''}>pending</option>
+                        <option value="approved" ${st === 'approved' ? 'selected' : ''}>approved</option>
+                        <option value="suspended" ${st === 'suspended' ? 'selected' : ''}>suspended</option>
+                        <option value="rejected" ${st === 'rejected' ? 'selected' : ''}>rejected</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label><input type="checkbox" id="club_is_active" ${c.is_active !== false ? 'checked' : ''}> Listed / operational</label>
+                </div>
+            `;
+        }
+
+        function openCreateClubModal() {
+            var sb = getAdminSupabase();
+            if (!sb) {
+                alert('Supabase admin session required to create a club.');
+                return;
+            }
+            var modalContainer = document.getElementById('modalContainer');
+            if (!modalContainer) return;
+            var empty = { name: '', location: '', contact_person: '', contact_email: '', contact_phone: '', established_date: null, club_status: 'pending', is_active: true };
+            modalContainer.innerHTML = `
+            <div class="modal" style="display:block;">
+                <div class="modal-content" style="max-width:520px;">
+                    <div class="modal-header">
+                        <h2>Add club</h2>
+                        <span class="close" onclick="closeModal()">&times;</span>
+                    </div>
+                    <form onsubmit="saveClubFromModal(event, null)">
+                        ${clubEditFormFields(empty)}
+                        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+                            <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                            <button type="submit" class="btn-primary">Create</button>
+                        </div>
+                    </form>
+                </div>
+            </div>`;
+        }
+
+        async function saveClubFromModal(ev, clubId) {
+            ev.preventDefault();
+            var sb = getAdminSupabase();
+            if (!sb) return;
+            var payload = {
+                name: document.getElementById('club_name').value.trim(),
+                location: document.getElementById('club_location').value.trim(),
+                contact_person: document.getElementById('club_contact_person').value.trim() || null,
+                contact_email: document.getElementById('club_contact_email').value.trim() || null,
+                contact_phone: document.getElementById('club_contact_phone').value.trim() || null,
+                established_date: document.getElementById('club_established').value || null,
+                club_status: document.getElementById('club_club_status').value,
+                is_active: document.getElementById('club_is_active').checked,
+                updated_at: new Date().toISOString()
+            };
+            var res = clubId
+                ? await sb.from('clubs').update(payload).eq('id', clubId)
+                : await sb.from('clubs').insert(payload);
+            if (res.error) {
+                alert(res.error.message || 'Save failed.');
+                return;
+            }
+            logActivity('Clubs', clubId ? 'Updated club' : 'Created club');
+            closeModal();
+            await loadClubs();
+        }
+
+        function formatClubRegDate(iso) {
+            if (!iso) return '—';
+            try {
+                var d = new Date(iso);
+                return isNaN(d.getTime()) ? '—' : d.toLocaleString();
+            } catch (e) { return '—'; }
+        }
+
+        function clubRegStatusClass(st) {
+            st = (st || '').toLowerCase();
+            if (st === 'approved') return 'status-approved';
+            if (st === 'rejected') return 'status-rejected';
+            if (st === 'withdrawn') return 'status-badge';
+            return 'status-pending';
+        }
+
+        async function loadClubRegistrationRequests() {
+            var tbody = document.getElementById('clubRegRequestsBody');
+            if (!tbody) return;
+            var sb = getAdminSupabase();
+            if (!sb) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#666;">Sign in with your SKF administrator account to view club registration requests.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#888;">Loading…</td></tr>';
+            var q = await sb.from('club_registration_requests').select('*').order('created_at', { ascending: false });
+            if (q.error) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#c62828;">' + escapeHtml(q.error.message) + '</td></tr>';
+                return;
+            }
+            var rows = q.data || [];
+            var ids = [];
+            rows.forEach(function (r) {
+                if (r.applicant_user_id && ids.indexOf(r.applicant_user_id) < 0) ids.push(r.applicant_user_id);
+            });
+            var userMap = {};
+            if (ids.length) {
+                var uq = await sb.from('users').select('id,full_name,email,phone,role,club_id').in('id', ids);
+                if (!uq.error && uq.data) {
+                    uq.data.forEach(function (u) { userMap[u.id] = u; });
+                }
+            }
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:#666;">No club registration requests yet.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = rows.map(function (r) {
+                var ap = userMap[r.applicant_user_id] || {};
+                var apLabel = escapeHtml(ap.full_name || ap.email || String(r.applicant_user_id || '').slice(0, 8) + '…');
+                var apSub = (ap.email && ap.full_name) ? escapeHtml(ap.email) : escapeHtml((ap.role || '') + (ap.club_id ? ' · has club' : ''));
+                var st = (r.status || 'pending').toLowerCase();
+                var rid = escapeAttr(String(r.id));
+                var actions = '';
+                if (st === 'pending') {
+                    actions = '<button type="button" class="btn-success" style="margin-right:6px;" onclick="approveClubRegistrationRequest(\'' + rid + '\')">Approve</button>'
+                        + '<button type="button" class="btn-danger" onclick="rejectClubRegistrationRequest(\'' + rid + '\')">Reject</button>';
+                } else {
+                    actions = '—';
+                }
+                var resClub = r.resulting_club_id
+                    ? '<code style="font-size:11px;">' + escapeHtml(String(r.resulting_club_id).slice(0, 8)) + '…</code>'
+                    : '—';
+                return '<tr>'
+                    + '<td>' + escapeHtml(formatClubRegDate(r.created_at)) + '</td>'
+                    + '<td><strong>' + escapeHtml(r.proposed_club_name || '—') + '</strong></td>'
+                    + '<td>' + escapeHtml(r.proposed_location || '—') + '</td>'
+                    + '<td>' + (r.requested_initial_player_count != null ? escapeHtml(String(r.requested_initial_player_count)) : '—') + '</td>'
+                    + '<td>' + apLabel + '<div style="font-size:12px;color:#888;">' + apSub + '</div></td>'
+                    + '<td><span class="status-badge ' + clubRegStatusClass(st) + '">' + escapeHtml(st) + '</span></td>'
+                    + '<td>' + resClub + '</td>'
+                    + '<td>' + actions + '</td>'
+                    + '</tr>';
+            }).join('');
+        }
+
+        async function approveClubRegistrationRequest(requestId) {
+            var sb = getAdminSupabase();
+            if (!sb) return;
+            var rq = await sb.from('club_registration_requests').select('*').eq('id', requestId).maybeSingle();
+            if (rq.error || !rq.data) {
+                alert('Request not found.');
+                return;
+            }
+            var row = rq.data;
+            if ((row.status || '').toLowerCase() !== 'pending') {
+                alert('This request is no longer pending.');
+                return;
+            }
+            var name = (row.proposed_club_name || '').trim();
+            if (!name) {
+                alert('Request has no proposed club name.');
+                return;
+            }
+            if (!confirm('Approve and create club "' + name + '" and link this applicant as club admin?')) return;
+            var loc = (row.proposed_location || '').trim() || 'Saudi Arabia';
+            var admin = JSON.parse(localStorage.getItem('user') || '{}');
+            var ins = await sb.from('clubs').insert({
+                name: name,
+                location: loc,
+                club_status: 'approved',
+                is_active: true,
+                contact_person: null,
+                contact_email: null,
+                contact_phone: null
+            }).select('id').single();
+            if (ins.error) {
+                alert(ins.error.message || 'Could not create club (duplicate name?).');
+                return;
+            }
+            var clubId = ins.data.id;
+            var updUser = await sb.from('users').update({
+                club_id: clubId,
+                club_name: name,
+                updated_at: new Date().toISOString()
+            }).eq('id', row.applicant_user_id);
+            if (updUser.error) {
+                alert('Club was created but linking the applicant failed: ' + updUser.error.message + '\nClub id: ' + clubId);
+                return;
+            }
+            var updReq = await sb.from('club_registration_requests').update({
+                status: 'approved',
+                reviewed_at: new Date().toISOString(),
+                reviewed_by_user_id: admin.id || null,
+                resulting_club_id: clubId
+            }).eq('id', requestId).eq('status', 'pending');
+            if (updReq.error) {
+                alert('Club and user were updated but the request row could not be finalized: ' + updReq.error.message);
+                return;
+            }
+            logActivity('Club registration', 'Approved — ' + name);
+            await loadClubRegistrationRequests();
+            await loadClubs();
+        }
+
+        async function rejectClubRegistrationRequest(requestId) {
+            if (!confirm('Reject this club registration request?')) return;
+            var sb = getAdminSupabase();
+            if (!sb) return;
+            var admin = JSON.parse(localStorage.getItem('user') || '{}');
+            var res = await sb.from('club_registration_requests').update({
+                status: 'rejected',
+                reviewed_at: new Date().toISOString(),
+                reviewed_by_user_id: admin.id || null
+            }).eq('id', requestId).eq('status', 'pending');
+            if (res.error) {
+                alert(res.error.message || 'Reject failed.');
+                return;
+            }
+            logActivity('Club registration', 'Rejected request');
+            await loadClubRegistrationRequests();
+        }
+
+        async function loadTransferSkfQueue() {
+            var tbody = document.getElementById('transferSkfQueueBody');
+            if (!tbody) return;
+            var sb = getAdminSupabase();
+            if (!sb) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;">Sign in with your SKF administrator account to view transfer requests.</td></tr>';
+                return;
+            }
+            var q = await sb.from('transfer_approval_requests').select('*').order('created_at', { ascending: false });
+            if (q.error) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#c62828;">'
+                    + escapeHtml(q.error.message) + '</td></tr>';
+                return;
+            }
+            var rows = q.data || [];
+            var pending = rows.filter(function (r) { return (r.status || '') === 'pending_skf'; });
+            if (!pending.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:20px;color:#888;">No pending transfer approvals.</td></tr>';
+                return;
+            }
+            var uids = pending.map(function (r) { return r.player_user_id; });
+            var uq = await sb.from('users').select('id,full_name,email,profile_photo_url,profiles(avatar_url)').in('id', uids);
+            var umap = {};
+            (uq.data || []).forEach(function (u) { umap[u.id] = normalizeUserRow(u); });
+            var cids = [];
+            pending.forEach(function (r) {
+                if (r.from_club_id) cids.push(r.from_club_id);
+                if (r.to_club_id) cids.push(r.to_club_id);
+            });
+            var cmap = {};
+            if (cids.length) {
+                var cq = await sb.from('clubs').select('id,name').in('id', [...new Set(cids.map(String))]);
+                (cq.data || []).forEach(function (c) { cmap[c.id] = c.name; });
+            }
+            tbody.innerHTML = pending.map(function (r) {
+                var u = umap[r.player_user_id] || {};
+                var av = (u.avatar_url || u.profile_photo_url || '').trim();
+                var img = (av && isSafeProfilePhotoUrl(av))
+                    ? '<img class="um-avatar" src="' + escapeAttr(av) + '" alt="">'
+                    : '<span class="um-avatar-ph">' + escapeHtml((u.full_name || '?').charAt(0).toUpperCase()) + '</span>';
+                var fromN = r.from_club_id ? (cmap[r.from_club_id] || r.from_club_id) : 'Free agent';
+                var toN = cmap[r.to_club_id] || r.to_club_id || '—';
+                return '<tr>'
+                    + '<td><div class="um-user-cell">' + img + '<div class="um-user-text"><strong>'
+                    + escapeHtml(u.full_name || String(r.player_user_id)) + '</strong><small>'
+                    + escapeHtml(u.email || '') + '</small></div></div></td>'
+                    + '<td>' + escapeHtml(String(fromN)) + ' → ' + escapeHtml(String(toN)) + '</td>'
+                    + '<td>' + escapeHtml(formatDate(r.created_at)) + '</td>'
+                    + '<td>' + escapeHtml(r.status || '') + '</td>'
+                    + '<td><button type="button" class="btn-success" onclick="skfApproveTransfer(\'' + escapeAttr(String(r.id)) + '\')" style="margin-right:6px;">Approve</button>'
+                    + '<button type="button" class="btn-danger" onclick="skfRejectTransfer(\'' + escapeAttr(String(r.id)) + '\')">Reject</button></td>'
+                    + '</tr>';
+            }).join('');
+        }
+
+        async function skfApproveTransfer(requestId) {
+            if (!confirm('Approve this transfer? This creates a new active contract and moves the player to the target club.')) return;
+            var sb = getAdminSupabase();
+            if (!sb) return;
+            var r = await sb.rpc('approve_transfer_request', { p_request_id: requestId });
+            if (r.error) {
+                alert(r.error.message || 'Approval failed. Please try again or contact SKF technical support.');
+                return;
+            }
+            logActivity('Transfer approved', String(requestId));
+            await loadTransferSkfQueue();
+        }
+
+        async function skfRejectTransfer(requestId) {
+            var note = window.prompt('Optional note for rejection (stored in SKF notes):', '') || '';
+            if (note === null) return;
+            if (!confirm('Reject this transfer request?')) return;
+            var sb = getAdminSupabase();
+            if (!sb) return;
+            var r = await sb.rpc('reject_transfer_request', { p_request_id: requestId, p_note: note || null });
+            if (r.error) {
+                alert(r.error.message || 'Reject failed.');
+                return;
+            }
+            logActivity('Transfer rejected', String(requestId));
+            await loadTransferSkfQueue();
+        }
+
+        function viewClub(clubId) {
+            var c = allClubs.find(function (x) { return String(x.id) === String(clubId); });
+            if (!c) {
+                alert('Club not found in list. Refresh the Clubs section.');
+                return;
+            }
+            var modalContainer = document.getElementById('modalContainer');
+            if (!modalContainer) return;
+            var fed = formatClubStatusLabel(c.club_status || 'pending');
+            modalContainer.innerHTML = `
+            <div class="modal" style="display:block;">
+                <div class="modal-content" style="max-width:520px;">
+                    <div class="modal-header">
+                        <h2>${escapeHtml(c.name || 'Club')}</h2>
+                        <span class="close" onclick="closeModal()">&times;</span>
+                    </div>
+                    <div style="padding:8px 0;line-height:1.6;">
+                        <div><strong>Location:</strong> ${escapeHtml(c.location || '—')}</div>
+                        <div><strong>Contact:</strong> ${escapeHtml(c.contact_email || c.contact_phone || '—')}</div>
+                        <div><strong>Federation:</strong> ${escapeHtml(fed)}</div>
+                        <div><strong>Listed:</strong> ${c.is_active !== false ? 'Yes' : 'No'}</div>
+                        <div><strong>ID:</strong> ${escapeHtml(String(c.id))}</div>
+                    </div>
+                    <div style="text-align:right;margin-top:12px;">
+                        <button type="button" class="btn-secondary" onclick="closeModal()">Close</button>
+                        <button type="button" class="btn-primary" onclick="closeModal();editClub('${escapeAttr(String(c.id))}')">Edit</button>
+                    </div>
+                </div>
+            </div>`;
+        }
+
+        function editClub(clubId) {
+            var sb = getAdminSupabase();
+            if (!sb) {
+                alert('Administrator session required. Please sign in with your SKF admin account.');
+                return;
+            }
+            var c = allClubs.find(function (x) { return String(x.id) === String(clubId); });
+            if (!c) {
+                alert('Club not loaded.');
+                return;
+            }
+            var modalContainer = document.getElementById('modalContainer');
+            if (!modalContainer) return;
+            var sid = escapeAttr(String(c.id));
+            modalContainer.innerHTML = `
+            <div class="modal" style="display:block;">
+                <div class="modal-content" style="max-width:520px;">
+                    <div class="modal-header">
+                        <h2>Edit club</h2>
+                        <span class="close" onclick="closeModal()">&times;</span>
+                    </div>
+                    <form onsubmit="saveClubFromModal(event, '${sid}')">
+                        ${clubEditFormFields(c)}
+                        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:16px;">
+                            <button type="button" class="btn-secondary" onclick="closeModal()">Cancel</button>
+                            <button type="submit" class="btn-primary">Save</button>
+                        </div>
+                    </form>
+                </div>
+            </div>`;
         }
 
         // Load profile
@@ -1757,9 +3206,24 @@
         async function viewUserDetails(userId) {
             var u = allUsers.find(function (x) { return x.id === userId; });
             var sb = getAdminSupabase();
-            if (!u && sb) {
-                var q = await sb.from('users').select('*').eq('id', userId).maybeSingle();
+            if (sb) {
+                var q = await sb.from('users').select('*, profiles(avatar_url)').eq('id', userId).maybeSingle();
+                if (q.error) {
+                    q = await sb.from('users').select('*').eq('id', userId).maybeSingle();
+                }
                 if (!q.error && q.data) u = normalizeUserRow(q.data);
+            } else if (!u) {
+                try {
+                    const token = localStorage.getItem('token');
+                    const response = await fetch(`${API_BASE_URL}/admin/users`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (response.ok) {
+                        var raw = await response.json();
+                        var found = (raw || []).find(function (x) { return String(x.id || x.Id) === String(userId); });
+                        if (found) u = normalizeUserRow(found);
+                    }
+                } catch (_) {}
             }
             if (!u) {
                 alert('User not found.');
@@ -1768,12 +3232,56 @@
             var modalContainer = document.getElementById('modalContainer');
             if (!modalContainer) return;
 
-            var card = u.player_id_card ? escapeHtml(String(u.player_id_card)) : '—';
+            var displayPhoto = (u.avatar_url || u.profile_image_url || u.profile_photo_url || '').trim();
+            var initial = (u.full_name || u.email || '?').trim().charAt(0).toUpperCase() || '?';
+            var heroHtml = '';
+            var heroSrc = userAvatarImgSrc(displayPhoto);
+            if (heroSrc) {
+                heroHtml = '<div class="user-detail-hero"><img src="' + escapeAttr(heroSrc) + '" alt="">'
+                    + '<h3>' + escapeHtml(u.full_name || '—') + '</h3>'
+                    + '<div class="user-detail-sub">' + escapeHtml(formatRoleName(u.role))
+                    + (u.is_active ? '' : ' · Inactive') + '</div></div>';
+            } else {
+                heroHtml = '<div class="user-detail-hero"><div class="user-detail-hero-ph">' + escapeHtml(initial) + '</div>'
+                    + '<h3>' + escapeHtml(u.full_name || '—') + '</h3>'
+                    + '<div class="user-detail-sub">' + escapeHtml(formatRoleName(u.role))
+                    + (u.is_active ? '' : ' · Inactive') + '</div></div>';
+            }
+
+            // Player ID card: never render PDFs as images; keep preview small.
+            var rawCard = (u.player_id_card || '').trim();
+            var card = '—';
+            if (rawCard) {
+                if (isPdfUrl(rawCard)) {
+                    // PDF/document: show as link button only.
+                    card = '<a href="' + escapeAttr(rawCard) + '" target="_blank" rel="noopener"'
+                        + ' style="display:inline-block;padding:10px 14px;border-radius:8px;background:#6c757d;color:#fff;text-decoration:none;font-weight:600;">Open document</a>';
+                } else if (isDisplayableImageUrl(rawCard)) {
+                    // Image: show constrained avatar + open link.
+                    card = '<div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">'
+                        + '<img class="approval-avatar" src="' + escapeAttr(rawCard) + '" alt="">'
+                        + '<a href="' + escapeAttr(rawCard) + '" target="_blank" rel="noopener">Open image</a>'
+                        + '</div>';
+                } else if (/^https?:\/\//i.test(rawCard)) {
+                    card = '<a href="' + escapeAttr(rawCard) + '" target="_blank" rel="noopener">Open file</a>';
+                } else {
+                    card = escapeHtml(rawCard.length > 220 ? (rawCard.slice(0, 220) + '…') : rawCard);
+                }
+            }
             var pid = escapeHtml(String(u.player_id || '—'));
+            var skfLine = (u.skf_official_id || '').trim();
             var row = function (label, val) {
                 return '<div class="detail-item" style="padding:8px 0;border-bottom:1px solid #eee;"><strong>' + label + '</strong><br>'
                     + '<span style="color:#444;">' + val + '</span></div>';
             };
+            var photoDetailVal = '—';
+            if (displayPhoto && isPdfUrl(displayPhoto)) {
+                photoDetailVal = '<a href="' + escapeAttr(displayPhoto) + '" target="_blank" rel="noopener">Open document</a>';
+            } else if (displayPhoto && isDisplayableImageUrl(displayPhoto)) {
+                photoDetailVal = '<a href="' + escapeAttr(displayPhoto) + '" target="_blank" rel="noopener">Open image</a>';
+            } else if (displayPhoto) {
+                photoDetailVal = escapeHtml('(stored URL not shown — only images are previewed)');
+            }
             modalContainer.innerHTML = `
                 <div class="modal" style="display:block;">
                     <div class="modal-content" style="max-width:520px;">
@@ -1782,23 +3290,20 @@
                             <span class="close" onclick="closeModal()">&times;</span>
                         </div>
                         <div style="padding:0 8px 16px;">
-                            ${row('Full name', escapeHtml(u.full_name || '—'))}
+                            ${heroHtml}
                             ${row('Email', escapeHtml(u.email || '—'))}
                             ${row('Username', escapeHtml(u.username || '—'))}
-                            ${row('Role', escapeHtml(formatRoleName(u.role)))}
-                            ${row('Status', u.is_active ? 'Active' : 'Inactive')}
+                            ${skfLine ? row('SKF official ID', escapeHtml(skfLine)) : ''}
                             ${row('Phone', escapeHtml(u.phone || '—'))}
                             ${row('National ID', escapeHtml(u.national_id || '—'))}
                             ${row('Player ID', pid)}
                             ${row('Player ID card', card)}
                             ${row('Club', escapeHtml(u.club_name || '—'))}
                             ${row('Age group', escapeHtml(u.age_group || '—'))}
-                            ${row('Rank', escapeHtml(u.rank || '—'))}
+                            ${row('Rank / belt', escapeHtml(u.rank || '—'))}
                             ${row('Category', escapeHtml(u.player_category || '—'))}
                             ${row('About / bio', escapeHtml(u.profile_bio || '—'))}
-                            ${row('Profile photo', (u.profile_photo_url && isSafeProfilePhotoUrl(u.profile_photo_url))
-                                ? ('<img src="' + escapeAttr(u.profile_photo_url) + '" alt="Profile" style="max-width:180px;max-height:180px;border-radius:8px;object-fit:cover;border:1px solid #ddd;margin-top:6px;">')
-                                : escapeHtml(u.profile_photo_url ? '(invalid or non-image URL)' : '—'))}
+                            ${row('Photo source', photoDetailVal)}
                             ${row('User ID', escapeHtml(String(u.id)))}
                             ${row('Created', escapeHtml(formatDate(u.created_at)))}
                             ${row('Updated', escapeHtml(formatDate(u.updated_at)))}
@@ -1973,6 +3478,16 @@
                 return false;
             }
 
+            const isEdit = editId !== null;
+            // Validation rule: a tournament cannot be opened without categories.
+            // We keep UI unchanged, but if creating and user picked "registration_open/closed",
+            // we force Draft and then open the Categories modal.
+            let effectiveStatus = status;
+            if (!isEdit && status && status !== 'draft') {
+                alert('Tournament must have at least one category before opening registration. It will be created as Draft. After you attach categories, you can open registration.');
+                effectiveStatus = 'draft';
+            }
+
             const payload = {
                 name,
                 description: description || null,
@@ -1981,16 +3496,16 @@
                 location,
                 registrationOpenDate: open.toISOString(),
                 registrationCloseDate: close.toISOString(),
-                status,
+                status: effectiveStatus,
                 maxParticipants: maxRaw ? parseInt(maxRaw, 10) : null,
                 entryFee: feeRaw ? parseFloat(feeRaw) : null
             };
 
-            const isEdit = editId !== null;
             const url = isEdit ? `${API_BASE_URL}/tournament/${editId}` : `${API_BASE_URL}/tournament`;
             const method = isEdit ? 'PUT' : 'POST';
             const successMsg = isEdit ? 'Tournament updated successfully!' : 'Tournament created successfully!';
 
+            await refreshAdminJwtFromSupabaseAuth();
             var sbSave = getAdminSupabase();
             if (sbSave) {
                 var userSave = JSON.parse(localStorage.getItem('user') || '{}');
@@ -2017,7 +3532,7 @@
                 } else {
                     rowDb.created_by = uidSave;
                     rowDb.is_active = true;
-                    qSave = await sbSave.from('tournaments').insert(rowDb);
+                    qSave = await sbSave.from('tournaments').insert(rowDb).select('id').single();
                 }
                 if (!qSave.error) {
                     logActivity(isEdit ? 'Tournament Updated' : 'Tournament Created',
@@ -2026,6 +3541,10 @@
                     closeModal();
                     await loadTournaments();
                     await loadDashboardStats();
+                    // Immediately attach categories on create (required for registration workflow)
+                    if (!isEdit && qSave.data && qSave.data.id) {
+                        try { await manageCategories(String(qSave.data.id)); } catch (_) {}
+                    }
                     return false;
                 }
                 alert('Save failed: ' + (qSave.error.message || JSON.stringify(qSave.error)));
@@ -2168,10 +3687,6 @@
             `;
         }
 
-        function openCreateClubModal() {
-            alert('Create club modal - To be implemented');
-        }
-
         async function deleteTournament(tournamentId) {
             if (!confirm('Are you sure you want to delete this tournament? It will be hidden from lists (soft delete).')) return;
 
@@ -2232,14 +3747,6 @@
                 return;
             }
             alert('Reject registration requires Supabase admin session or API support.');
-        }
-
-        function viewClub(clubId) {
-            alert('View club - To be implemented');
-        }
-
-        function editClub(clubId) {
-            alert('Edit club - To be implemented');
         }
 
         // ── Referee Assignment Management ────────────────────────────────────
@@ -2586,6 +4093,25 @@
                             <span class="close" onclick="closeModal()">&times;</span>
                         </div>
 
+                        <div class="modal-section-divider">Select categories from database</div>
+                        <div style="padding:0 2px 12px;">
+                            <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;">
+                                <div class="form-group" style="flex:1;min-width:240px;margin-bottom:0;">
+                                    <label for="masterCatSearch">Search</label>
+                                    <input id="masterCatSearch" type="search" placeholder="Search categories..." oninput="filterMasterCategoryPicker('${tournamentId}')">
+                                </div>
+                                <button type="button" class="btn-primary" id="btnAttachMasterCats"
+                                    onclick="attachSelectedMasterCategories('${tournamentId}')"
+                                    style="height:38px;white-space:nowrap;">Add selected</button>
+                            </div>
+                            <div id="masterCategoryPickerWrap" style="margin-top:10px;">
+                                <p style="color:#666; font-size:14px;">Loading...</p>
+                            </div>
+                            <p style="font-size:12px;color:#666;margin:8px 0 0;line-height:1.45;">
+                                These are <strong>database categories</strong>. Select and attach them to this tournament (linked by category ID).
+                            </p>
+                        </div>
+
                         <div class="modal-section-divider">Current Categories</div>
                         <div id="categoriesTableWrapper">
                             <p style="color:#666; font-size:14px;">Loading...</p>
@@ -2596,11 +4122,12 @@
                             <input type="hidden" id="cat_edit_id" value="">
                             <div class="category-form-grid">
                                 <div class="form-group">
-                                    <label for="cat_discipline">Discipline *</label>
-                                    <select id="cat_discipline" required>
+                                    <label for="cat_discipline">Event Type *</label>
+                                    <select id="cat_discipline" required onchange="onCategoryEventTypeChange()">
                                         <option value="" disabled selected>Select</option>
-                                        <option value="kata">Kata</option>
                                         <option value="kumite">Kumite</option>
+                                        <option value="kata_individual">Kata Individual</option>
+                                        <option value="kata_team">Kata Team</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
@@ -2609,25 +4136,21 @@
                                         <option value="" disabled selected>Select</option>
                                         <option value="male">Male</option>
                                         <option value="female">Female</option>
-                                        <option value="mixed">Mixed</option>
                                     </select>
                                 </div>
                                 <div class="form-group">
-                                    <label for="cat_age_group">Age Group *</label>
+                                    <label for="cat_age_group">Age Category *</label>
                                     <select id="cat_age_group" required>
                                         <option value="" disabled selected>Select</option>
-                                        <option value="U12">Under 12</option>
-                                        <option value="U14">Under 14</option>
-                                        <option value="U16">Under 16</option>
-                                        <option value="U18">Under 18</option>
-                                        <option value="U21">Under 21</option>
-                                        <option value="Senior">Senior</option>
-                                        <option value="Veteran">Veteran</option>
+                                        <option value="cadet">Cadet (14 to under 16)</option>
+                                        <option value="junior">Junior (16 to under 18)</option>
+                                        <option value="u21">U21</option>
+                                        <option value="senior">Senior (18+)</option>
                                     </select>
                                 </div>
-                                <div class="form-group">
-                                    <label for="cat_weight">Weight Class *</label>
-                                    <input type="text" id="cat_weight" required placeholder="e.g. -60kg, +84kg, Open">
+                                <div class="form-group" id="cat_weight_group">
+                                    <label for="cat_weight">Weight Division <span style="color:#666;font-weight:500;">(Kumite only)</span></label>
+                                    <input type="text" id="cat_weight" placeholder="e.g. -67 kg, +84 kg">
                                 </div>
                             </div>
                             <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px;">
@@ -2639,12 +4162,227 @@
                 </div>
             `;
 
+            // Ensure the form state is correct on open
+            setTimeout(function () { try { onCategoryEventTypeChange(); } catch { } }, 0);
+
+            await loadMasterCategoriesForTournament(tournamentId);
             await loadCategories(tournamentId);
+        }
+
+        function wkfGenderLabel(g) {
+            var s = String(g || '').toLowerCase();
+            if (s === 'male') return 'Male';
+            if (s === 'female') return 'Female';
+            return g || '—';
+        }
+
+        function wkfAgeCategoryLabel(a) {
+            var s = String(a || '').toLowerCase();
+            if (s === 'cadet') return 'Cadet';
+            if (s === 'junior') return 'Junior';
+            if (s === 'u21' || s === 'under 21' || s === 'under21') return 'U21';
+            if (s === 'senior') return 'Senior';
+            return a || '—';
+        }
+
+        function wkfEventTypeLabel(ev) {
+            var s = String(ev || '').toLowerCase();
+            if (s === 'kumite') return 'Kumite';
+            if (s === 'kata_individual' || s === 'kata') return 'Kata';
+            if (s === 'kata_team' || s === 'team_kata') return 'Team Kata';
+            return ev || 'Event';
+        }
+
+        function wkfDisciplineFromEventType(ev) {
+            var s = String(ev || '').toLowerCase();
+            return (s === 'kumite') ? 'kumite' : 'kata';
+        }
+
+        function onCategoryEventTypeChange() {
+            var ev = (document.getElementById('cat_discipline') || {}).value || '';
+            var wGroup = document.getElementById('cat_weight_group');
+            var wInput = document.getElementById('cat_weight');
+            if (!wInput) return;
+            var isKumite = String(ev).toLowerCase() === 'kumite';
+            if (wGroup) wGroup.style.display = isKumite ? '' : 'none';
+            wInput.required = !!isKumite;
+            if (!isKumite) wInput.value = '';
+        }
+
+        function masterCategoryLabel(cat) {
+            if (!cat) return '—';
+            var ev = cat.event_type || (String(cat.type || '').toLowerCase() === 'kumite' ? 'kumite' : 'kata_individual');
+            var isKumite = String(ev).toLowerCase() === 'kumite';
+            var gender = wkfGenderLabel(cat.gender);
+            var age = wkfAgeCategoryLabel(cat.age_category || cat.age_group);
+            var eventLabel = wkfEventTypeLabel(ev);
+            var w = (cat.weight_division || cat.weight_label || '').trim();
+            var built = [gender, age, eventLabel].filter(Boolean).join(' ');
+            if (isKumite && w) built = built + ' ' + w;
+            var nm = (cat.name || '').trim();
+            if (nm) return nm;
+            return built || 'Category';
+        }
+
+        function renderMasterCategoryPicker(tournamentId, cats) {
+            var wrap = document.getElementById('masterCategoryPickerWrap');
+            if (!wrap) return;
+            if (!cats || !cats.length) {
+                wrap.innerHTML = '<p style="color:#888;font-size:13px;padding:6px 0;">No master categories found. Add them in Supabase `categories` table first.</p>';
+                return;
+            }
+            wrap.innerHTML = `
+                <div style="max-height:260px;overflow:auto;border:1px solid #e0e0e0;border-radius:8px;padding:6px 10px;background:#fafafa;">
+                    ${cats.map(c => {
+                        const id = escapeAttr(String(c.id));
+                        const label = escapeHtml(masterCategoryLabel(c));
+                        return `
+                            <label style="display:flex;gap:10px;align-items:flex-start;padding:8px 6px;border-bottom:1px solid #eee;cursor:pointer;">
+                                <input type="checkbox" class="master-cat-cb" value="${id}" style="margin-top:2px;">
+                                <div style="min-width:0;">
+                                    <div style="font-weight:600;color:#222;word-break:break-word;">${label}</div>
+                                    <div style="font-size:12px;color:#666;margin-top:3px;">
+                                        ${escapeHtml(wkfEventTypeLabel(c.event_type || (String(c.type || '').toLowerCase() === 'kumite' ? 'kumite' : 'kata_individual')))}
+                                        ${c.gender ? ' · ' + escapeHtml(wkfGenderLabel(String(c.gender))) : ''}
+                                        ${(c.age_category || c.age_group) ? ' · ' + escapeHtml(wkfAgeCategoryLabel(String(c.age_category || c.age_group))) : ''}
+                                        ${(String(c.event_type || '').toLowerCase() === 'kumite' && (c.weight_division || c.weight_label)) ? ' · ' + escapeHtml(String(c.weight_division || c.weight_label)) : ''}
+                                    </div>
+                                </div>
+                            </label>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+        }
+
+        function filterMasterCategoryPicker(tournamentId) {
+            var q = (document.getElementById('masterCatSearch') || {}).value || '';
+            var term = String(q).trim().toLowerCase();
+            if (!term) {
+                renderMasterCategoryPicker(tournamentId, allMasterCategories);
+                return;
+            }
+            var filtered = (allMasterCategories || []).filter(function (c) {
+                var s = (masterCategoryLabel(c)
+                    + ' ' + (c.event_type || '')
+                    + ' ' + (c.type || '')
+                    + ' ' + (c.gender || '')
+                    + ' ' + (c.age_category || '')
+                    + ' ' + (c.age_group || '')
+                    + ' ' + (c.weight_division || '')
+                    + ' ' + (c.weight_label || '')
+                ).toLowerCase();
+                return s.indexOf(term) >= 0;
+            });
+            renderMasterCategoryPicker(tournamentId, filtered);
+        }
+
+        async function loadMasterCategoriesForTournament(tournamentId) {
+            var wrap = document.getElementById('masterCategoryPickerWrap');
+            if (!wrap) return;
+            var sb = getAdminSupabase();
+            if (!sb) {
+                wrap.innerHTML = '<p style="color:#888;font-size:13px;padding:6px 0;">Sign in with your SKF administrator account to manage categories.</p>';
+                return;
+            }
+            var q = await sb.from('categories')
+                .select('id,name,type,gender,age_group,weight_label,status,event_type,age_category,weight_division,is_team_event,is_active')
+                .eq('status', 'active')
+                .order('event_type', { ascending: true });
+            if (q.error) {
+                wrap.innerHTML = '<p style="color:#c62828;font-size:13px;padding:6px 0;">' + escapeHtml(q.error.message || 'Could not load categories') + '</p>';
+                return;
+            }
+            allMasterCategories = q.data || [];
+            renderMasterCategoryPicker(tournamentId, allMasterCategories);
+        }
+
+        async function attachSelectedMasterCategories(tournamentId) {
+            var sb = getAdminSupabase();
+            if (!sb) {
+                alert('Administrator session required. Please sign in with your SKF admin account.');
+                return;
+            }
+            var btn = document.getElementById('btnAttachMasterCats');
+            var cbs = Array.prototype.slice.call(document.querySelectorAll('.master-cat-cb:checked'));
+            if (!cbs.length) {
+                alert('Select at least one category.');
+                return;
+            }
+            if (btn) btn.disabled = true;
+            var selectedIds = cbs.map(cb => String(cb.value));
+            var byId = {};
+            (allMasterCategories || []).forEach(function (c) { byId[String(c.id)] = c; });
+
+            var inserted = 0;
+            for (var i = 0; i < selectedIds.length; i++) {
+                var cid = selectedIds[i];
+                var c = byId[cid];
+                if (!c) continue;
+                var ev = String(c.event_type || '').toLowerCase();
+                if (!ev) {
+                    var t = String(c.type || '').toLowerCase();
+                    ev = (t === 'kumite') ? 'kumite' : 'kata_individual';
+                }
+                if (['kumite', 'kata_individual', 'kata_team'].indexOf(ev) < 0) continue;
+                var discipline = wkfDisciplineFromEventType(ev);
+                var gender = String(c.gender || '').toLowerCase();
+                if (['male', 'female'].indexOf(gender) < 0) continue;
+                var ageCat = String(c.age_category || c.age_group || '').toLowerCase();
+                if (['cadet', 'junior', 'u21', 'senior'].indexOf(ageCat) < 0) continue;
+                var ageGroup = wkfAgeCategoryLabel(ageCat);
+                var isKumite = ev === 'kumite';
+                var weightDiv = String((c.weight_division || c.weight_label || '')).trim();
+                if (isKumite && !weightDiv) continue;
+                if (!isKumite) weightDiv = '';
+                var isTeam = (ev === 'kata_team') || !!c.is_team_event;
+                var weightClass = isKumite ? weightDiv : '';
+
+                var ins = await sb.from('tournament_categories').insert({
+                    tournament_id: tournamentId,
+                    category_id: cid,
+                    discipline: discipline,
+                    gender: gender,
+                    age_group: ageGroup,       // legacy display column
+                    weight_class: weightClass, // legacy display column (kumite only)
+                    event_type: ev,
+                    age_category: ageCat,
+                    is_team_event: isTeam,
+                    status: 'active'
+                });
+                if (!ins.error) {
+                    inserted++;
+                } else {
+                    // ignore duplicates (unique index) but surface other errors
+                    var code = (ins.error.code || '').toString();
+                    if (code !== '23505') {
+                        console.warn('attach master category:', ins.error);
+                    }
+                }
+            }
+
+            if (btn) btn.disabled = false;
+            await loadCategories(tournamentId);
+            alert(inserted ? ('Added ' + inserted + ' categories to the tournament.') : 'No new categories were added (they may already be attached).');
         }
 
         async function loadCategories(tournamentId) {
             const wrapper = document.getElementById('categoriesTableWrapper');
             if (!wrapper) return;
+
+            var sb = getAdminSupabase();
+            if (sb) {
+                var q = await sb.from('tournament_categories')
+                    .select('id,tournament_id,discipline,gender,age_group,weight_class,category_id,bracket_type,status,event_type,age_category,is_team_event')
+                    .eq('tournament_id', tournamentId)
+                    .order('age_group', { ascending: true });
+                if (!q.error) {
+                    persistCategories(tournamentId, q.data || []);
+                    renderCategoriesTable(tournamentId, q.data || []);
+                    return;
+                }
+                console.warn('Supabase loadCategories:', q.error);
+            }
 
             try {
                 const token = localStorage.getItem('token');
@@ -2677,20 +4415,20 @@
                 <table class="category-table">
                     <thead>
                         <tr>
-                            <th>Discipline</th>
+                            <th>Event</th>
                             <th>Gender</th>
-                            <th>Age Group</th>
-                            <th>Weight Class</th>
+                            <th>Age Category</th>
+                            <th>Weight Division</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         ${categories.map(cat => `
                             <tr>
-                                <td style="text-transform:capitalize;">${cat.discipline || 'N/A'}</td>
-                                <td style="text-transform:capitalize;">${cat.gender || 'N/A'}</td>
-                                <td>${cat.age_group || cat.ageGroup || 'N/A'}</td>
-                                <td>${cat.weight_class || cat.weightClass || 'N/A'}</td>
+                                <td>${escapeHtml(wkfEventTypeLabel(cat.event_type || (String(cat.discipline || '').toLowerCase() === 'kumite' ? 'kumite' : 'kata_individual')))}</td>
+                                <td>${escapeHtml(wkfGenderLabel(cat.gender))}</td>
+                                <td>${escapeHtml(wkfAgeCategoryLabel(cat.age_category || cat.age_group || cat.ageGroup))}</td>
+                                <td>${escapeHtml((String(cat.event_type || '').toLowerCase() === 'kumite') ? (cat.weight_class || cat.weightClass || '—') : '—')}</td>
                                 <td>
                                     <button class="btn-secondary" onclick="editCategoryInModal('${tournamentId}','${cat.id}')" style="margin-right:4px; padding:5px 10px;">Edit</button>
                                     <button class="btn-danger" onclick="deleteCategoryInModal('${tournamentId}','${cat.id}')" style="padding:5px 10px;">Delete</button>
@@ -2706,18 +4444,122 @@
             event.preventDefault();
 
             const editId = document.getElementById('cat_edit_id').value || null;
-            const discipline = document.getElementById('cat_discipline').value;
+            const eventType = document.getElementById('cat_discipline').value;
             const gender = document.getElementById('cat_gender').value;
-            const ageGroup = document.getElementById('cat_age_group').value;
-            const weightClass = document.getElementById('cat_weight').value.trim();
+            const ageCat = document.getElementById('cat_age_group').value;
+            const weightDivRaw = (document.getElementById('cat_weight').value || '').trim();
 
-            if (!discipline || !gender || !ageGroup || !weightClass) {
-                alert('Please fill all category fields.');
+            if (!eventType || !gender || !ageCat) {
+                alert('Please fill all required category fields.');
                 return false;
             }
 
-            const payload = { discipline, gender, ageGroup, weightClass };
             const isEdit = editId !== null;
+
+            // Prefer Supabase (DB-linked categories) — no manual text-only categories.
+            var sb = getAdminSupabase();
+            if (sb) {
+                var ev = String(eventType).toLowerCase();
+                var isKumite = ev === 'kumite';
+                if (isKumite && !weightDivRaw) {
+                    alert('Kumite requires a weight division.');
+                    return false;
+                }
+                if (!isKumite && weightDivRaw) {
+                    alert('Kata must NOT have a weight division.');
+                    return false;
+                }
+                var discipline = wkfDisciplineFromEventType(ev);
+                var ageGroup = wkfAgeCategoryLabel(ageCat); // legacy display
+                var weightClass = isKumite ? weightDivRaw : '';
+                var isTeam = ev === 'kata_team';
+
+                if (isEdit) {
+                    var up = await sb.from('tournament_categories').update({
+                        discipline: discipline,
+                        gender: gender,
+                        age_group: ageGroup,
+                        weight_class: weightClass,
+                        event_type: ev,
+                        age_category: ageCat,
+                        is_team_event: isTeam,
+                        updated_at: new Date().toISOString()
+                    }).eq('id', editId).eq('tournament_id', tournamentId);
+                    if (up.error) {
+                        alert(up.error.message || 'Update failed.');
+                        return false;
+                    }
+                    const tE = allTournaments.find(x => x.id === tournamentId);
+                    logActivity('Category Added', 'Updated — ' + wkfGenderLabel(gender) + ' ' + wkfAgeCategoryLabel(ageCat) + ' ' + wkfEventTypeLabel(ev) + (isKumite ? (' ' + weightDivRaw) : '') + ' — ' + (tE ? tE.name : tournamentId));
+                    resetCategoryForm();
+                    await loadCategories(tournamentId);
+                    return false;
+                }
+
+                // Create/find master category (public.categories) then attach via tournament_categories.category_id
+                var findQ = sb.from('categories')
+                    .select('id')
+                    .eq('status', 'active')
+                    .eq('event_type', ev)
+                    .eq('gender', gender)
+                    .eq('age_category', ageCat);
+                if (isKumite) {
+                    findQ = findQ.eq('weight_division', weightDivRaw);
+                } else {
+                    findQ = findQ.is('weight_division', null);
+                }
+                var find = await findQ.maybeSingle();
+
+                var masterId = null;
+                if (!find.error && find.data && find.data.id) {
+                    masterId = find.data.id;
+                } else {
+                    var nm = wkfGenderLabel(gender) + ' ' + wkfAgeCategoryLabel(ageCat) + ' ' + wkfEventTypeLabel(ev) + (isKumite ? (' ' + weightDivRaw) : '');
+                    var insM = await sb.from('categories').insert({
+                        name: nm || (wkfEventTypeLabel(ev) + ' category'),
+                        type: discipline,
+                        gender: gender,
+                        age_group: ageGroup,                 // legacy
+                        weight_label: isKumite ? weightDivRaw : null, // legacy
+                        status: 'active'
+                        ,
+                        event_type: ev,
+                        age_category: ageCat,
+                        weight_division: isKumite ? weightDivRaw : null,
+                        is_team_event: isTeam,
+                        is_active: true
+                    }).select('id').single();
+                    if (insM.error) {
+                        alert(insM.error.message || 'Could not create master category.');
+                        return false;
+                    }
+                    masterId = insM.data.id;
+                }
+
+                var insT = await sb.from('tournament_categories').insert({
+                    tournament_id: tournamentId,
+                    category_id: masterId,
+                    discipline: discipline,
+                    gender: gender,
+                    age_group: ageGroup,
+                    weight_class: weightClass,
+                    event_type: ev,
+                    age_category: ageCat,
+                    is_team_event: isTeam,
+                    status: 'active'
+                });
+                if (insT.error) {
+                    alert(insT.error.message || 'Attach failed.');
+                    return false;
+                }
+                const tA = allTournaments.find(x => x.id === tournamentId);
+                logActivity('Category Added', wkfGenderLabel(gender) + ' ' + wkfAgeCategoryLabel(ageCat) + ' ' + wkfEventTypeLabel(ev) + (isKumite ? (' ' + weightDivRaw) : '') + ' — ' + (tA ? tA.name : ''));
+                resetCategoryForm();
+                await loadCategories(tournamentId);
+                return false;
+            }
+
+            const payload = { discipline: eventType, gender, ageGroup: ageCat, weightClass: weightDivRaw };
             const url = isEdit
                 ? `${API_BASE_URL}/tournament/${tournamentId}/categories/${editId}`
                 : `${API_BASE_URL}/tournament/${tournamentId}/categories`;
@@ -2778,14 +4620,15 @@
             if (!cat) return;
 
             document.getElementById('cat_edit_id').value = categoryId;
-            document.getElementById('cat_discipline').value = cat.discipline || '';
+            document.getElementById('cat_discipline').value = cat.event_type || (String(cat.discipline || '').toLowerCase() === 'kumite' ? 'kumite' : 'kata_individual') || '';
             document.getElementById('cat_gender').value = cat.gender || '';
-            document.getElementById('cat_age_group').value = cat.age_group || cat.ageGroup || '';
-            document.getElementById('cat_weight').value = cat.weight_class || cat.weightClass || '';
+            document.getElementById('cat_age_group').value = cat.age_category || (String(cat.age_group || cat.ageGroup || '').toLowerCase() || '');
+            document.getElementById('cat_weight').value = (String(cat.event_type || '').toLowerCase() === 'kumite') ? (cat.weight_class || cat.weightClass || '') : '';
             document.getElementById('cat_submit_btn').textContent = 'Update Category';
             document.getElementById('cat_cancel_edit').style.display = 'inline-block';
             document.getElementById('cat_form_title').textContent = 'Edit Category';
             document.getElementById('cat_discipline').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            onCategoryEventTypeChange();
         }
 
         function resetCategoryForm() {
@@ -2794,10 +4637,27 @@
             document.getElementById('cat_submit_btn').textContent = 'Add Category';
             document.getElementById('cat_cancel_edit').style.display = 'none';
             document.getElementById('cat_form_title').textContent = 'Add Category';
+            onCategoryEventTypeChange();
         }
 
         async function deleteCategoryInModal(tournamentId, categoryId) {
             if (!confirm('Delete this category? This cannot be undone.')) return;
+
+            var sb = getAdminSupabase();
+            if (sb) {
+                var del = await sb.from('tournament_categories')
+                    .delete()
+                    .eq('id', categoryId)
+                    .eq('tournament_id', tournamentId);
+                if (del.error) {
+                    alert(del.error.message || 'Delete failed.');
+                    return;
+                }
+                const t = allTournaments.find(x => x.id === tournamentId);
+                logActivity('Category Deleted', 'Tournament: ' + (t ? t.name : tournamentId));
+                await loadCategories(tournamentId);
+                return;
+            }
 
             try {
                 const token = localStorage.getItem('token');
@@ -2822,6 +4682,359 @@
                 renderCategoriesTable(tournamentId, allCategoriesByTournament[tournamentId]);
             }
         }
+        // ── Belt Tests (admin) ────────────────────────────────────────
+        var _btAdminEvents = [];
+        var _btAdminSelectedEventId = null;
+
+        async function loadBtAdminEvents() {
+            var sb = getAdminSupabase();
+            if (!sb) {
+                document.getElementById('btAdminEventsTbody').innerHTML =
+                    '<tr><td colspan="5" style="text-align:center;padding:16px;color:#888;">Sign in with a Supabase account to manage belt tests.</td></tr>';
+                return;
+            }
+            var q = await sb.from('belt_test_events')
+                .select('id, title, event_date, location, status, notes')
+                .order('event_date', { ascending: false });
+            if (q.error) {
+                document.getElementById('btAdminEventsTbody').innerHTML =
+                    '<tr><td colspan="5" style="color:#c00;padding:12px;">' + escapeHtml(q.error.message) + '</td></tr>';
+                return;
+            }
+            _btAdminEvents = q.data || [];
+            renderBtAdminEventsTable();
+        }
+
+        function renderBtAdminEventsTable() {
+            var tb = document.getElementById('btAdminEventsTbody');
+            if (!tb) return;
+            if (!_btAdminEvents.length) {
+                tb.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:16px;color:#888;">No events yet. Click "+ New Event" to create one.</td></tr>';
+                return;
+            }
+            var statusColor = { draft: '#888', open: '#2e7d32', closed: '#f57c00', completed: '#1565c0' };
+            tb.innerHTML = _btAdminEvents.map(function (ev) {
+                var d = ev.event_date ? new Date(ev.event_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+                var col = statusColor[ev.status] || '#555';
+                var active = _btAdminSelectedEventId === ev.id ? 'background:#f1f8e9;' : '';
+                return '<tr style="cursor:pointer;' + active + '" onclick="btAdminSelectEvent(' + escapeAttr(JSON.stringify(ev.id)) + ')">'
+                    + '<td><strong>' + escapeHtml(ev.title) + '</strong></td>'
+                    + '<td style="white-space:nowrap;">' + escapeHtml(d) + '</td>'
+                    + '<td>' + escapeHtml(ev.location || '—') + '</td>'
+                    + '<td><span style="color:' + col + ';font-weight:700;text-transform:capitalize;">' + escapeHtml(ev.status) + '</span></td>'
+                    + '<td style="white-space:nowrap;">'
+                    + '<button type="button" style="font-size:12px;padding:4px 10px;border:1px solid #ccc;border-radius:6px;cursor:pointer;margin-right:4px;" onclick="event.stopPropagation();btAdminOpenEventModal(' + escapeAttr(JSON.stringify(ev.id)) + ')">Edit</button>'
+                    + '<button type="button" style="font-size:12px;padding:4px 10px;border:1px solid #c62828;color:#c62828;border-radius:6px;cursor:pointer;background:#fff;" onclick="event.stopPropagation();btAdminDeleteEvent(' + escapeAttr(JSON.stringify(ev.id)) + ')">Delete</button>'
+                    + '</td></tr>';
+            }).join('');
+        }
+
+        async function btAdminSelectEvent(eventId) {
+            _btAdminSelectedEventId = eventId;
+            renderBtAdminEventsTable();
+            var ev = _btAdminEvents.find(function (e) { return e.id === eventId; });
+            var title = ev ? ev.title : 'Event';
+            var h = document.getElementById('btAdminCandidatesTitle');
+            if (h) h.textContent = 'Candidates — ' + title;
+            var card = document.getElementById('btAdminCandidatesCard');
+            if (card) card.style.display = 'block';
+            await loadBtAdminCandidates(eventId);
+        }
+
+        async function loadBtAdminCandidates(eventId) {
+            var tb = document.getElementById('btAdminCandidatesTbody');
+            if (!tb) return;
+            tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:#888;">Loading…</td></tr>';
+            var sb = getAdminSupabase();
+            if (!sb) return;
+
+            // Use SECURITY DEFINER RPC — bypasses RLS, returns names + photos
+            var q = await sb.rpc('skf_fetch_belt_test_candidates', { p_event_id: eventId });
+            if (q.error) {
+                tb.innerHTML = '<tr><td colspan="6" style="color:#c00;padding:12px;">' + escapeHtml(q.error.message) + '</td></tr>';
+                return;
+            }
+            if (!q.data || !q.data.length) {
+                tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:#888;">No candidates yet for this event.</td></tr>';
+                return;
+            }
+
+            var statusColor = { pending: '#f57c00', approved: '#2e7d32', rejected: '#c62828', passed: '#1565c0', failed: '#555' };
+            tb.innerHTML = q.data.map(function (c) {
+                var pname = c.full_name || c.email || '(player ' + String(c.user_id).slice(0, 8) + '…)';
+                var col = statusColor[c.status] || '#555';
+                var initials = pname.charAt(0).toUpperCase();
+                var photoHtml = c.photo_url
+                    ? '<img src="' + escapeAttr(c.photo_url) + '" style="width:36px;height:36px;border-radius:50%;object-fit:cover;border:2px solid #2e7d32;vertical-align:middle;flex-shrink:0;" onerror="this.style.display=\'none\'">'
+                    : '<div style="width:36px;height:36px;border-radius:50%;background:#e8f5e9;display:inline-flex;align-items:center;justify-content:center;font-weight:700;color:#2e7d32;font-size:14px;flex-shrink:0;border:2px solid #2e7d32;">' + initials + '</div>';
+                var actions = '';
+                if (c.status === 'pending') {
+                    actions = '<button type="button" style="font-size:12px;padding:4px 10px;border:none;border-radius:6px;background:#2e7d32;color:#fff;cursor:pointer;margin-right:4px;" onclick="btAdminSetCandidateStatus(' + escapeAttr(JSON.stringify(c.id)) + ',\'approved\')">Approve</button>'
+                            + '<button type="button" style="font-size:12px;padding:4px 10px;border:none;border-radius:6px;background:#c62828;color:#fff;cursor:pointer;" onclick="btAdminSetCandidateStatus(' + escapeAttr(JSON.stringify(c.id)) + ',\'rejected\')">Reject</button>';
+                } else if (c.status === 'approved') {
+                    actions = '<button type="button" style="font-size:12px;padding:4px 10px;border:none;border-radius:6px;background:#1565c0;color:#fff;cursor:pointer;" onclick="btAdminOpenResultModal(' + escapeAttr(JSON.stringify(c.id)) + ',' + escapeAttr(JSON.stringify(pname)) + ')">Record result</button>';
+                }
+                return '<tr>'
+                    + '<td><div style="display:flex;align-items:center;gap:10px;">' + photoHtml + '<span>' + escapeHtml(pname) + '</span></div></td>'
+                    + '<td>' + escapeHtml(c.current_rank || '—') + '</td>'
+                    + '<td>' + escapeHtml(c.requested_rank || '—') + '</td>'
+                    + '<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + escapeAttr(c.notes || '') + '">' + escapeHtml(c.notes || '—') + '</td>'
+                    + '<td><span style="color:' + col + ';font-weight:700;text-transform:capitalize;">' + escapeHtml(c.status) + '</span>'
+                    + (c.result_notes ? '<small style="display:block;color:#888;">' + escapeHtml(c.result_notes) + '</small>' : '') + '</td>'
+                    + '<td style="white-space:nowrap;">' + actions + '</td>'
+                    + '</tr>';
+            }).join('');
+        }
+
+        async function btAdminSetCandidateStatus(candidateId, newStatus) {
+            var sb = getAdminSupabase();
+            if (!sb) return;
+            var upd = await sb.rpc('skf_belt_test_set_status', { p_candidate_id: candidateId, p_new_status: newStatus });
+            if (upd.error) { alert('Could not update status: ' + upd.error.message); return; }
+            if (_btAdminSelectedEventId) await loadBtAdminCandidates(_btAdminSelectedEventId);
+        }
+
+        function btAdminOpenEventModal(eventId) {
+            var m = document.getElementById('btAdminEventModal');
+            var h = document.getElementById('btAdminModalTitle');
+            var idInp = document.getElementById('btAdminEventId');
+            if (!m) return;
+            if (eventId) {
+                var ev = _btAdminEvents.find(function (e) { return e.id === eventId; });
+                if (!ev) return;
+                if (h) h.textContent = 'Edit Belt Test Event';
+                idInp.value = ev.id;
+                document.getElementById('btAdminEvTitle').value    = ev.title || '';
+                document.getElementById('btAdminEvDate').value     = ev.event_date ? ev.event_date.slice(0, 16) : '';
+                document.getElementById('btAdminEvLocation').value = ev.location || '';
+                document.getElementById('btAdminEvStatus').value   = ev.status || 'draft';
+                document.getElementById('btAdminEvNotes').value    = ev.notes || '';
+            } else {
+                if (h) h.textContent = 'New Belt Test Event';
+                idInp.value = '';
+                document.getElementById('btAdminEvTitle').value    = '';
+                document.getElementById('btAdminEvDate').value     = '';
+                document.getElementById('btAdminEvLocation').value = '';
+                document.getElementById('btAdminEvStatus').value   = 'draft';
+                document.getElementById('btAdminEvNotes').value    = '';
+            }
+            m.style.display = 'flex';
+        }
+
+        function btAdminCloseEventModal() {
+            var m = document.getElementById('btAdminEventModal');
+            if (m) m.style.display = 'none';
+        }
+
+        async function btAdminSaveEvent() {
+            var btn = document.getElementById('btAdminSaveBtn');
+            var id       = (document.getElementById('btAdminEventId') || {}).value || '';
+            var title    = ((document.getElementById('btAdminEvTitle') || {}).value || '').trim();
+            var dateVal  = ((document.getElementById('btAdminEvDate') || {}).value || '').trim();
+            var location = ((document.getElementById('btAdminEvLocation') || {}).value || '').trim();
+            var status   = ((document.getElementById('btAdminEvStatus') || {}).value || '').trim();
+            var notes    = ((document.getElementById('btAdminEvNotes') || {}).value || '').trim();
+            if (!title) { alert('Title is required.'); return; }
+            if (!dateVal) { alert('Date is required.'); return; }
+            var sb = getAdminSupabase();
+            if (!sb) { alert('Not connected.'); return; }
+            if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+            var payload = { title: title, event_date: new Date(dateVal).toISOString(), location: location || '', status: status, notes: notes || null };
+            var res;
+            if (id) {
+                res = await sb.from('belt_test_events').update(payload).eq('id', id);
+            } else {
+                var user = JSON.parse(localStorage.getItem('user') || '{}');
+                payload.created_by = user.id || null;
+                res = await sb.from('belt_test_events').insert(payload);
+            }
+            if (btn) { btn.disabled = false; btn.textContent = 'Save'; }
+            if (res.error) { alert('Save failed: ' + res.error.message); return; }
+            btAdminCloseEventModal();
+            logActivity(id ? 'Belt Test Updated' : 'Belt Test Created', title);
+            await loadBtAdminEvents();
+        }
+
+        async function btAdminDeleteEvent(eventId) {
+            var ev = _btAdminEvents.find(function (e) { return e.id === eventId; });
+            if (!confirm('Delete event "' + (ev ? ev.title : eventId) + '"? This also deletes all candidate applications.')) return;
+            var sb = getAdminSupabase();
+            if (!sb) return;
+            var res = await sb.from('belt_test_events').delete().eq('id', eventId);
+            if (res.error) { alert('Delete failed: ' + res.error.message); return; }
+            logActivity('Belt Test Deleted', ev ? ev.title : eventId);
+            if (_btAdminSelectedEventId === eventId) {
+                _btAdminSelectedEventId = null;
+                var card = document.getElementById('btAdminCandidatesCard');
+                if (card) card.style.display = 'none';
+            }
+            await loadBtAdminEvents();
+        }
+
+        function btAdminOpenResultModal(candidateId, playerName) {
+            var m = document.getElementById('btAdminResultModal');
+            if (!m) return;
+            var h = document.getElementById('btAdminResultTitle');
+            if (h) h.textContent = 'Record Result — ' + (playerName || '');
+            document.getElementById('btAdminResultCandidateId').value = candidateId;
+            document.getElementById('btAdminResultValue').value = 'passed';
+            document.getElementById('btAdminResultNotes').value = '';
+            m.style.display = 'flex';
+        }
+
+        function btAdminCloseResultModal() {
+            var m = document.getElementById('btAdminResultModal');
+            if (m) m.style.display = 'none';
+        }
+
+        async function btAdminRecordResult() {
+            var btn = document.getElementById('btAdminResultSaveBtn');
+            var cid    = (document.getElementById('btAdminResultCandidateId') || {}).value || '';
+            var result = (document.getElementById('btAdminResultValue') || {}).value || 'passed';
+            var notes  = ((document.getElementById('btAdminResultNotes') || {}).value || '').trim();
+            var sb = getAdminSupabase();
+            if (!sb || !cid) return;
+            if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+            var res = await sb.rpc('skf_belt_test_record_result', {
+                p_candidate_id: cid,
+                p_result: result,
+                p_result_notes: notes || null
+            });
+            if (btn) { btn.disabled = false; btn.textContent = 'Save Result'; }
+            if (res.error) { alert('Could not record result: ' + res.error.message); return; }
+            logActivity('Belt Test Result', result.charAt(0).toUpperCase() + result.slice(1));
+            btAdminCloseResultModal();
+            if (_btAdminSelectedEventId) await loadBtAdminCandidates(_btAdminSelectedEventId);
+        }
+
+        // ── Highlights management ─────────────────────────────────────
+        function escHL(s) {
+            if (s == null) return '';
+            return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        async function loadAdminHighlights() {
+            var wrap = document.getElementById('hlTableWrap');
+            if (!wrap) return;
+            wrap.innerHTML = '<p style="color:#888;font-size:13px;">Loading…</p>';
+            await refreshAdminJwtFromSupabaseAuth();
+            var sb = getAdminSupabase();
+            if (!sb) { wrap.innerHTML = '<p style="color:#c62828;">Sign-in required.</p>'; return; }
+            var q = await sb.from('skf_highlights')
+                .select('id,title,caption,image_url,is_active,sort_order,created_at')
+                .order('sort_order',{ascending:true}).order('created_at',{ascending:false});
+            if (q.error) { wrap.innerHTML = '<p style="color:#c62828;">Could not load highlights. Please contact SKF technical support.</p>'; return; }
+            var rows = q.data || [];
+            if (!rows.length) { wrap.innerHTML = '<p style="color:#888;font-size:13px;">No highlights yet. Upload the first one above.</p>'; return; }
+            var html = '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
+                + '<thead><tr style="background:#f5f5f5;">'
+                + '<th style="padding:8px;border:1px solid #e0e0e0;width:80px;">Preview</th>'
+                + '<th style="padding:8px;border:1px solid #e0e0e0;">Title</th>'
+                + '<th style="padding:8px;border:1px solid #e0e0e0;">Caption</th>'
+                + '<th style="padding:8px;border:1px solid #e0e0e0;width:60px;">Order</th>'
+                + '<th style="padding:8px;border:1px solid #e0e0e0;width:60px;">Active</th>'
+                + '<th style="padding:8px;border:1px solid #e0e0e0;width:80px;"></th>'
+                + '</tr></thead><tbody>';
+            rows.forEach(function(r) {
+                var imgSrc = r.image_url && (r.image_url.indexOf('http') === 0
+                    ? r.image_url
+                    : SKF_SUPABASE_URL + '/storage/v1/object/public/' + r.image_url);
+                html += '<tr>'
+                    + '<td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">'
+                    + (imgSrc ? '<img src="' + escHL(imgSrc) + '" style="width:70px;height:44px;object-fit:cover;border-radius:4px;" referrerpolicy="no-referrer">' : '—')
+                    + '</td>'
+                    + '<td style="padding:6px;border:1px solid #e0e0e0;font-weight:600;">' + escHL(r.title) + '</td>'
+                    + '<td style="padding:6px;border:1px solid #e0e0e0;color:#555;">' + escHL(r.caption||'') + '</td>'
+                    + '<td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">' + escHL(String(r.sort_order)) + '</td>'
+                    + '<td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">'
+                    + '<button onclick="hlToggleActive(\'' + escHL(r.id) + '\',' + (r.is_active?'false':'true') + ')" '
+                    + 'style="padding:3px 10px;border:none;border-radius:5px;cursor:pointer;font-size:11px;font-weight:700;'
+                    + (r.is_active ? 'background:#c8e6c9;color:#1b5e20;">' : 'background:#ffcdd2;color:#c62828;">')
+                    + (r.is_active ? 'ON' : 'OFF') + '</button>'
+                    + '</td>'
+                    + '<td style="padding:6px;border:1px solid #e0e0e0;text-align:center;">'
+                    + '<button onclick="hlDelete(\'' + escHL(r.id) + '\')" '
+                    + 'style="padding:3px 10px;background:#e53935;color:#fff;border:none;border-radius:5px;cursor:pointer;font-size:11px;font-weight:700;">Delete</button>'
+                    + '</td>'
+                    + '</tr>';
+            });
+            html += '</tbody></table>';
+            wrap.innerHTML = html;
+        }
+
+        async function hlUpload() {
+            var title = (document.getElementById('hlTitle').value || '').trim();
+            var caption = (document.getElementById('hlCaption').value || '').trim();
+            var order = parseInt(document.getElementById('hlOrder').value || '0', 10) || 0;
+            var fileInput = document.getElementById('hlFile');
+            var file = fileInput && fileInput.files && fileInput.files[0];
+            var statusEl = document.getElementById('hlUploadStatus');
+
+            function setStatus(msg, ok) {
+                statusEl.textContent = msg;
+                statusEl.style.display = 'block';
+                statusEl.style.color = ok ? '#2e7d32' : '#c62828';
+            }
+
+            if (!title) { setStatus('Title is required.', false); return; }
+            if (!file)  { setStatus('Please select an image file.', false); return; }
+            if (file.size > 5 * 1024 * 1024) { setStatus('File must be 5 MB or smaller.', false); return; }
+
+            setStatus('Uploading…', true);
+            await refreshAdminJwtFromSupabaseAuth();
+            var sb = getAdminSupabase();
+            if (!sb) { setStatus('Sign-in required.', false); return; }
+
+            var ext = file.name.split('.').pop().toLowerCase();
+            var fname = 'hl_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7) + '.' + ext;
+            var upRes = await sb.storage.from('skf-highlights').upload(fname, file, { cacheControl: '3600', upsert: false });
+            if (upRes.error) {
+                // Bucket may not exist yet — guide admin
+                if (upRes.error.message && upRes.error.message.indexOf('Bucket not found') >= 0) {
+                    setStatus('Storage bucket "skf-highlights" not found. Paste and run the storage block from database/phase23_highlights.sql in Supabase SQL Editor, then try again.', false);
+                } else {
+                    setStatus('Upload error: ' + upRes.error.message, false);
+                }
+                return;
+            }
+            var pubData = sb.storage.from('skf-highlights').getPublicUrl(fname);
+            var imageUrl = (pubData.data && pubData.data.publicUrl) ? pubData.data.publicUrl : fname;
+
+            var user = JSON.parse(localStorage.getItem('user') || '{}');
+            var ins = await sb.from('skf_highlights').insert({
+                title: title,
+                caption: caption || null,
+                image_url: imageUrl,
+                sort_order: order,
+                is_active: true,
+                created_by: user.id || null
+            });
+            if (ins.error) { setStatus('DB insert error: ' + ins.error.message, false); return; }
+            setStatus('Published! The banner will appear on all dashboards.', true);
+            document.getElementById('hlTitle').value = '';
+            document.getElementById('hlCaption').value = '';
+            document.getElementById('hlOrder').value = '0';
+            fileInput.value = '';
+            await loadAdminHighlights();
+        }
+
+        async function hlToggleActive(id, newState) {
+            await refreshAdminJwtFromSupabaseAuth();
+            var sb = getAdminSupabase();
+            if (!sb) return;
+            await sb.from('skf_highlights').update({ is_active: newState }).eq('id', id);
+            await loadAdminHighlights();
+        }
+
+        async function hlDelete(id) {
+            if (!confirm('Delete this highlight? This cannot be undone.')) return;
+            await refreshAdminJwtFromSupabaseAuth();
+            var sb = getAdminSupabase();
+            if (!sb) return;
+            await sb.from('skf_highlights').delete().eq('id', id);
+            await loadAdminHighlights();
+        }
+
         // ── Reveal all cards and tables (opacity: 0 → 1) ──────────────
         function animateCards() {
             var selectors = ['.stat-card', '.dashboard-card', '.data-table-container'];

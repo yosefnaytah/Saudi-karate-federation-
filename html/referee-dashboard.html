@@ -3,1016 +3,1592 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Referee Dashboard - Saudi Karate Federation</title>
-    <link rel="stylesheet" href="dashboard.css">
+    <title>Referee dashboard — Saudi Karate Federation</title>
+    <link rel="stylesheet" href="dashboard.css?v=20260420">
     <style>
-        .placeholder-box {
-            text-align: center;
-            padding: 60px 20px;
-        }
-        .placeholder-box .icon {
-            font-size: 52px;
-            margin-bottom: 16px;
-        }
-        .placeholder-box h3 {
-            font-size: 20px;
-            font-weight: bold;
-            color: #555;
-            margin: 0 0 10px;
-        }
-        .placeholder-box p {
-            font-size: 14px;
-            color: #888;
-            max-width: 420px;
-            margin: 0 auto;
-            line-height: 1.6;
-        }
-        .coming-soon-badge {
-            display: inline-block;
-            margin-top: 16px;
-            background: #e8f5e9;
-            color: #2e7d32;
-            font-size: 12px;
-            font-weight: bold;
-            padding: 4px 14px;
-            border-radius: 12px;
-            border: 1px solid #c8e6c9;
-        }
-        .discipline-badge {
-            display: inline-block;
-            padding: 2px 10px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .discipline-kata    { background: #e3f2fd; color: #1565c0; }
-        .discipline-kumite  { background: #e8f5e9; color: #2e7d32; }
-        .status-pill {
-            display: inline-block;
-            padding: 2px 10px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: bold;
-        }
-        .status-draft               { background: #e0e0e0; color: #555; }
-        .status-registration_open   { background: #c8e6c9; color: #2e7d32; }
-        .status-registration_closed { background: #ffcdd2; color: #c62828; }
-        /* competition format badges */
-        .format-badge { display:inline-block; padding:2px 10px; border-radius:10px; font-size:12px; font-weight:bold; }
-        .format-single { background:#e3f2fd; color:#1565c0; }
-        .format-round  { background:#f3e5f5; color:#6a1b9a; }
-        .format-none   { background:#f5f5f5; color:#999; }
-        /* format modal overlay */
-        .fmt-modal-overlay {
-            display:flex; position:fixed; inset:0;
-            background:rgba(0,0,0,.45); z-index:2000;
-            align-items:center; justify-content:center;
-        }
-        .fmt-modal-box {
-            background:#fff; border-radius:12px; padding:28px;
-            max-width:420px; width:90%;
-            box-shadow:0 10px 40px rgba(0,0,0,.2);
-        }
-        .fmt-modal-header {
-            display:flex; justify-content:space-between; align-items:center;
-            margin-bottom:18px; padding-bottom:14px; border-bottom:1px solid #eee;
-        }
-        .fmt-modal-header h2 { margin:0; font-size:17px; color:#333; }
-        .fmt-modal-header span { cursor:pointer; font-size:22px; color:#999; line-height:1; }
-        .fmt-option {
-            display:flex; align-items:center; gap:12px;
-            padding:14px 16px; border:2px solid #e0e0e0; border-radius:8px;
-            margin-bottom:10px; cursor:pointer; transition:border-color .2s, background .2s;
-        }
-        .fmt-option:hover   { border-color:#3a7d44; background:#f9f9f9; }
-        .fmt-option.selected { border-color:#3a7d44; background:#e8f5e9; }
-        .fmt-option input   { accent-color:#3a7d44; width:16px; height:16px; cursor:pointer; }
-        .fmt-option-label   { font-size:14px; font-weight:bold; color:#333; }
-        .fmt-option-desc    { font-size:12px; color:#888; margin-top:2px; }
+        .dashboard-section { display: none; }
+        #overview-section { display: block; }
+        .dashboard-container .menu-toggle { z-index: 2100; }
+        .dashboard-container .dashboard-nav.active { z-index: 2000; }
+        .ref-card { background: #fff; border-radius: 10px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); border: 1px solid #e8e8e8; }
+        .ref-card h2 { margin: 0 0 10px; font-size: 1.05rem; color: #1b5e20; }
+        .ref-muted { font-size: 13px; color: #555; line-height: 1.5; margin-bottom: 12px; }
+        .ref-badge { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #e8f5e9; color: #1b5e20; }
+        .ref-badge-warn { background: #fff3e0; color: #e65100; }
+        .ref-table-wrap { overflow-x: auto; margin-top: 10px; }
+        table.ref-data { width: 100%; border-collapse: collapse; font-size: 14px; }
+        table.ref-data th, table.ref-data td { border: 1px solid #e0e0e0; padding: 8px 10px; text-align: left; }
+        table.ref-data th { background: #f5f5f5; }
+        .ref-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; align-items: center; }
+        .ref-btn { padding: 8px 14px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; }
+        .ref-btn-primary { background: #2e7d32; color: #fff; }
+        .ref-btn-secondary { background: #546e7a; color: #fff; }
+        .ref-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        select.ref-select { padding: 8px 10px; border-radius: 8px; border: 1px solid #ccc; font-size: 13px; }
+        table.ref-data input[type="number"] { width: 3.2rem; padding: 4px 6px; font-size: 13px; }
+        table.ref-data input[type="text"].ops-mat { width: 4.5rem; }
+        table.ref-data select.ops-status, table.ref-data select.ops-winner { min-width: 6.5rem; font-size: 12px; padding: 4px 6px; }
+        .ref-ov-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 14px; }
+        .ref-ov-stat { background: #fff; border-radius: 10px; padding: 14px 12px; border: 1px solid #e8e8e8; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .ref-ov-stat strong { display: block; font-size: 1.35rem; color: #1b5e20; font-weight: 700; }
+        .ref-ov-stat span { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: .03em; }
+        .ref-ov-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px; margin-bottom: 8px; }
+        .ref-ov-card { background: #fff; border-radius: 10px; padding: 16px 18px; border: 1px solid #e8e8e8; box-shadow: 0 4px 12px rgba(0,0,0,0.06); }
+        .ref-ov-card h3 { margin: 0 0 10px; font-size: 1.02rem; color: #1b5e20; }
+        .ref-ov-card .ref-muted { margin-bottom: 0; }
+        .ref-ov-card ul { margin: 0; padding-left: 1.15rem; font-size: 13px; color: #444; line-height: 1.45; }
+        .ref-ov-quick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; align-items: center; }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js?v=20260419"></script>
+    <script src="skf-role-layout.js?v=20260506"></script>
+    <script src="skf-realtime-matches.js?v=20260506"></script>
+    <script src="skf-highlights.js?v=20260510"></script>
 </head>
 <body>
-<div class="dashboard-container">
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <div class="header-left">
+                <img src="full badge.png" alt="Saudi Karate Federation" class="header-badge">
+            <div class="header-fed-name">
+                <span class="header-fed-ar">الاتحاد السعودي للكاراتيه</span>
+                <span class="header-fed-en">Saudi Karate Federation</span>
+            </div>
+            </div>
+            <div class="header-right">
+                <div class="user-role" id="userDisplay">Loading…</div>
+                <div class="vision-logo">
+                    <p class="vision-title">VISION (رؤية)</p>
+                    <p class="vision-year">2030</p>
+                </div>
+            </div>
+        </header>
 
-    <!-- Header -->
-    <header class="dashboard-header">
-        <div class="header-left">
-            <div class="header-logo">Saudi Karate Federation — Referee</div>
+        <div class="menu-toggle" id="menuToggle" title="Menu" aria-label="Open menu">
+            <span class="bar"></span><span class="bar"></span><span class="bar"></span>
         </div>
-        <div class="header-center"></div>
-        <div class="header-right">
-            <div class="user-role" id="userDisplay">Loading...</div>
-            <div class="vision-logo">
-                <p class="vision-title">VISION (رؤية)</p>
-                <p class="vision-year">2030</p>
-            </div>
-        </div>
-    </header>
 
-    <!-- Hamburger Toggle -->
-    <div class="menu-toggle" id="menuToggle">
-        <span class="bar"></span>
-        <span class="bar"></span>
-        <span class="bar"></span>
-    </div>
+        <nav class="dashboard-nav" id="dashboardNav">
+            <ul class="nav-menu"><!-- filled by skf-role-layout.js --></ul>
+        </nav>
 
-    <!-- Side Navigation -->
-    <nav class="dashboard-nav" id="dashboardNav">
-        <ul class="nav-menu">
-            <li class="nav-item">
-                <a href="#" class="nav-link active" onclick="showSection('overview', event)">Overview</a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link" onclick="showSection('assigned-tournaments', event)">Assigned Tournaments</a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link" onclick="showSection('assigned-categories', event)">Assigned Categories</a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link" onclick="showSection('match-management', event)">Match Management</a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link" onclick="showSection('draw-setup', event)">Draw Setup</a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link" onclick="showSection('results-entry', event)">Results Entry</a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link" onclick="showSection('profile', event)">Profile</a>
-            </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link" onclick="logout()">Logout</a>
-            </li>
-        </ul>
-    </nav>
+        <main class="dashboard-content">
+            <!-- SKF Highlights Banner -->
+            <div id="skfHlBannerRef"></div>
 
-    <!-- Main Content -->
-    <main class="dashboard-content">
-
-        <!-- ── Overview ──────────────────────────────────── -->
-        <section id="overview-section" class="dashboard-section" style="display:block;">
-
-            <div class="stats-container">
-                <div class="stat-card">
-                    <div class="stat-value" id="statTournaments">—</div>
-                    <div class="stat-label">Assigned Tournaments</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="statCategories">—</div>
-                    <div class="stat-label">Assigned Categories</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value">—</div>
-                    <div class="stat-label">Upcoming Matches</div>
-                </div>
-            </div>
-
-            <!-- Tournaments quick-view -->
-            <div class="dashboard-card">
-                <div class="dashboard-card-header">
-                    <h2 class="dashboard-card-title">Assigned Tournaments</h2>
-                    <button class="btn" onclick="showSection('assigned-tournaments', event)">View All</button>
-                </div>
-                <div class="data-table-container loaded" id="overviewTournamentsContainer">
-                    <p style="color:#888;font-size:14px;padding:8px 0;">Loading...</p>
-                </div>
-            </div>
-
-            <!-- Categories quick-view -->
-            <div class="dashboard-card">
-                <div class="dashboard-card-header">
-                    <h2 class="dashboard-card-title">Assigned Categories</h2>
-                    <button class="btn" onclick="showSection('assigned-categories', event)">View All</button>
-                </div>
-                <div class="data-table-container loaded" id="overviewCategoriesContainer">
-                    <p style="color:#888;font-size:14px;padding:8px 0;">Loading...</p>
-                </div>
-            </div>
-
-        </section>
-
-        <!-- ── Assigned Tournaments ───────────────────────── -->
-        <section id="assigned-tournaments-section" class="dashboard-section" style="display:none;">
-            <div class="dashboard-card">
-                <div class="dashboard-card-header">
-                    <h2 class="dashboard-card-title">Assigned Tournaments</h2>
-                    <span style="font-size:12px;color:#888;">Click "Manage" to set up categories, then open registration for players</span>
-                </div>
-                <div class="data-table-container loaded">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Tournament</th>
-                                <th>Location</th>
-                                <th>Start Date</th>
-                                <th>Status</th>
-                                <th>Registration</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tournamentsTableBody">
-                            <tr>
-                                <td colspan="6" style="text-align:center;padding:20px;color:#666;">Loading...</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Per-tournament category manager (shown when referee clicks Manage) -->
-            <div id="refCatManagerPanel" style="display:none;">
-                <div class="dashboard-card" style="border:2px solid #3a7d44;">
-                    <div class="dashboard-card-header">
-                        <h2 class="dashboard-card-title" id="refCatManagerTitle">Manage Categories</h2>
-                        <button onclick="closeRefCatManager()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#999;">&times;</button>
+            <section id="overview-section" class="dashboard-section">
+                <div class="ref-card">
+                    <h2 id="overviewTitle">Referee workspace</h2>
+                    <p class="ref-muted" id="overviewBlurb">Loading…</p>
+                    <p class="ref-muted" id="refMenuHint" style="display:none;margin-bottom:0;font-size:12px;color:#666;">
+                        <strong>Menu:</strong> open the menu (top-left) for the same links, or use the buttons below.
+                    </p>
+                    <div class="ref-actions" id="refOverviewActions" style="display:none;margin-top:12px;">
+                        <button type="button" class="ref-btn ref-btn-primary" id="btnGotoSetup">Tournament setup (Referee+)</button>
+                        <button type="button" class="ref-btn ref-btn-secondary" id="btnGotoOps">Match operations</button>
                     </div>
+                </div>
+                <div class="ref-card" id="plusHints" style="display:none;">
+                    <h2>Referee+ responsibilities (this dashboard)</h2>
+                    <ul class="ref-muted" style="margin:0;padding-left:1.2rem;">
+                        <li>Set <strong>bracket type</strong> per category: <strong>knockout</strong> (single elim, power-of-two players) or <strong>league</strong> (round robin, any count ≥ 2).</li>
+                        <li>Generate draws from <strong>approved</strong> registrations only. Use the generate actions for each category after bracket type is set.</li>
+                        <li>Move the tournament to <strong>Ready</strong> when the structure is finalized so match referees can operate.</li>
+                    </ul>
+                    <p class="ref-muted" style="margin-bottom:0;">If draw generation or athlete names fail to load, contact SKF technical support — your account may need updated access.</p>
+                </div>
 
-                    <!-- Add category form -->
-                    <div style="background:#f9f9f9;border-radius:8px;padding:16px;margin-bottom:20px;">
-                        <h3 style="margin:0 0 14px;font-size:14px;color:#333;font-weight:600;">Add Category</h3>
-                        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;">
-                            <div>
-                                <label style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase;">Discipline</label>
-                                <select id="rcDiscipline" style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:6px;margin-top:4px;font-size:13px;">
-                                    <option value="">Select...</option>
-                                    <option value="kata">Kata</option>
-                                    <option value="kumite">Kumite</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase;">Gender</label>
-                                <select id="rcGender" style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:6px;margin-top:4px;font-size:13px;">
-                                    <option value="">Select...</option>
-                                    <option value="male">Male</option>
-                                    <option value="female">Female</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase;">Age Group</label>
-                                <select id="rcAgeGroup" style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:6px;margin-top:4px;font-size:13px;">
-                                    <option value="">Select...</option>
-                                    <option value="Under 12">Under 12</option>
-                                    <option value="Under 14">Under 14</option>
-                                    <option value="Under 16">Under 16</option>
-                                    <option value="Under 18">Under 18</option>
-                                    <option value="Under 21">Under 21</option>
-                                    <option value="Senior">Senior (+21)</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase;">Weight Class</label>
-                                <select id="rcWeight" style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:6px;margin-top:4px;font-size:13px;">
-                                    <option value="">Select...</option>
-                                    <option value="-50kg">-50 kg</option>
-                                    <option value="-55kg">-55 kg</option>
-                                    <option value="-60kg">-60 kg</option>
-                                    <option value="-65kg">-65 kg</option>
-                                    <option value="-70kg">-70 kg</option>
-                                    <option value="-75kg">-75 kg</option>
-                                    <option value="-80kg">-80 kg</option>
-                                    <option value="-85kg">-85 kg</option>
-                                    <option value="+85kg">+85 kg</option>
-                                    <option value="Open">Open Weight</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label style="font-size:11px;font-weight:600;color:#555;text-transform:uppercase;">Format</label>
-                                <select id="rcFormat" style="width:100%;padding:8px;border:1.5px solid #ddd;border-radius:6px;margin-top:4px;font-size:13px;">
-                                    <option value="">Select...</option>
-                                    <option value="single_elimination">Single Elimination</option>
-                                    <option value="round_robin">Round Robin</option>
-                                </select>
+                <div id="refOverviewWorkboard" class="ref-card" style="margin-top:0;">
+                    <h2 style="margin:0 0 8px;font-size:1.05rem;color:#1b5e20;">Operational snapshot</h2>
+                    <p class="ref-muted" style="margin-top:0;">Counts and queues respect your tournament assignments and database policies. Open <strong>Match operations</strong> for full tables and saving.</p>
+                    <div class="ref-ov-stats">
+                        <div class="ref-ov-stat"><strong id="refOvStatTournaments">—</strong><span>Scope events</span></div>
+                        <div class="ref-ov-stat"><strong id="refOvStatLive">—</strong><span>Live / paused</span></div>
+                        <div class="ref-ov-stat"><strong id="refOvStatScheduled">—</strong><span>Scheduled</span></div>
+                        <div class="ref-ov-stat"><strong id="refOvStatDone">—</strong><span>Completed</span></div>
+                    </div>
+                    <div class="ref-ov-grid">
+                        <div class="ref-ov-card">
+                            <h3>Live & paused — operate now</h3>
+                            <div id="refOvLiveList" class="ref-muted">Loading…</div>
+                            <div class="ref-ov-quick">
+                                <a href="referee-match-control.html" class="ref-btn ref-btn-primary">Open match control</a>
+                                <button type="button" class="ref-btn ref-btn-secondary" id="refOvGotoOps">Full match operations</button>
                             </div>
                         </div>
-                        <div style="margin-top:14px;display:flex;gap:10px;align-items:center;">
-                            <button onclick="refAddCategory()" style="padding:8px 24px;background:#3a7d44;color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer;font-size:13px;">+ Add Category</button>
-                            <span id="rcMsg" style="font-size:13px;"></span>
+                        <div class="ref-ov-card">
+                            <h3>Upcoming bouts (scheduled)</h3>
+                            <div id="refOvScheduledList" class="ref-muted">Loading…</div>
+                        </div>
+                        <div class="ref-ov-card">
+                            <h3>Recently finished</h3>
+                            <div id="refOvFinishedList" class="ref-muted">Loading…</div>
+                        </div>
+                        <div class="ref-ov-card" id="refOvPlusCard" style="display:none;">
+                            <h3>Tournament operations (Referee+)</h3>
+                            <div id="refOvPlusBody" class="ref-muted">Loading…</div>
+                            <div class="ref-ov-quick">
+                                <button type="button" class="ref-btn ref-btn-primary" id="refOvGotoSetup">Tournament setup</button>
+                            </div>
                         </div>
                     </div>
+                </div>
+            </section>
 
-                    <!-- Categories table -->
-                    <div class="data-table-container loaded">
-                        <table class="data-table">
+            <section id="operations-section" class="dashboard-section">
+                <div class="ref-card">
+                    <h2>Match operations</h2>
+                    <p class="ref-muted" id="opsIntro">Load a tournament and category, then record status, scores, and winner. Knockout winners advance automatically when a bout is marked completed.</p>
+                    <div class="ref-actions" style="flex-wrap:wrap;align-items:flex-end;">
+                        <label class="ref-muted" style="display:flex;flex-direction:column;gap:4px;">Tournament
+                            <select id="opsTournamentSelect" class="ref-select" style="min-width:220px;"></select>
+                        </label>
+                        <label class="ref-muted" style="display:flex;flex-direction:column;gap:4px;">Category
+                            <select id="opsCategorySelect" class="ref-select" style="min-width:200px;"></select>
+                        </label>
+                        <button type="button" class="ref-btn ref-btn-secondary" id="opsReloadBtn">Reload matches</button>
+                    </div>
+                    <p class="ref-muted" id="opsHint" style="margin-top:10px;font-size:12px;"></p>
+                    <div class="ref-table-wrap" id="opsMatchesWrap"></div>
+                </div>
+            </section>
+
+            <section id="setup-section" class="dashboard-section">
+                <div class="ref-card">
+                    <h2>Tournaments</h2>
+                    <p class="ref-muted">Active tournaments you can configure. Operational state is separate from registration open/closed.</p>
+                    <div class="ref-table-wrap">
+                        <table class="ref-data" id="tournamentsTable">
                             <thead>
-                                <tr><th>Discipline</th><th>Gender</th><th>Age Group</th><th>Weight</th><th>Format</th><th>Remove</th></tr>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Start</th>
+                                    <th>Registration status</th>
+                                    <th>Competition state</th>
+                                    <th></th>
+                                </tr>
                             </thead>
-                            <tbody id="refCatTableBody">
-                                <tr><td colspan="6" style="text-align:center;padding:16px;color:#888;">No categories added yet.</td></tr>
+                            <tbody id="tournamentsBody"><tr><td colspan="5">Loading…</td></tr></tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="ref-card" id="detailCard" style="display:none;">
+                    <h2 id="detailTitle">Category setup</h2>
+                    <p class="ref-muted" id="detailMeta"></p>
+                    <div class="ref-table-wrap">
+                        <table class="ref-data" id="categoriesTable">
+                            <thead>
+                                <tr>
+                                    <th>Event</th>
+                                    <th>Gender</th>
+                                    <th>Age Category</th>
+                                    <th>Weight Division</th>
+                                    <th>Bracket type</th>
+                                    <th>Approved</th>
+                                    <th>Matches</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categoriesBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="ref-actions" style="margin-top:14px;">
+                        <label class="ref-muted" style="display:flex;align-items:center;gap:8px;">
+                            Tournament competition state
+                            <select id="tournamentStateSelect" class="ref-select"></select>
+                        </label>
+                        <button type="button" class="ref-btn ref-btn-primary" id="btnSaveTournamentState">Save state</button>
+                    </div>
+                    <p class="ref-muted" id="stateHint" style="margin-top:10px;"></p>
+                    <div id="refMatchPreview" class="ref-card" style="display:none;margin-top:14px;">
+                        <h2 style="margin:0 0 8px;font-size:1rem;color:#1b5e20;">Match preview</h2>
+                        <p class="ref-muted" id="refMatchPreviewMeta" style="margin-bottom:8px;"></p>
+                        <div class="ref-table-wrap" id="refMatchPreviewBody"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Belt Tests section — Referee+ only -->
+            <section id="belttest-section" class="dashboard-section">
+                <style>
+                    .bt-candidate-photo{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid #2e7d32;vertical-align:middle;flex-shrink:0;}
+                    .bt-candidate-ph{width:40px;height:40px;border-radius:50%;background:#e8f5e9;display:inline-flex;align-items:center;justify-content:center;font-weight:700;color:#2e7d32;font-size:15px;flex-shrink:0;border:2px solid #2e7d32;}
+                    .bt-name-cell{display:flex;align-items:center;gap:10px;}
+                    /* Exam mode */
+                    #refBtExamPanel{display:none;margin-top:16px;}
+                    .bt-exam-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+                    .bt-exam-title{font-size:20px;font-weight:800;color:#1b5e20;margin:0;}
+                    .bt-exam-subtitle{font-size:13px;color:#666;margin:4px 0 0;}
+                    .bt-exam-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px;}
+                    .bt-exam-card{background:#fff;border-radius:14px;border:2px solid #e0e0e0;box-shadow:0 2px 10px rgba(0,0,0,.07);overflow:hidden;transition:border-color .2s;}
+                    .bt-exam-card.pending-card{border-color:#e0e0e0;}
+                    .bt-exam-card.approved-card{border-color:#2e7d32;}
+                    .bt-exam-card.passed-card{border-color:#1565c0;opacity:.75;}
+                    .bt-exam-card.failed-card{border-color:#c62828;opacity:.75;}
+                    .bt-exam-card-body{padding:20px 16px 12px;text-align:center;}
+                    .bt-exam-photo{width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid #2e7d32;margin:0 auto 12px;display:block;}
+                    .bt-exam-photo-ph{width:80px;height:80px;border-radius:50%;background:linear-gradient(145deg,#e8f5e9,#c8e6c9);margin:0 auto 12px;display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:700;color:#2e7d32;}
+                    .bt-exam-name{font-size:15px;font-weight:800;color:#1b1b1b;margin:0 0 4px;}
+                    .bt-exam-rank{font-size:12px;color:#666;margin:0 0 14px;}
+                    .bt-exam-rank strong{color:#1b5e20;}
+                    .bt-exam-actions{display:flex;gap:8px;justify-content:center;padding:0 16px 16px;}
+                    .bt-btn-pass{flex:1;padding:10px 0;background:#1b5e20;color:#fff;border:none;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;transition:background .15s;}
+                    .bt-btn-pass:hover{background:#2e7d32;}
+                    .bt-btn-fail{flex:1;padding:10px 0;background:#fff;color:#c62828;border:2px solid #c62828;border-radius:8px;font-weight:700;font-size:14px;cursor:pointer;transition:background .15s;}
+                    .bt-btn-fail:hover{background:#ffebee;}
+                    .bt-exam-badge{display:inline-block;padding:6px 18px;border-radius:999px;font-size:13px;font-weight:800;letter-spacing:.05em;margin-bottom:12px;}
+                    .bt-exam-badge.passed{background:#e3f2fd;color:#1565c0;}
+                    .bt-exam-badge.failed{background:#ffebee;color:#c62828;}
+                    .bt-exam-badge.pending{background:#fff8e1;color:#f57c00;}
+                    .bt-exam-badge.approved{background:#e8f5e9;color:#2e7d32;}
+                    .bt-start-exam-btn{background:#1b5e20;color:#fff;border:none;border-radius:8px;padding:9px 20px;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:7px;}
+                    .bt-start-exam-btn:hover{background:#2e7d32;}
+                    .bt-close-exam-btn{background:#f5f5f5;color:#333;border:1px solid #ddd;border-radius:8px;padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;}
+                    .bt-close-exam-btn:hover{background:#ebebeb;}
+                    .bt-approve-bar{display:flex;align-items:center;gap:10px;background:#fff8e1;border:1px solid #ffe082;border-radius:10px;padding:10px 16px;margin-bottom:16px;font-size:13px;color:#5d4037;}
+                    .bt-approve-all-btn{padding:7px 16px;background:#f57c00;color:#fff;border:none;border-radius:7px;font-weight:700;font-size:13px;cursor:pointer;}
+                    .bt-approve-all-btn:hover{background:#e65100;}
+                </style>
+
+                <div class="ref-card">
+                    <h2>Belt Test Events</h2>
+                    <p class="ref-muted">Select an event to review candidates, approve applications, and conduct the examination.</p>
+                    <div class="ref-table-wrap">
+                        <table class="ref-data" id="refBtEventsTbl">
+                            <thead>
+                                <tr><th>Title</th><th>Date</th><th>Location</th><th>Status</th><th>Candidates</th></tr>
+                            </thead>
+                            <tbody id="refBtEventsTbody">
+                                <tr><td colspan="5">Open this section to load events…</td></tr>
                             </tbody>
                         </table>
                     </div>
+                </div>
 
-                    <!-- Open Registration button -->
-                    <div style="margin-top:20px;padding-top:16px;border-top:1px solid #eee;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-                        <div>
-                            <div style="font-size:13px;font-weight:600;color:#333;">Ready to open registration for players?</div>
-                            <div style="font-size:12px;color:#888;margin-top:2px;">Make sure all categories are set before opening.</div>
-                        </div>
-                        <button id="refOpenRegBtn" onclick="refOpenRegistration()"
-                            style="padding:10px 28px;background:#2e7d44;color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:14px;">
-                            ✅ Submit &amp; Open Registration
-                        </button>
+                <!-- Candidates list card -->
+                <div class="ref-card" id="refBtCandidatesCard" style="display:none;">
+                    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+                        <h2 id="refBtCandidatesTitle" style="margin:0;">Candidates</h2>
+                        <button class="bt-start-exam-btn" onclick="refBtStartExam()">&#9654;&#xFE0E; Start Examination</button>
                     </div>
-                    <div id="refOpenRegMsg" style="margin-top:10px;font-size:13px;text-align:right;"></div>
+                    <div class="ref-table-wrap">
+                        <table class="ref-data">
+                            <thead>
+                                <tr><th>Player</th><th>Current rank</th><th>Requested rank</th><th>Notes</th><th>Status</th><th>Actions</th></tr>
+                            </thead>
+                            <tbody id="refBtCandidatesTbody">
+                                <tr><td colspan="6">Select an event above.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
-        </section>
 
-        <!-- ── Assigned Categories ────────────────────────── -->
-        <section id="assigned-categories-section" class="dashboard-section" style="display:none;">
-            <div class="dashboard-card">
-                <div class="dashboard-card-header">
-                    <h2 class="dashboard-card-title">Assigned Categories</h2>
+                <!-- Exam mode panel -->
+                <div class="ref-card" id="refBtExamPanel">
+                    <div class="bt-exam-header">
+                        <div>
+                            <p class="bt-exam-title" id="refBtExamTitle">Examination</p>
+                            <p class="bt-exam-subtitle">Click Pass or Fail for each candidate. Results are saved immediately and rank is updated on pass.</p>
+                        </div>
+                        <button class="bt-close-exam-btn" onclick="refBtCloseExam()">&#10005; Close Exam</button>
+                    </div>
+                    <div id="refBtPendingWarning" class="bt-approve-bar" style="display:none;">
+                        <span>&#9888;&#xFE0E; Some candidates are still <strong>pending</strong> — approve them first so they appear here.</span>
+                    </div>
+                    <div class="bt-exam-grid" id="refBtExamGrid"></div>
                 </div>
-                <div class="data-table-container loaded">
-                    <table class="data-table" id="categoriesFullTable">
-                        <thead>
-                            <tr>
-                                <th>Tournament</th>
-                                <th>Discipline</th>
-                                <th>Gender</th>
-                                <th>Age Group</th>
-                                <th>Weight Class</th>
-                                <th>Format</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="categoriesTableBody">
-                            <tr>
-                                <td colspan="7" style="text-align:center;padding:20px;color:#666;">Loading...</td>
-                            </tr>
-                        </tbody>
-                    </table>
+
+                <!-- Result notes modal (shown when Pass/Fail clicked in exam mode) -->
+                <div id="refBtResultModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:3000;align-items:center;justify-content:center;">
+                    <div style="background:#fff;border-radius:14px;padding:28px 24px;max-width:420px;width:92%;box-shadow:0 8px 32px rgba(0,0,0,.2);">
+                        <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
+                            <div id="refBtModalPhoto" style="width:60px;height:60px;border-radius:50%;overflow:hidden;flex-shrink:0;border:3px solid #2e7d32;background:#e8f5e9;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;color:#2e7d32;"></div>
+                            <div>
+                                <h3 style="margin:0 0 2px;color:#1b5e20;" id="refBtResultTitle">Record Result</h3>
+                                <p style="margin:0;font-size:13px;color:#666;" id="refBtResultRankLine"></p>
+                            </div>
+                        </div>
+                        <input type="hidden" id="refBtResultCandidateId">
+                        <input type="hidden" id="refBtResultPreset">
+                        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Result</label>
+                        <select id="refBtResultValue" style="display:block;width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:8px;font-size:14px;margin-bottom:14px;">
+                            <option value="passed">&#10003; Passed</option>
+                            <option value="failed">&#10007; Failed</option>
+                        </select>
+                        <label style="font-size:13px;font-weight:600;display:block;margin-bottom:5px;">Examiner notes (optional)</label>
+                        <textarea id="refBtResultNotes" rows="3" placeholder="Performance notes, observations…" style="display:block;width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:8px;font-size:14px;resize:vertical;margin-bottom:18px;box-sizing:border-box;"></textarea>
+                        <div style="display:flex;gap:10px;justify-content:flex-end;">
+                            <button type="button" onclick="refBtCloseResultModal()" style="padding:10px 18px;border:1px solid #ccc;border-radius:8px;background:#fff;cursor:pointer;font-size:14px;">Cancel</button>
+                            <button type="button" id="refBtResultSaveBtn" onclick="refBtRecordResult()" style="padding:10px 18px;border:none;border-radius:8px;background:#2e7d32;color:#fff;font-weight:700;cursor:pointer;font-size:14px;">Save Result</button>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </section>
+            </section>
+        </main>
+    </div>
 
-        <!-- Format modal mount point -->
-        <div id="formatModalContainer"></div>
+    <script>
+        var REF_SUPABASE_URL = 'https://uqlpxdphikmmpdsuojil.supabase.co';
+        var REF_SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxbHB4ZHBoaWttbXBkc3VvamlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3OTI5NDEsImV4cCI6MjA4NjM2ODk0MX0.03xQ8ltwZm_TTEAHDOHocfFKG2j_PHmL1Lzt2t-aFJU';
 
-        <!-- ── Match Management (placeholder) ────────────── -->
-        <section id="match-management-section" class="dashboard-section" style="display:none;">
-            <div class="dashboard-card">
-                <div class="dashboard-card-header">
-                    <h2 class="dashboard-card-title">Match Management</h2>
-                </div>
-                <div class="placeholder-box">
-                    <div class="icon">⚔️</div>
-                    <h3>Match Management</h3>
-                    <p>Match management tools will be available here once matches are assigned to you by the SKF Admin.</p>
-                    <span class="coming-soon-badge">Coming Soon</span>
-                </div>
-            </div>
-        </section>
+        var _refRole = '';
+        var _refSb = null;
+        var _refUserId = null;
+        var _selectedTournament = null;
+        var _refOpsRtUnsub = null;
+        var _refOpsRtDebounce = null;
+        var _refOvRtUnsub = null;
+        var _refOvRtDebounce = null;
 
-        <!-- ── Draw Setup (placeholder) ──────────────────── -->
-        <section id="draw-setup-section" class="dashboard-section" style="display:none;">
-            <div class="dashboard-card">
-                <div class="dashboard-card-header">
-                    <h2 class="dashboard-card-title">Draw Setup</h2>
-                </div>
-                <div class="placeholder-box">
-                    <div class="icon">🎯</div>
-                    <h3>Draw Setup</h3>
-                    <p>Draw generation and bracket setup for assigned categories will be available here in a future update.</p>
-                    <span class="coming-soon-badge">Coming Soon</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- ── Results Entry (placeholder) ──────────────── -->
-        <section id="results-entry-section" class="dashboard-section" style="display:none;">
-            <div class="dashboard-card">
-                <div class="dashboard-card-header">
-                    <h2 class="dashboard-card-title">Results Entry</h2>
-                </div>
-                <div class="placeholder-box">
-                    <div class="icon">📋</div>
-                    <h3>Results Entry</h3>
-                    <p>Match results entry and scoring tools will be available here once match management is active.</p>
-                    <span class="coming-soon-badge">Coming Soon</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- ── Profile ────────────────────────────────────── -->
-        <section id="profile-section" class="dashboard-section" style="display:none;">
-            <div class="dashboard-card">
-                <div class="dashboard-card-header">
-                    <h2 class="dashboard-card-title">My Profile</h2>
-                </div>
-                <div id="profileContent">
-                    <p style="color:#666;">Loading profile...</p>
-                </div>
-            </div>
-        </section>
-
-    </main>
-</div>
-
-<script>
-    // ── Constants ─────────────────────────────────────────────────
-    const API_BASE_URL   = 'http://localhost:5000/api';
-    const ALLOWED_ROLES  = ['referee', 'referees_plus'];
-    const API_TIMEOUT_MS = 4000;
-    const LOCAL_TEST_MODE = true;
-
-    // ── Init ──────────────────────────────────────────────────────
-    document.addEventListener('DOMContentLoaded', function () {
-        checkRefereeAuth();
-        initMenu();
-        loadOverviewData();
-    });
-
-    // ── Logout ────────────────────────────────────────────────────
-    function logout() {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        window.location.href = 'index.html';
-    }
-
-    // ── Fetch with timeout ────────────────────────────────────────
-    function fetchWithTimeout(url, options) {
-        var controller = new AbortController();
-        var timer = setTimeout(function() { controller.abort(); }, API_TIMEOUT_MS);
-        return fetch(url, Object.assign({}, options || {}, { signal: controller.signal }))
-            .finally(function() { clearTimeout(timer); });
-    }
-
-    // ── Auth guard ────────────────────────────────────────────────
-    function checkRefereeAuth() {
-        var token   = localStorage.getItem('token');
-        var userStr = localStorage.getItem('user');
-        if (!token || !userStr) {
-            window.location.href = 'index.html';
-            return;
+        function refOpsUnsubscribeRealtime() {
+            if (_refOpsRtUnsub) {
+                try { _refOpsRtUnsub.unsubscribe(); } catch (e) {}
+                _refOpsRtUnsub = null;
+            }
         }
-        var user = JSON.parse(userStr);
-        var role = (user.role || '').toLowerCase();
-        if (!ALLOWED_ROLES.includes(role)) {
-            if (role === 'skf_admin' || role === 'admin') window.location.href = 'admin-dashboard.html';
-            else if (role === 'player') window.location.href = 'player-dashboard.html';
-            else window.location.href = 'index.html';
-            return;
-        }
-        var el = document.getElementById('userDisplay');
-        if (el) {
-            var label = role === 'referees_plus' ? 'Referee+' : 'Referee';
-            var name  = user.fullName || user.full_name || user.email || label;
-            el.textContent = 'Welcome, ' + name + ' (' + label + ')';
-        }
-    }
 
-    // ── Menu ──────────────────────────────────────────────────────
-    function initMenu() {
-        var toggle = document.getElementById('menuToggle');
-        var nav    = document.getElementById('dashboardNav');
-        if (toggle && nav) {
-            toggle.addEventListener('click', function () {
-                this.classList.toggle('active');
-                nav.classList.toggle('active');
+        function refOpsSubscribeRealtime(tournamentId) {
+            refOpsUnsubscribeRealtime();
+            if (!tournamentId || typeof SKFMatchRealtime === 'undefined') return;
+            var sb = _refSb || refSupabase();
+            if (!sb) return;
+            _refOpsRtUnsub = SKFMatchRealtime.subscribeTournamentMatches(sb, tournamentId, function () {
+                clearTimeout(_refOpsRtDebounce);
+                _refOpsRtDebounce = setTimeout(function () {
+                    var sec = document.getElementById('operations-section');
+                    if (!sec || sec.style.display === 'none') return;
+                    var c = document.getElementById('opsCategorySelect');
+                    if (c && c.value) onOpsCategoryChange();
+                }, 350);
             });
         }
-    }
 
-    // ── Section switching ─────────────────────────────────────────
-    function showSection(name, evt) {
-        document.querySelectorAll('.dashboard-section').forEach(function(s) { s.style.display = 'none'; });
-        document.querySelectorAll('.nav-link').forEach(function(l) { l.classList.remove('active'); });
-        var section = document.getElementById(name + '-section');
-        if (section) section.style.display = 'block';
-        if (evt && evt.target) evt.target.classList.add('active');
-        if (window.innerWidth <= 768) {
+        function refOvUnsubscribeRealtime() {
+            if (_refOvRtUnsub) {
+                try { _refOvRtUnsub.unsubscribe(); } catch (e) {}
+                _refOvRtUnsub = null;
+            }
+        }
+
+        function refOvSubscribeRealtime(tournamentIds) {
+            refOvUnsubscribeRealtime();
+            if (!tournamentIds || !tournamentIds.length || typeof SKFMatchRealtime === 'undefined') return;
+            var sb = _refSb || refSupabase();
+            if (!sb) return;
+            _refOvRtUnsub = SKFMatchRealtime.subscribeTournamentsMatches(sb, tournamentIds, function () {
+                clearTimeout(_refOvRtDebounce);
+                _refOvRtDebounce = setTimeout(function () {
+                    if (_refSb) loadRefereeOverview();
+                    var sec = document.getElementById('operations-section');
+                    if (sec && sec.style.display !== 'none') {
+                        var cx = document.getElementById('opsCategorySelect');
+                        if (cx && cx.value) onOpsCategoryChange();
+                    }
+                }, 350);
+            });
+        }
+
+        function opsControlLabel(m) {
+            var st = String(m.status || '').toLowerCase();
+            if (st === 'scheduled' && m.red_user_id && m.blue_user_id) return 'Start';
+            if (st === 'live' || st === 'paused') return 'Continue';
+            return 'Control';
+        }
+
+        function openNewMatchControl(matchId, catId, tid) {
+            localStorage.setItem('skf_ref_match_id', matchId);
+            localStorage.setItem('skf_ref_category_id', catId);
+            localStorage.setItem('skf_ref_tournament_id', tid);
+            window.location.href = 'referee-match-control.html';
+        }
+
+        function closeRefMenu() {
             var nav = document.getElementById('dashboardNav');
-            var tog = document.getElementById('menuToggle');
+            var t = document.getElementById('menuToggle');
             if (nav) nav.classList.remove('active');
-            if (tog) tog.classList.remove('active');
+            if (t) t.classList.remove('active');
         }
-        if (name === 'assigned-tournaments') loadTournaments(false);
-        if (name === 'assigned-categories')  loadCategories(false);
-        if (name === 'profile')              loadProfile();
-        animateCards();
-    }
 
-    // ── Overview loader ───────────────────────────────────────────
-    async function loadOverviewData() {
-        await loadTournaments(true);
-        await loadCategories(true);
-        animateCards();
-    }
-
-    // ── Get current referee ID ────────────────────────────────────
-    function getMyId() {
-        var user = JSON.parse(localStorage.getItem('user') || '{}');
-        return user.id || '';
-    }
-
-    // ── Get my assigned tournaments from localStorage ──────────────
-    function getMyTournaments() {
-        var uid         = getMyId();
-        var assignments = JSON.parse(localStorage.getItem('skf_local_ref_assignments') || '[]');
-        var allT        = JSON.parse(localStorage.getItem('skf_local_tournaments') || '[]');
-        var mine        = assignments.filter(function(a) { return a.refereeId === uid; });
-
-        return mine.map(function(a) {
-            // Use embedded tournament object if present
-            if (a.tournament && a.tournament.id) return a.tournament;
-            // Otherwise look it up from the saved tournament list
-            return allT.find(function(t) { return t.id === a.tournamentId; }) || null;
-        }).filter(Boolean);
-    }
-
-    // ── Get categories for my tournaments ─────────────────────────
-    function getMyCategories() {
-        var uid = getMyId();
-        var assignments = JSON.parse(localStorage.getItem('skf_local_ref_assignments') || '[]');
-        var mine = assignments.filter(function(a) { return a.refereeId === uid; });
-        var allCats = [];
-        mine.forEach(function(a) {
-            var tournament = a.tournament;
-            if (!tournament || !tournament.id) return;
-            // Try skf_local_cats_{id} first (saved by admin dashboard)
-            var stored = JSON.parse(localStorage.getItem('skf_local_cats_' + tournament.id) || '[]');
-            // Also try the allCategoriesByTournament key saved by admin
-            if (!stored.length) {
-                stored = JSON.parse(localStorage.getItem('skf_cats_' + tournament.id) || '[]');
+        function showSection(name, evt) {
+            if (evt && evt.preventDefault) evt.preventDefault();
+            document.querySelectorAll('.dashboard-section').forEach(function (s) { s.style.display = 'none'; });
+            var sec = document.getElementById(name + '-section');
+            if (sec) sec.style.display = 'block';
+            document.querySelectorAll('#dashboardNav .nav-link').forEach(function (a) { a.classList.remove('active'); });
+            if (evt && evt.currentTarget) evt.currentTarget.classList.add('active');
+            else {
+                var navMatch = document.querySelector('#dashboardNav .nav-link[data-section="' + name + '"]');
+                if (navMatch) navMatch.classList.add('active');
             }
-            stored.forEach(function(c) {
-                allCats.push({
-                    id:               c.id,
-                    tournamentId:     tournament.id,
-                    tournamentName:   tournament.name,
-                    discipline:       c.discipline,
-                    gender:           c.gender,
-                    ageGroup:         c.age_group || c.ageGroup || '',
-                    weightClass:      c.weight_class || c.weightClass || '',
-                    competitionFormat: getLocalFormat(c.id) || c.competition_format || c.competitionFormat || ''
+            closeRefMenu();
+            if (name === 'setup' && (_refRole === 'referees_plus')) loadTournamentsTable();
+            if (name === 'operations') loadOperationsView();
+            if (name === 'belttest' && (_refRole === 'referees_plus')) loadRefBtEvents();
+            if (typeof SKFRoleLayout !== 'undefined') {
+                var map = { overview: 'dashboard', operations: 'operations', setup: 'setup', belttest: 'belttest' };
+                SKFRoleLayout.applyRefereeSidebar(map[name] || 'dashboard');
+            }
+        }
+
+        function isRefLocalToken() {
+            var t = localStorage.getItem('token') || '';
+            return !t || t.indexOf('local-token') === 0;
+        }
+
+        async function refreshRefJwtFromSupabaseAuth() {
+            if (isRefLocalToken()) return;
+            if (typeof supabase === 'undefined') return;
+            try {
+                var sb = supabase.createClient(REF_SUPABASE_URL, REF_SUPABASE_ANON, {
+                    auth: { persistSession: true, storage: localStorage, autoRefreshToken: true, detectSessionInUrl: false }
                 });
+                var r1 = await sb.auth.getSession();
+                var sess = r1.data && r1.data.session;
+                if (!sess) return;
+                var expMs = sess.expires_at ? sess.expires_at * 1000 : 0;
+                if (!expMs || expMs < Date.now() + 120000) {
+                    var r2 = await sb.auth.refreshSession();
+                    if (r2.data && r2.data.session) sess = r2.data.session;
+                }
+                if (sess && sess.access_token) localStorage.setItem('token', sess.access_token);
+            } catch (e) {
+                console.warn('refreshRefJwtFromSupabaseAuth:', e);
+            }
+        }
+
+        function refSupabase() {
+            if (typeof supabase === 'undefined') return null;
+            var tok = localStorage.getItem('token');
+            if (!tok || tok.indexOf('local-token') === 0) return null;
+            return supabase.createClient(REF_SUPABASE_URL, REF_SUPABASE_ANON, {
+                global: { headers: { Authorization: 'Bearer ' + tok } },
+                auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
             });
-        });
-        return allCats;
-    }
-
-    // ── Load tournaments ──────────────────────────────────────────
-    async function loadTournaments(forOverview) {
-        var token = localStorage.getItem('token');
-        var uid   = getMyId();
-        var tournaments = [];
-
-        if (!LOCAL_TEST_MODE) {
-            try {
-                var res = await fetchWithTimeout(API_BASE_URL + '/tournament/by-referee/' + uid, {
-                    headers: token ? { 'Authorization': 'Bearer ' + token } : {}
-                });
-                if (res.ok) { tournaments = await res.json(); }
-            } catch(e) { /* fall through */ }
         }
 
-        if (!tournaments.length) {
-            tournaments = getMyTournaments();
+        function escapeHtml(s) {
+            if (s == null || s === '') return '';
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
         }
 
-        var statEl = document.getElementById('statTournaments');
-        if (statEl) statEl.textContent = tournaments.length;
-        renderTournaments(tournaments, forOverview);
-    }
-
-    // ── Load categories ───────────────────────────────────────────
-    async function loadCategories(forOverview) {
-        var token = localStorage.getItem('token');
-        var cats  = [];
-
-        if (!LOCAL_TEST_MODE) {
-            try {
-                var res = await fetchWithTimeout(API_BASE_URL + '/tournament/assigned-categories', {
-                    headers: token ? { 'Authorization': 'Bearer ' + token } : {}
-                });
-                if (res.ok) { cats = await res.json(); }
-            } catch(e) { /* fall through */ }
+        function wkfGenderLabel(g) {
+            var s = String(g || '').toLowerCase();
+            if (s === 'male') return 'Male';
+            if (s === 'female') return 'Female';
+            return g || '—';
         }
 
-        if (!cats.length) {
-            cats = getMyCategories();
+        function wkfAgeCategoryLabel(a) {
+            var s = String(a || '').toLowerCase();
+            if (s === 'cadet') return 'Cadet';
+            if (s === 'junior') return 'Junior';
+            if (s === 'u21' || s === 'under 21' || s === 'under21') return 'U21';
+            if (s === 'senior') return 'Senior';
+            return a || '—';
         }
 
-        // Merge saved formats
-        cats.forEach(function(c) {
-            if (!c.competitionFormat) {
-                var local = getLocalFormat(c.id);
-                if (local) c.competitionFormat = local;
+        function wkfEventTypeLabel(ev) {
+            var s = String(ev || '').toLowerCase();
+            if (s === 'kumite') return 'Kumite';
+            if (s === 'kata_individual' || s === 'kata') return 'Kata';
+            if (s === 'kata_team' || s === 'team_kata') return 'Team Kata';
+            return ev || 'Event';
+        }
+
+        function wkfCategoryLabelFromRow(c) {
+            if (!c) return 'Category';
+            var ev = String(c.event_type || '').toLowerCase();
+            if (!ev) ev = (String(c.discipline || '').toLowerCase() === 'kumite') ? 'kumite' : 'kata_individual';
+            if (String(c.is_team_event).toLowerCase() === 'true') ev = 'kata_team';
+            var isKumite = ev === 'kumite';
+            var base = wkfGenderLabel(c.gender) + ' ' + wkfAgeCategoryLabel(c.age_category || c.age_group) + ' ' + wkfEventTypeLabel(ev);
+            if (isKumite && c.weight_class) base += ' ' + String(c.weight_class);
+            return base;
+        }
+
+        async function loadTournamentsTable() {
+            var tbody = document.getElementById('tournamentsBody');
+            await refreshRefJwtFromSupabaseAuth();
+            _refSb = refSupabase();
+            var sb = _refSb;
+            if (!sb || !tbody) return;
+            if (_refRole !== 'referees_plus') {
+                tbody.innerHTML = '<tr><td colspan="5">Tournament setup is limited to <strong>Referee+</strong> accounts.</td></tr>';
+                return;
             }
-        });
-
-        var statEl = document.getElementById('statCategories');
-        if (statEl) statEl.textContent = cats.length;
-        renderCategories(cats, forOverview);
-    }
-
-    // ── Render tournaments ────────────────────────────────────────
-    // ── Referee category management state ────────────────────────
-    var _refCatTournamentId   = null;
-    var _refCatTournamentName = '';
-    var REF_CONFIRMED_KEY     = 'skf_ref_confirmed_';   // + tournamentId -> true
-
-    function isRefConfirmed(tid) {
-        return localStorage.getItem(REF_CONFIRMED_KEY + tid) === 'true';
-    }
-
-    function renderTournaments(list, forOverview) {
-        var emptyMsg = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#888;">No tournaments assigned yet. Ask the SKF Admin to assign you.</td></tr>';
-
-        var tbody = document.getElementById('tournamentsTableBody');
-        if (tbody) {
-            tbody.innerHTML = list.length === 0 ? emptyMsg : list.map(function(t) {
-                var start     = t.startDate || t.start_date;
-                var confirmed = isRefConfirmed(t.id);
-                var regStatus = confirmed
-                    ? '<span style="color:#2e7d44;font-weight:bold;font-size:12px;">&#10003; Open</span>'
-                    : '<span style="color:#999;font-size:12px;">Pending Setup</span>';
-                return '<tr>' +
-                    '<td><strong>' + esc(t.name || 'N/A') + '</strong></td>' +
-                    '<td>' + esc(t.location || 'N/A') + '</td>' +
-                    '<td>' + fmtDate(start) + '</td>' +
-                    '<td>' + statusPill(t.status) + '</td>' +
-                    '<td>' + regStatus + '</td>' +
-                    '<td><button class="btn" style="font-size:12px;padding:5px 14px;" ' +
-                        'onclick="openRefCatManager(\'' + t.id + '\',\'' + esc(t.name || '') + '\')">' +
-                        'Manage</button></td>' +
-                    '</tr>';
+            tbody.innerHTML = '<tr><td colspan="5">Loading…</td></tr>';
+            var q = await sb.from('tournaments').select('id,name,start_date,status,competition_state,is_active').order('start_date', { ascending: false }).limit(50);
+            if (q.error && /competition_state|column|schema/i.test(String(q.error.message || ''))) {
+                q = await sb.from('tournaments').select('id,name,start_date,status,is_active').order('start_date', { ascending: false }).limit(50);
+                if (!q.error && q.data) q.data.forEach(function (t) { t.competition_state = 'setup'; });
+            }
+            if (q.error) {
+                console.error('[REF]', q.error);
+                tbody.innerHTML = '<tr><td colspan="5" style="color:#c62828;">Unable to load tournaments. Please try again or contact SKF support.</td></tr>';
+                return;
+            }
+            var rows = q.data || [];
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="5">No active tournaments.</td></tr>';
+                return;
+            }
+            tbody.innerHTML = rows.map(function (t) {
+                var cs = t.competition_state || 'setup';
+                return '<tr>'
+                    + '<td>' + escapeHtml(t.name || '') + '</td>'
+                    + '<td>' + escapeHtml(t.start_date ? String(t.start_date).slice(0, 10) : '—') + '</td>'
+                    + '<td><span class="ref-badge">' + escapeHtml(t.status || '') + '</span></td>'
+                    + '<td><span class="ref-badge ref-badge-warn">' + escapeHtml(cs) + '</span></td>'
+                    + '<td><button type="button" class="ref-btn ref-btn-secondary ref-open-t" data-id="' + escapeHtml(t.id) + '">Configure</button></td>'
+                    + '</tr>';
             }).join('');
+            tbody.querySelectorAll('.ref-open-t').forEach(function (btn) {
+                btn.onclick = function () { openTournamentDetail(btn.getAttribute('data-id')); };
+            });
         }
 
-        var oc = document.getElementById('overviewTournamentsContainer');
-        if (!forOverview || !oc) return;
-        if (list.length === 0) {
-            oc.innerHTML = '<p style="color:#888;padding:8px 0;">No tournaments assigned yet.</p>';
-            return;
+        async function showMatchPreview(sb, tournamentId, categoryId, disciplineLabel) {
+            var wrap = document.getElementById('refMatchPreview');
+            var meta = document.getElementById('refMatchPreviewMeta');
+            var body = document.getElementById('refMatchPreviewBody');
+            if (!wrap || !body) return;
+            wrap.style.display = 'block';
+            meta.textContent = 'Loading…';
+            body.innerHTML = '';
+            var mq = await sb.from('tournament_matches').select('round_number,bracket_position,status,red_user_id,blue_user_id')
+                .eq('category_id', categoryId).eq('tournament_id', tournamentId)
+                .order('round_number', { ascending: true }).order('bracket_position', { ascending: true });
+            if (mq.error) {
+                console.error('[REF]', mq.error);
+                meta.textContent = 'Unable to load match preview.';
+                return;
+            }
+            var rows = mq.data || [];
+            if (!rows.length) {
+                meta.textContent = (disciplineLabel || 'Category') + ' — no matches yet. Generate a draw first.';
+                return;
+            }
+            var ids = [];
+            rows.forEach(function (r) {
+                if (r.red_user_id) ids.push(r.red_user_id);
+                if (r.blue_user_id) ids.push(r.blue_user_id);
+            });
+            var uniq = ids.filter(function (id, idx) { return ids.indexOf(id) === idx; });
+            var umap = {};
+            if (uniq.length) {
+                var uq = await sb.from('users').select('id,full_name,email').in('id', uniq);
+                if (!uq.error && uq.data) uq.data.forEach(function (u) { umap[u.id] = u; });
+            }
+            meta.textContent = (disciplineLabel || '') + ' — ' + rows.length + ' match(es)';
+            var html = '<table class="ref-data"><thead><tr><th>Rd</th><th>#</th><th>Red</th><th>Blue</th><th>Status</th></tr></thead><tbody>';
+            rows.forEach(function (r) {
+                var rn = !r.red_user_id ? 'To be determined' : (umap[r.red_user_id] ? ((umap[r.red_user_id].full_name && String(umap[r.red_user_id].full_name).trim()) || (umap[r.red_user_id].email && String(umap[r.red_user_id].email).trim()) || 'Participant') : 'Participant');
+                var bn = !r.blue_user_id ? 'To be determined' : (umap[r.blue_user_id] ? ((umap[r.blue_user_id].full_name && String(umap[r.blue_user_id].full_name).trim()) || (umap[r.blue_user_id].email && String(umap[r.blue_user_id].email).trim()) || 'Participant') : 'Participant');
+                html += '<tr><td>' + escapeHtml(String(r.round_number)) + '</td><td>' + escapeHtml(String(r.bracket_position)) + '</td>'
+                    + '<td>' + escapeHtml(rn) + '</td><td>' + escapeHtml(bn) + '</td><td>' + escapeHtml(r.status || '') + '</td></tr>';
+            });
+            html += '</tbody></table>';
+            body.innerHTML = html;
         }
-        oc.innerHTML = '<table class="data-table"><thead><tr>' +
-            '<th>Tournament</th><th>Location</th><th>Start Date</th><th>Status</th>' +
-            '</tr></thead><tbody>' +
-            list.slice(0, 3).map(function(t) {
-                var start = t.startDate || t.start_date;
-                return '<tr>' +
-                    '<td><strong>' + esc(t.name || 'N/A') + '</strong></td>' +
-                    '<td>' + esc(t.location || 'N/A') + '</td>' +
-                    '<td>' + fmtDate(start) + '</td>' +
-                    '<td>' + statusPill(t.status) + '</td>' +
-                    '</tr>';
-            }).join('') + '</tbody></table>';
-    }
 
-    // ── Render categories ─────────────────────────────────────────
-    function renderCategories(list, forOverview) {
-        var emptyMsg = '<tr><td colspan="7" style="text-align:center;padding:20px;color:#888;">No categories assigned yet.</td></tr>';
+        async function openTournamentDetail(tid) {
+            if (_refRole !== 'referees_plus') return;
+            await refreshRefJwtFromSupabaseAuth();
+            _refSb = refSupabase();
+            var sb = _refSb;
+            var card = document.getElementById('detailCard');
+            if (!sb || !card) return;
+            var pv = document.getElementById('refMatchPreview');
+            if (pv) pv.style.display = 'none';
+            _selectedTournament = tid;
+            card.style.display = 'block';
+            document.getElementById('detailTitle').textContent = 'Categories';
+            document.getElementById('detailMeta').textContent = 'Loading…';
+            var cq = await sb.from('tournament_categories').select('*').eq('tournament_id', tid).order('discipline');
+            var tbody = document.getElementById('categoriesBody');
+            if (cq.error) {
+                console.error('[REF]', cq.error);
+                document.getElementById('detailMeta').textContent = 'Unable to load categories. Please try again or contact SKF support.';
+                tbody.innerHTML = '';
+                return;
+            }
+            var cats = cq.data || [];
+            var tq = await sb.from('tournaments').select('name,competition_state').eq('id', tid).maybeSingle();
+            if (tq.error && /competition_state|column|schema/i.test(String(tq.error.message || ''))) {
+                tq = await sb.from('tournaments').select('name').eq('id', tid).maybeSingle();
+                if (tq.data) tq.data.competition_state = 'setup';
+            }
+            var tname = (tq.data && tq.data.name) || 'Tournament';
+            var tcs = (tq.data && tq.data.competition_state) || 'setup';
+            document.getElementById('detailTitle').textContent = 'Setup — ' + tname;
+            if (!cats.length) {
+                document.getElementById('detailMeta').textContent = 'No categories linked to this tournament. SKF Admin must attach official categories first.';
+            } else {
+                document.getElementById('detailMeta').textContent = cats.length + ' categories · current competition state: ' + tcs;
+            }
 
-        var tbody = document.getElementById('categoriesTableBody');
-        if (tbody) {
-            tbody.innerHTML = list.length === 0 ? emptyMsg : list.map(function(c, idx) {
-                var fmt = c.competitionFormat || c.competition_format || '';
-                return '<tr>' +
-                    '<td>' + esc(c.tournamentName || 'N/A') + '</td>' +
-                    '<td>' + disciplineBadge(c.discipline) + '</td>' +
-                    '<td style="text-transform:capitalize;">' + esc(c.gender || 'N/A') + '</td>' +
-                    '<td>' + esc(c.ageGroup || c.age_group || 'N/A') + '</td>' +
-                    '<td>' + esc(c.weightClass || c.weight_class || 'N/A') + '</td>' +
-                    '<td>' + formatBadge(fmt) + '</td>' +
-                    '<td><button class="btn" style="font-size:12px;padding:5px 12px;" ' +
-                        'data-tid="' + esc(c.tournamentId) + '" ' +
-                        'data-cid="' + esc(c.id) + '" ' +
-                        'data-tname="' + esc(c.tournamentName || '') + '" ' +
-                        'data-cdesc="' + esc((c.discipline||'') + ' / ' + (c.gender||'') + ' / ' + (c.ageGroup||c.age_group||'')) + '" ' +
-                        'data-fmt="' + esc(fmt) + '" ' +
-                        'onclick="handleSetFormat(this)">Set Format</button></td>' +
-                    '</tr>';
+            var sel = document.getElementById('tournamentStateSelect');
+            sel.innerHTML = ['setup', 'ready', 'live', 'completed'].map(function (s) {
+                return '<option value="' + s + '"' + (s === tcs ? ' selected' : '') + '>' + s + '</option>';
             }).join('');
+            document.getElementById('stateHint').textContent = _refRole === 'referees_plus'
+                ? 'Use Ready when draws are finalized. Live / completed are normally set when the event runs (SKF may also change these in admin).'
+                : '';
+
+            var matchByCat = {};
+            var mqAll = await sb.from('tournament_matches').select('category_id').eq('tournament_id', tid);
+            if (!mqAll.error && mqAll.data) {
+                mqAll.data.forEach(function (m) {
+                    if (m.category_id) matchByCat[m.category_id] = (matchByCat[m.category_id] || 0) + 1;
+                });
+            }
+
+            tbody.innerHTML = '';
+            for (var i = 0; i < cats.length; i++) {
+                var c = cats[i];
+                var rc = await sb.from('tournament_registrations').select('id', { count: 'exact', head: true })
+                    .eq('status', 'approved')
+                    .or('category_id.eq.' + c.id + ',tournament_category_id.eq.' + c.id);
+                var cnt = (!rc.error && rc.count != null) ? rc.count : '—';
+                var mc = matchByCat[c.id] || 0;
+                var bt = c.bracket_type || 'knockout';
+                var label = wkfCategoryLabelFromRow(c);
+                var ev = String(c.event_type || '').toLowerCase();
+                if (!ev) ev = (String(c.discipline || '').toLowerCase() === 'kumite') ? 'kumite' : 'kata_individual';
+                if (String(c.is_team_event).toLowerCase() === 'true') ev = 'kata_team';
+                var isKumite = ev === 'kumite';
+                var tr = document.createElement('tr');
+                tr.innerHTML = '<td>' + escapeHtml(wkfEventTypeLabel(ev)) + '</td>'
+                    + '<td>' + escapeHtml(wkfGenderLabel(c.gender || '')) + '</td>'
+                    + '<td>' + escapeHtml(wkfAgeCategoryLabel(c.age_category || c.age_group || '')) + '</td>'
+                    + '<td>' + escapeHtml(isKumite ? (c.weight_class || '—') : '—') + '</td>'
+                    + '<td><select class="ref-select ref-bracket-type" data-cid="' + escapeHtml(c.id) + '">'
+                    + '<option value="knockout"' + (bt === 'knockout' ? ' selected' : '') + '>Knockout</option>'
+                    + '<option value="league"' + (bt === 'league' ? ' selected' : '') + '>League (round robin)</option>'
+                    + '</select></td>'
+                    + '<td>' + cnt + '</td>'
+                    + '<td>' + mc + '</td>'
+                    + '<td class="ref-cat-actions"></td>';
+                var actions = tr.querySelector('.ref-cat-actions');
+                var saveBt = document.createElement('button');
+                saveBt.type = 'button';
+                saveBt.className = 'ref-btn ref-btn-secondary';
+                saveBt.textContent = 'Save type';
+                saveBt.onclick = (function (cid, row, tId) {
+                    return async function () {
+                        var selBt = row.querySelector('.ref-bracket-type');
+                        var v = selBt ? selBt.value : 'knockout';
+                        var up = await sb.from('tournament_categories').update({
+                            bracket_type: v,
+                            updated_at: new Date().toISOString()
+                        }).eq('id', cid);
+                        if (up.error) { console.error('[REF]', up.error); alert('Unable to save. Please try again or contact SKF support.'); return; }
+                        openTournamentDetail(tId);
+                    };
+                })(c.id, tr, tid);
+                actions.appendChild(saveBt);
+                if (bt === 'knockout') {
+                    var gen = document.createElement('button');
+                    gen.type = 'button';
+                    gen.className = 'ref-btn ref-btn-primary';
+                    gen.style.marginLeft = '6px';
+                    gen.textContent = 'Generate knockout';
+                    gen.onclick = (function (cid, tId, approvedCount, categoryLabel) {
+                        return async function () {
+                            if (approvedCount < 2) {
+                                alert('This category has fewer than 2 approved registrations. Approve registrations first, then generate a draw.\n\n' + (categoryLabel || 'Category'));
+                                return;
+                            }
+                            if ((approvedCount & (approvedCount - 1)) !== 0) {
+                                alert('Knockout requires a power-of-two approved count: 4, 8, 16, ...\n\nApproved now: ' + approvedCount + '\n\n' + (categoryLabel || 'Category'));
+                                return;
+                            }
+                            if (!confirm('Rebuild knockout bracket from approved registrations? Requires a power-of-two count (4, 8, 16, …).')) return;
+                            var r = await sb.rpc('referee_plus_generate_knockout_bracket', { p_category_id: cid });
+                            if (r.error) {
+                                console.error('[REF+]', r.error); alert('Could not generate the knockout bracket. Please try again or contact SKF support.');
+                                return;
+                            }
+                            alert('Knockout bracket created.');
+                            openTournamentDetail(tId);
+                        };
+                    })(c.id, tid, (typeof cnt === 'number' ? cnt : (parseInt(String(cnt || ''), 10) || 0)), label);
+                    actions.appendChild(gen);
+                } else if (bt === 'league') {
+                    var genL = document.createElement('button');
+                    genL.type = 'button';
+                    genL.className = 'ref-btn ref-btn-primary';
+                    genL.style.marginLeft = '6px';
+                    genL.textContent = 'Generate league';
+                    genL.onclick = (function (cid, tId, approvedCount, categoryLabel) {
+                        return async function () {
+                            if (approvedCount < 2) {
+                                alert('This category has fewer than 2 approved registrations. Approve registrations first, then generate a draw.\n\n' + (categoryLabel || 'Category'));
+                                return;
+                            }
+                            if (!confirm('Rebuild the round-robin schedule? This creates one bout between each pair of approved athletes in this category.')) return;
+                            var r = await sb.rpc('referee_plus_generate_league_round_robin', { p_category_id: cid });
+                            if (r.error) {
+                                console.error('[REF+]', r.error); alert('Could not generate the league schedule. Please try again or contact SKF support.');
+                                return;
+                            }
+                            alert('League schedule created.');
+                            openTournamentDetail(tId);
+                        };
+                    })(c.id, tid, (typeof cnt === 'number' ? cnt : (parseInt(String(cnt || ''), 10) || 0)), label);
+                    actions.appendChild(genL);
+                }
+                var prevBt = document.createElement('button');
+                prevBt.type = 'button';
+                prevBt.className = 'ref-btn ref-btn-secondary';
+                prevBt.style.marginLeft = '6px';
+                prevBt.textContent = 'Preview';
+                prevBt.onclick = (function (cid, label, tId) {
+                    return function () { showMatchPreview(sb, tId, cid, label); };
+                })(c.id, label, tid);
+                actions.appendChild(prevBt);
+                tbody.appendChild(tr);
+            }
+
+            var saveState = document.getElementById('btnSaveTournamentState');
+            saveState.onclick = async function () {
+                var v = sel.value;
+                var up = await sb.from('tournaments').update({
+                    competition_state: v,
+                    updated_at: new Date().toISOString()
+                }).eq('id', tid);
+                if (up.error) { console.error('[REF]', up.error); alert('Unable to save. Please try again or contact SKF support.'); return; }
+                alert('Tournament state updated.');
+                loadTournamentsTable();
+                openTournamentDetail(tid);
+            };
         }
 
-        var oc = document.getElementById('overviewCategoriesContainer');
-        if (!forOverview || !oc) return;
-        if (list.length === 0) {
-            oc.innerHTML = '<p style="color:#888;padding:8px 0;">No categories assigned yet.</p>';
-            return;
+        function parseOpsInt(s) {
+            var n = parseInt(String(s || '').trim(), 10);
+            return isNaN(n) ? null : n;
         }
-        oc.innerHTML = '<table class="data-table"><thead><tr>' +
-            '<th>Tournament</th><th>Discipline</th><th>Gender</th><th>Age Group</th><th>Format</th>' +
-            '</tr></thead><tbody>' +
-            list.slice(0, 3).map(function(c) {
-                var fmt = c.competitionFormat || c.competition_format || '';
-                return '<tr>' +
-                    '<td>' + esc(c.tournamentName || 'N/A') + '</td>' +
-                    '<td>' + disciplineBadge(c.discipline) + '</td>' +
-                    '<td style="text-transform:capitalize;">' + esc(c.gender || 'N/A') + '</td>' +
-                    '<td>' + esc(c.ageGroup || c.age_group || 'N/A') + '</td>' +
-                    '<td>' + formatBadge(fmt) + '</td>' +
-                    '</tr>';
-            }).join('') + '</tbody></table>';
-    }
 
-    // ── Set Format handler (uses data attributes — no string escaping issues) ──
-    function handleSetFormat(btn) {
-        var tId   = btn.getAttribute('data-tid');
-        var cId   = btn.getAttribute('data-cid');
-        var tName = btn.getAttribute('data-tname');
-        var cDesc = btn.getAttribute('data-cdesc');
-        var fmt   = btn.getAttribute('data-fmt');
-        openFormatModal(tId, cId, tName, cDesc, fmt);
-    }
-
-    // ── Format modal ──────────────────────────────────────────────
-    function openFormatModal(tournamentId, categoryId, tournamentName, categoryDesc, currentFormat) {
-        var mc = document.getElementById('formatModalContainer');
-        if (!mc) return;
-        var opts = [
-            { value: 'single_elimination', label: 'Single Elimination', desc: 'Lose once and you are out. Best for determining a clear champion.' },
-            { value: 'round_robin',        label: 'Round Robin',        desc: 'Every participant plays against every other participant once.' }
-        ];
-        var optsHtml = opts.map(function(o) {
-            var sel = o.value === currentFormat ? ' selected' : '';
-            var chk = o.value === currentFormat ? ' checked' : '';
-            return '<label class="fmt-option' + sel + '" onclick="selectFormat(this)">' +
-                '<input type="radio" name="fmt" value="' + o.value + '"' + chk + '>' +
-                '<div><div class="fmt-option-label">' + o.label + '</div>' +
-                '<div class="fmt-option-desc">' + o.desc + '</div></div>' +
-                '</label>';
-        }).join('');
-
-        mc.innerHTML =
-            '<div class="fmt-modal-overlay" onclick="if(event.target===this)closeFormatModal()">' +
-            '<div class="fmt-modal-box">' +
-                '<div class="fmt-modal-header">' +
-                    '<h2>Set Format &mdash; ' + esc(tournamentName) + '</h2>' +
-                    '<span onclick="closeFormatModal()" style="cursor:pointer;font-size:22px;">&times;</span>' +
-                '</div>' +
-                '<p style="font-size:13px;color:#666;margin:0 0 16px;">' + esc(categoryDesc) + '</p>' +
-                optsHtml +
-                '<div id="fmtMsg" style="font-size:13px;min-height:18px;margin-bottom:10px;"></div>' +
-                '<div style="display:flex;gap:10px;justify-content:flex-end;">' +
-                    '<button onclick="closeFormatModal()" style="padding:10px 18px;border:1px solid #ddd;border-radius:6px;background:#fff;cursor:pointer;">Cancel</button>' +
-                    '<button id="fmtSaveBtn" data-tid="' + esc(tournamentId) + '" data-cid="' + esc(categoryId) + '" ' +
-                        'onclick="saveFormat(this)" ' +
-                        'style="padding:10px 22px;background:#3a7d44;color:#fff;border:none;border-radius:6px;font-weight:bold;cursor:pointer;">Save</button>' +
-                '</div>' +
-            '</div></div>';
-    }
-
-    function selectFormat(label) {
-        document.querySelectorAll('.fmt-option').forEach(function(el) { el.classList.remove('selected'); });
-        label.classList.add('selected');
-        var radio = label.querySelector('input[type=radio]');
-        if (radio) radio.checked = true;
-    }
-
-    async function saveFormat(btn) {
-        var tournamentId = btn.getAttribute('data-tid');
-        var categoryId   = btn.getAttribute('data-cid');
-        var selected = document.querySelector('.fmt-option.selected input[type=radio]');
-        var msg = document.getElementById('fmtMsg');
-        if (!selected || !selected.value) {
-            if (msg) { msg.style.color = '#c62828'; msg.textContent = 'Please select a format first.'; }
-            return;
-        }
-        var fmt   = selected.value;
-        var token = localStorage.getItem('token');
-
-        // Always save locally immediately
-        storeLocalFormat(categoryId, fmt);
-
-        if (!LOCAL_TEST_MODE) {
-            try {
-                var res = await fetchWithTimeout(
-                    API_BASE_URL + '/tournament/' + tournamentId + '/categories/' + categoryId + '/format',
-                    { method: 'PATCH', headers: Object.assign({'Content-Type':'application/json'}, token ? {'Authorization':'Bearer '+token} : {}), body: JSON.stringify({ format: fmt }) }
-                );
-                if (res.ok) {
-                    if (msg) { msg.style.color = '#2e7d32'; msg.textContent = 'Saved!'; }
-                    setTimeout(function() { closeFormatModal(); loadCategories(false); loadCategories(true); }, 800);
+        async function loadOperationsView() {
+            var selT = document.getElementById('opsTournamentSelect');
+            var selC = document.getElementById('opsCategorySelect');
+            var wrap = document.getElementById('opsMatchesWrap');
+            var hint = document.getElementById('opsHint');
+            if (!selT) return;
+            await refreshRefJwtFromSupabaseAuth();
+            _refSb = refSupabase();
+            var sb = _refSb;
+            selT.innerHTML = '<option value="">Loading…</option>';
+            selC.innerHTML = '<option value="">— Select category —</option>';
+            if (wrap) wrap.innerHTML = '';
+            if (hint) hint.textContent = '';
+            if (!sb) {
+                selT.innerHTML = '<option value="">Sign in required</option>';
+                return;
+            }
+            var list = [];
+            if (_refRole === 'referees_plus') {
+                var q = await sb.from('tournaments').select('id,name,start_date,status,competition_state').eq('is_active', true).order('start_date', { ascending: true });
+                if (q.error && /competition_state|column|schema/i.test(String(q.error.message || ''))) {
+                    q = await sb.from('tournaments').select('id,name,start_date,status').eq('is_active', true).order('start_date', { ascending: true });
+                }
+                if (q.error) {
+                    console.error('[OPS]', q.error);
+                    selT.innerHTML = '<option value="">Error</option>';
+                    alert('Unable to load tournaments. Please try again or contact SKF support.');
                     return;
                 }
-            } catch(e) { /* fall through to local */ }
-        }
-
-        if (msg) { msg.style.color = '#e65100'; msg.textContent = 'Saved locally.'; }
-        setTimeout(function() { closeFormatModal(); loadCategories(false); loadCategories(true); }, 800);
-    }
-
-    function closeFormatModal() {
-        var mc = document.getElementById('formatModalContainer');
-        if (mc) mc.innerHTML = '';
-    }
-
-    function storeLocalFormat(categoryId, fmt) {
-        var stored = JSON.parse(localStorage.getItem('skf_local_category_formats') || '{}');
-        stored[categoryId] = fmt;
-        localStorage.setItem('skf_local_category_formats', JSON.stringify(stored));
-    }
-
-    function getLocalFormat(categoryId) {
-        var stored = JSON.parse(localStorage.getItem('skf_local_category_formats') || '{}');
-        return stored[categoryId] || '';
-    }
-
-    // ── Profile ───────────────────────────────────────────────────
-    function loadProfile() {
-        var user = JSON.parse(localStorage.getItem('user') || '{}');
-        var el   = document.getElementById('profileContent');
-        if (!el) return;
-        var roleLabel = (user.role || '').toLowerCase() === 'referees_plus' ? 'Referee+' : 'Referee';
-        el.innerHTML =
-            '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:15px;">' +
-            row('Full Name', user.fullName || user.full_name || 'N/A') +
-            row('Email',     user.email    || 'N/A') +
-            row('Role',      roleLabel) +
-            row('ID',        user.id       || 'N/A') +
-            '</div>';
-    }
-    function row(label, val) {
-        return '<div style="padding:12px;background:#f9f9f9;border-radius:6px;">' +
-            '<strong style="color:#3a7d44;">' + label + ':</strong> ' + esc(String(val)) + '</div>';
-    }
-
-    // ── Utilities ─────────────────────────────────────────────────
-    function esc(s) {
-        return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-    }
-    function fmtDate(iso) {
-        if (!iso) return 'N/A';
-        try { return new Date(iso).toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' }); }
-        catch(e) { return iso; }
-    }
-    function statusPill(s) {
-        return '<span class="status-pill status-' + (s||'') + '">' + ({draft:'Draft',registration_open:'Reg. Open',registration_closed:'Reg. Closed'}[s]||s||'N/A') + '</span>';
-    }
-    function disciplineBadge(d) {
-        var cls = d === 'kata' ? 'discipline-kata' : 'discipline-kumite';
-        return '<span class="discipline-badge ' + cls + '">' + (d ? d.charAt(0).toUpperCase()+d.slice(1) : 'N/A') + '</span>';
-    }
-    function formatBadge(fmt) {
-        if (fmt === 'single_elimination') return '<span class="format-badge format-single">Single Elimination</span>';
-        if (fmt === 'round_robin')        return '<span class="format-badge format-round">Round Robin</span>';
-        return '<span class="format-badge format-none">Not Set</span>';
-    }
-
-    // ─────────────────────────────────────────────────────────────
-    // Referee Category Manager
-    // ─────────────────────────────────────────────────────────────
-    function openRefCatManager(tournamentId, tournamentName) {
-        _refCatTournamentId   = tournamentId;
-        _refCatTournamentName = tournamentName;
-        document.getElementById('refCatManagerTitle').textContent = 'Manage Categories: ' + tournamentName;
-        document.getElementById('refCatManagerPanel').style.display = 'block';
-        document.getElementById('refOpenRegMsg').textContent = '';
-        // Load existing cats from localStorage
-        _renderRefCatTable();
-        // Update Open Reg button label
-        var confirmed = isRefConfirmed(tournamentId);
-        var btn = document.getElementById('refOpenRegBtn');
-        if (confirmed) {
-            btn.textContent = 'Registration Already Open';
-            btn.style.background = '#888';
-            btn.disabled = true;
-        } else {
-            btn.innerHTML = 'Submit &amp; Open Registration';
-            btn.style.background = '#2e7d44';
-            btn.disabled = false;
-        }
-        // scroll into view
-        document.getElementById('refCatManagerPanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    function closeRefCatManager() {
-        document.getElementById('refCatManagerPanel').style.display = 'none';
-        _refCatTournamentId   = null;
-        _refCatTournamentName = '';
-    }
-
-    function _getRefCats() {
-        try {
-            return JSON.parse(localStorage.getItem('skf_local_cats_' + _refCatTournamentId) || '[]');
-        } catch(e) { return []; }
-    }
-
-    function _saveRefCats(cats) {
-        localStorage.setItem('skf_local_cats_' + _refCatTournamentId, JSON.stringify(cats));
-    }
-
-    function _renderRefCatTable() {
-        var cats = _getRefCats();
-        var tbody = document.getElementById('refCatTableBody');
-        if (!tbody) return;
-        if (cats.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:16px;color:#888;">No categories added yet.</td></tr>';
-            return;
-        }
-        tbody.innerHTML = cats.map(function(c, i) {
-            var fmt = c.competition_format || c.competitionFormat || '';
-            var fmtLabel = fmt === 'single_elimination' ? 'Single Elim.' : fmt === 'round_robin' ? 'Round Robin' : '—';
-            return '<tr>' +
-                '<td>' + disciplineBadge(c.discipline) + '</td>' +
-                '<td style="text-transform:capitalize;">' + esc(c.gender || '') + '</td>' +
-                '<td>' + esc(c.age_group || c.ageGroup || '') + '</td>' +
-                '<td>' + esc(c.weight_class || c.weightClass || '') + '</td>' +
-                '<td>' + fmtLabel + '</td>' +
-                '<td><button onclick="refRemoveCategory(' + i + ')" style="background:#c0392b;color:#fff;border:none;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:12px;">Remove</button></td>' +
-                '</tr>';
-        }).join('');
-    }
-
-    function refAddCategory() {
-        var discipline = document.getElementById('rcDiscipline').value;
-        var gender     = document.getElementById('rcGender').value;
-        var ageGroup   = document.getElementById('rcAgeGroup').value;
-        var weight     = document.getElementById('rcWeight').value;
-        var format     = document.getElementById('rcFormat').value;
-        var msg        = document.getElementById('rcMsg');
-
-        if (!discipline || !gender || !ageGroup || !weight) {
-            msg.style.color = '#c0392b';
-            msg.textContent = 'Please fill in Discipline, Gender, Age Group, and Weight.';
-            return;
-        }
-
-        var cats = _getRefCats();
-        // Check duplicate
-        var dup = cats.find(function(c) {
-            return (c.discipline === discipline) && (c.gender === gender) &&
-                   ((c.age_group||c.ageGroup) === ageGroup) && ((c.weight_class||c.weightClass) === weight);
-        });
-        if (dup) {
-            msg.style.color = '#c0392b';
-            msg.textContent = 'This category already exists.';
-            return;
-        }
-
-        cats.push({
-            id: 'local_' + Date.now(),
-            tournament_id: _refCatTournamentId,
-            discipline: discipline,
-            gender: gender,
-            age_group: ageGroup,
-            weight_class: weight,
-            competition_format: format || null
-        });
-        _saveRefCats(cats);
-        _renderRefCatTable();
-
-        // Reset form
-        ['rcDiscipline','rcGender','rcAgeGroup','rcWeight','rcFormat'].forEach(function(id) {
-            document.getElementById(id).value = '';
-        });
-        msg.style.color = '#2e7d44';
-        msg.textContent = 'Category added!';
-        setTimeout(function() { msg.textContent = ''; }, 2000);
-    }
-
-    function refRemoveCategory(index) {
-        var cats = _getRefCats();
-        cats.splice(index, 1);
-        _saveRefCats(cats);
-        _renderRefCatTable();
-    }
-
-    function refOpenRegistration() {
-        if (!_refCatTournamentId) return;
-        var cats = _getRefCats();
-        var msgEl = document.getElementById('refOpenRegMsg');
-        if (cats.length === 0) {
-            msgEl.style.color = '#c0392b';
-            msgEl.textContent = 'Add at least one category before opening registration.';
-            return;
-        }
-        // Mark as confirmed in localStorage
-        localStorage.setItem(REF_CONFIRMED_KEY + _refCatTournamentId, 'true');
-        // Also update tournament status in skf_local_tournaments
-        try {
-            var ts = JSON.parse(localStorage.getItem('skf_local_tournaments') || '[]');
-            ts = ts.map(function(t) {
-                if (t.id === _refCatTournamentId) {
-                    t.status = 'registration_open';
-                    t.refConfirmed = true;
+                list = q.data || [];
+            } else if (_refRole === 'referee') {
+                var r = await sb.from('tournament_referees').select('tournament_id').eq('referee_id', _refUserId);
+                if (r.error) {
+                    console.error('[OPS]', r.error);
+                    selT.innerHTML = '<option value="">Error</option>';
+                    alert('Unable to load your assignments. Please try again or contact SKF support.');
+                    return;
                 }
-                return t;
+                var tids = [];
+                (r.data || []).forEach(function (row) {
+                    if (row.tournament_id && tids.indexOf(row.tournament_id) < 0) tids.push(row.tournament_id);
+                });
+                if (tids.length) {
+                    var tq = await sb.from('tournaments').select('id,name,start_date,status,competition_state,is_active').in('id', tids).order('start_date', { ascending: false }).limit(50);
+                    if (tq.error && /competition_state|column|schema/i.test(String(tq.error.message || ''))) {
+                        tq = await sb.from('tournaments').select('id,name,start_date,status,is_active').in('id', tids).order('start_date', { ascending: false }).limit(50);
+                    }
+                    if (tq.error) {
+                        console.error('[OPS]', tq.error);
+                        selT.innerHTML = '<option value="">Error</option>';
+                        alert('Unable to load tournaments. Please try again or contact SKF support.');
+                        return;
+                    }
+                    list = tq.data || [];
+                }
+            }
+            selT.innerHTML = '<option value="">— Select tournament —</option>';
+            if (!list.length) {
+                var msg = _refRole === 'referee'
+                    ? 'No assignments — SKF Admin must add you to tournament referees for this event.'
+                    : 'No tournaments found. If an event is marked inactive, ask SKF Admin to enable it or extend your assignment.';
+                selT.innerHTML = '<option value="">' + msg + '</option>';
+                return;
+            }
+            list.forEach(function (t) {
+                var o = document.createElement('option');
+                o.value = t.id;
+                var cs = t.competition_state ? ' · ' + t.competition_state : '';
+                o.textContent = (t.name || 'Event') + ' · ' + (t.start_date ? String(t.start_date).slice(0, 10) : '—') + cs + (t.is_active === false ? ' (inactive)' : '');
+                selT.appendChild(o);
             });
-            localStorage.setItem('skf_local_tournaments', JSON.stringify(ts));
-        } catch(e) {}
+            selT.onchange = function () { onOpsTournamentChange(); };
+            selC.onchange = function () { onOpsCategoryChange(); };
+            var reloadBtn = document.getElementById('opsReloadBtn');
+            if (reloadBtn) reloadBtn.onclick = function () { onOpsCategoryChange(); };
+        }
 
-        msgEl.style.color = '#2e7d44';
-        msgEl.textContent = 'Registration is now OPEN for players!';
-        var btn = document.getElementById('refOpenRegBtn');
-        btn.textContent = 'Registration Already Open';
-        btn.style.background = '#888';
-        btn.disabled = true;
-        // Refresh tournament table
-        loadTournaments(false);
-    }
-
-    function animateCards() {
-        ['.stat-card','.dashboard-card','.data-table-container'].forEach(function(sel) {
-            document.querySelectorAll(sel).forEach(function(el,i) {
-                setTimeout(function() { el.classList.add('loaded'); }, i * 80);
+        async function onOpsTournamentChange() {
+            var selT = document.getElementById('opsTournamentSelect');
+            var selC = document.getElementById('opsCategorySelect');
+            var wrap = document.getElementById('opsMatchesWrap');
+            var tid = selT && selT.value;
+            if (!tid) {
+                refOpsUnsubscribeRealtime();
+                if (selC) selC.innerHTML = '<option value="">— Select category —</option>';
+                if (wrap) wrap.innerHTML = '';
+                return;
+            }
+            try {
+                localStorage.setItem('skf_ref_tournament_id', tid);
+            } catch (e) {}
+            await refreshRefJwtFromSupabaseAuth();
+            _refSb = refSupabase();
+            var sb = _refSb;
+            if (!sb) return;
+            selC.innerHTML = '<option value="">Loading…</option>';
+            if (wrap) wrap.innerHTML = '';
+            selC.dataset.noCats = '';
+            var cq = await sb.from('tournament_categories')
+                .select('id, discipline, gender, age_group, weight_class, event_type, age_category, is_team_event')
+                .eq('tournament_id', tid)
+                .order('discipline');
+            if (cq.error) {
+                console.error('[OPS]', cq.error);
+                selC.innerHTML = '<option value="">Error</option>';
+                alert('Unable to load categories. Please try again or contact SKF support.');
+                refOpsSubscribeRealtime(tid);
+                return;
+            }
+            var cats = cq.data || [];
+            selC.innerHTML = '<option value="">— Select category —</option>';
+            if (!cats.length) {
+                selC.innerHTML = '<option value="">No categories linked — SKF Admin must attach categories</option>';
+                selC.dataset.noCats = '1';
+                if (wrap) wrap.innerHTML = '<p class="ref-muted">No categories linked to this tournament. SKF Admin must attach official categories first.</p>';
+                refOpsSubscribeRealtime(tid);
+                return;
+            }
+            cats.forEach(function (c) {
+                var o = document.createElement('option');
+                o.value = c.id;
+                o.textContent = wkfCategoryLabelFromRow(c) || c.id;
+                selC.appendChild(o);
             });
+            refOpsSubscribeRealtime(tid);
+        }
+
+        async function onOpsCategoryChange() {
+            var selT = document.getElementById('opsTournamentSelect');
+            var selC = document.getElementById('opsCategorySelect');
+            var wrap = document.getElementById('opsMatchesWrap');
+            var hint = document.getElementById('opsHint');
+            var tid = selT && selT.value;
+            var cid = selC && selC.value;
+            if (selC && selC.dataset && selC.dataset.noCats === '1') {
+                if (wrap) wrap.innerHTML = '<p class="ref-muted">No categories linked to this tournament. SKF Admin must attach official categories first.</p>';
+                return;
+            }
+            try {
+                if (tid && cid) {
+                    localStorage.setItem('skf_ref_tournament_id', tid);
+                    localStorage.setItem('skf_ref_category_id', cid);
+                }
+            } catch (e) {}
+            if (!tid || !cid) {
+                if (wrap) wrap.innerHTML = '';
+                return;
+            }
+            await refreshRefJwtFromSupabaseAuth();
+            _refSb = refSupabase();
+            var sb = _refSb;
+            if (!sb || !wrap) return;
+            wrap.innerHTML = '<p class="ref-muted">Loading…</p>';
+            if (hint) hint.textContent = 'Saving writes to the database immediately per bout. Changing a completed knockout result after the next round started may need admin help.';
+            var mq = await sb.from('tournament_matches').select('id, round_number, bracket_position, status, red_user_id, blue_user_id, winner_user_id, red_score, blue_score, mat_label')
+                .eq('tournament_id', tid).eq('category_id', cid)
+                .order('round_number', { ascending: true }).order('bracket_position', { ascending: true });
+            if (mq.error) {
+                console.error('[OPS]', mq.error); wrap.innerHTML = '<p class="ref-muted" style="color:#c62828;">Unable to load matches. Please try again or contact SKF support.</p>';
+                return;
+            }
+            var matches = mq.data || [];
+            if (!matches.length) {
+                wrap.innerHTML = '<p class="ref-muted">No matches in this category yet. Referee+ must generate a draw first.</p>';
+                return;
+            }
+            var ids = [];
+            matches.forEach(function (m) {
+                if (m.red_user_id) ids.push(m.red_user_id);
+                if (m.blue_user_id) ids.push(m.blue_user_id);
+            });
+            var uniq = ids.filter(function (id, i) { return ids.indexOf(id) === i; });
+            var umap = {};
+            if (uniq.length) {
+                var uq = await sb.from('users').select('id,full_name,email').in('id', uniq);
+                if (!uq.error && uq.data) uq.data.forEach(function (u) { umap[u.id] = u; });
+            }
+            var stOpts = ['scheduled', 'live', 'paused', 'completed', 'walkover', 'cancelled'];
+            var html = '<table class="ref-data"><thead><tr>'
+                + '<th>Rd</th><th>#</th><th>Red</th><th>Blue</th><th>Status</th><th>R</th><th>B</th><th>Winner</th><th>Mat</th><th></th>'
+                + '</tr></thead><tbody>';
+            matches.forEach(function (m) {
+                var rn = !m.red_user_id ? 'To be determined' : (umap[m.red_user_id] ? ((umap[m.red_user_id].full_name && String(umap[m.red_user_id].full_name).trim()) || (umap[m.red_user_id].email && String(umap[m.red_user_id].email).trim()) || 'Participant') : 'Participant');
+                var bn = !m.blue_user_id ? 'To be determined' : (umap[m.blue_user_id] ? ((umap[m.blue_user_id].full_name && String(umap[m.blue_user_id].full_name).trim()) || (umap[m.blue_user_id].email && String(umap[m.blue_user_id].email).trim()) || 'Participant') : 'Participant');
+                var wv = '';
+                if (m.winner_user_id && m.red_user_id && m.winner_user_id === m.red_user_id) wv = 'red';
+                else if (m.winner_user_id && m.blue_user_id && m.winner_user_id === m.blue_user_id) wv = 'blue';
+                var statusSel = '<select class="ref-select ops-status">';
+                stOpts.forEach(function (s) {
+                    statusSel += '<option value="' + s + '"' + (m.status === s ? ' selected' : '') + '>' + s + '</option>';
+                });
+                statusSel += '</select>';
+                var winSel = '<select class="ref-select ops-winner">'
+                    + '<option value=""' + (!wv ? ' selected' : '') + '>—</option>'
+                    + '<option value="red"' + (wv === 'red' ? ' selected' : '') + '>Red</option>'
+                    + '<option value="blue"' + (wv === 'blue' ? ' selected' : '') + '>Blue</option></select>';
+                html += '<tr data-mid="' + escapeHtml(m.id) + '" data-red="' + escapeHtml(m.red_user_id || '') + '" data-blue="' + escapeHtml(m.blue_user_id || '') + '">'
+                    + '<td>' + escapeHtml(String(m.round_number)) + '</td>'
+                    + '<td>' + escapeHtml(String(m.bracket_position)) + '</td>'
+                    + '<td>' + escapeHtml(rn) + '</td>'
+                    + '<td>' + escapeHtml(bn) + '</td>'
+                    + '<td>' + statusSel + '</td>'
+                    + '<td><input type="number" class="ops-red-score" value="' + (m.red_score != null ? escapeHtml(String(m.red_score)) : '') + '"/></td>'
+                    + '<td><input type="number" class="ops-blue-score" value="' + (m.blue_score != null ? escapeHtml(String(m.blue_score)) : '') + '"/></td>'
+                    + '<td>' + winSel + '</td>'
+                    + '<td><input type="text" class="ops-mat" value="' + escapeHtml(m.mat_label || '') + '"/></td>'
+                    + '<td style="display:flex;gap:4px;">'
+                    + '<button type="button" class="ref-btn ref-btn-primary ops-save-btn">Save</button>'
+                    + '<button type="button" class="ref-btn ref-btn-secondary" onclick="openNewMatchControl(\'' + escapeHtml(m.id) + '\',\'' + escapeHtml(cid) + '\',\'' + escapeHtml(tid) + '\')">' + escapeHtml(opsControlLabel(m)) + '</button>'
+                    + '</td>'
+                    + '</tr>';
+            });
+            html += '</tbody></table>';
+            wrap.innerHTML = html;
+            wrap.querySelectorAll('.ops-save-btn').forEach(function (btn) {
+                btn.onclick = function () {
+                    var tr = btn.closest('[data-mid]');
+                    if (tr) saveOpsRow(tr);
+                };
+            });
+        }
+
+        async function saveOpsRow(tr) {
+            var sb = _refSb;
+            if (!sb || !tr) return;
+            var mid = tr.getAttribute('data-mid');
+            var rid = tr.getAttribute('data-red') || null;
+            var bid = tr.getAttribute('data-blue') || null;
+            var stEl = tr.querySelector('.ops-status');
+            var status = stEl ? stEl.value : 'scheduled';
+            var ws = tr.querySelector('.ops-winner');
+            var rs = tr.querySelector('.ops-red-score');
+            var bs = tr.querySelector('.ops-blue-score');
+            var mat = tr.querySelector('.ops-mat');
+            var winnerUserId = null;
+            if (ws && ws.value === 'red' && rid) winnerUserId = rid;
+            else if (ws && ws.value === 'blue' && bid) winnerUserId = bid;
+            if ((status === 'completed' || status === 'walkover') && !winnerUserId) {
+                alert('Choose Red or Blue as winner for completed / walkover.');
+                return;
+            }
+            if (status !== 'completed' && status !== 'walkover') winnerUserId = null;
+            var payload = {
+                status: status,
+                red_score: rs && rs.value !== '' ? parseOpsInt(rs.value) : null,
+                blue_score: bs && bs.value !== '' ? parseOpsInt(bs.value) : null,
+                winner_user_id: winnerUserId,
+                mat_label: mat && mat.value.trim() ? mat.value.trim() : null,
+                updated_at: new Date().toISOString()
+            };
+            var up = await sb.from('tournament_matches').update(payload).eq('id', mid);
+            if (up.error) {
+                console.error('[OPS]', up.error);
+                alert('Unable to save match. Please try again or contact SKF support.');
+                return;
+            }
+            await onOpsCategoryChange();
+        }
+
+        async function loadRefereeOverview() {
+            refOvUnsubscribeRealtime();
+            var sb = _refSb;
+            var liveEl = document.getElementById('refOvLiveList');
+            var schedEl = document.getElementById('refOvScheduledList');
+            var finEl = document.getElementById('refOvFinishedList');
+            var plusCard = document.getElementById('refOvPlusCard');
+            var plusBody = document.getElementById('refOvPlusBody');
+            var stT = document.getElementById('refOvStatTournaments');
+            var stL = document.getElementById('refOvStatLive');
+            var stS = document.getElementById('refOvStatScheduled');
+            var stD = document.getElementById('refOvStatDone');
+            function setDash() {
+                if (stT) stT.textContent = '—';
+                if (stL) stL.textContent = '—';
+                if (stS) stS.textContent = '—';
+                if (stD) stD.textContent = '—';
+                if (liveEl) liveEl.innerHTML = '<p class="ref-muted" style="margin:0;">Sign in to load match data.</p>';
+                if (schedEl) schedEl.innerHTML = '';
+                if (finEl) finEl.innerHTML = '';
+            }
+            if (!sb) {
+                setDash();
+                return;
+            }
+            var ids = [];
+            if (_refRole === 'referees_plus') {
+                var tq = await sb.from('tournaments').select('id').eq('is_active', true).limit(80);
+                if (tq.error) {
+                    if (liveEl) liveEl.innerHTML = '<p class="ref-muted" style="margin:0;color:#c62828;">Could not load tournaments.</p>';
+                    return;
+                }
+                (tq.data || []).forEach(function (t) { if (t.id) ids.push(t.id); });
+            } else {
+                var r = await sb.from('tournament_referees').select('tournament_id').eq('referee_id', _refUserId);
+                if (r.error) {
+                    if (liveEl) liveEl.innerHTML = '<p class="ref-muted" style="margin:0;color:#c62828;">Could not load assignments.</p>';
+                    return;
+                }
+                (r.data || []).forEach(function (row) {
+                    if (row.tournament_id && ids.indexOf(row.tournament_id) < 0) ids.push(row.tournament_id);
+                });
+            }
+            if (stT) stT.textContent = String(ids.length);
+            if (!ids.length) {
+                if (stL) stL.textContent = '0';
+                if (stS) stS.textContent = '0';
+                if (stD) stD.textContent = '0';
+                if (liveEl) liveEl.innerHTML = '<p class="ref-muted" style="margin:0;">No tournaments in scope yet.'
+                    + (_refRole === 'referee' ? ' Ask <strong>SKF Admin</strong> to assign you under tournament referees.' : ' Enable an event or extend access.') + '</p>';
+                if (schedEl) schedEl.innerHTML = '<p class="ref-muted" style="margin:0;">—</p>';
+                if (finEl) finEl.innerHTML = '<p class="ref-muted" style="margin:0;">—</p>';
+                if (plusCard) plusCard.style.display = (_refRole === 'referees_plus') ? 'block' : 'none';
+                if (plusBody && _refRole === 'referees_plus') plusBody.innerHTML = '<p class="ref-muted" style="margin:0;">No active tournaments to configure.</p>';
+                return;
+            }
+            var mq = await sb.from('tournament_matches')
+                .select('id,status,tournament_id,category_id,round_number,bracket_position,mat_label,scheduled_start,updated_at,red_user_id,blue_user_id')
+                .in('tournament_id', ids)
+                .limit(2500);
+            if (mq.error) {
+                if (stL) stL.textContent = '—';
+                if (stS) stS.textContent = '—';
+                if (stD) stD.textContent = '—';
+                if (liveEl) liveEl.innerHTML = '<p class="ref-muted" style="margin:0;color:#c62828;">Matches could not be loaded. Please sign out and sign in again.</p>';
+                if (schedEl) schedEl.innerHTML = '<p class="ref-muted" style="margin:0;">—</p>';
+                if (finEl) finEl.innerHTML = '<p class="ref-muted" style="margin:0;">—</p>';
+                return;
+            }
+            var matches = mq.data || [];
+            var liveN = 0, pauseN = 0, schedN = 0, doneN = 0;
+            var liveRows = [], schedRows = [], doneRows = [];
+            matches.forEach(function (m) {
+                var st = (m.status || '').toLowerCase();
+                if (st === 'live') { liveN++; liveRows.push(m); }
+                else if (st === 'paused') { pauseN++; liveRows.push(m); }
+                else if (st === 'scheduled') { schedN++; schedRows.push(m); }
+                else if (st === 'completed' || st === 'walkover') { doneN++; doneRows.push(m); }
+            });
+            if (stL) stL.textContent = String(liveN + pauseN);
+            if (stS) stS.textContent = String(schedN);
+            if (stD) stD.textContent = String(doneN);
+
+            var tmap = {};
+            var cqmap = {};
+            var uniqT = [];
+            ids.forEach(function (id) { if (uniqT.indexOf(id) < 0) uniqT.push(id); });
+            if (uniqT.length) {
+                var tnq = await sb.from('tournaments').select('id,name').in('id', uniqT);
+                if (!tnq.error && tnq.data) tnq.data.forEach(function (t) { tmap[t.id] = t.name || 'Event'; });
+            }
+            var catIds = [];
+            liveRows.concat(schedRows).slice(0, 40).forEach(function (m) {
+                if (m.category_id && catIds.indexOf(m.category_id) < 0) catIds.push(m.category_id);
+            });
+            if (catIds.length) {
+                var cnq = await sb.from('tournament_categories').select('id,tournament_id,discipline,gender,age_category,age_group,weight_class,event_type,is_team_event').in('id', catIds);
+                if (!cnq.error && cnq.data) cnq.data.forEach(function (c) { cqmap[c.id] = c; });
+            }
+            function catLabel(cid) {
+                var c = cqmap[cid];
+                return c ? (wkfCategoryLabelFromRow(c) || 'Category') : 'Category';
+            }
+            if (liveEl) {
+                if (!liveRows.length) liveEl.innerHTML = '<p class="ref-muted" style="margin:0;">No live or paused bouts in your scope. Use <strong>Match operations</strong> after a draw is published.</p>';
+                else {
+                    liveEl.innerHTML = '<ul>' + liveRows.slice(0, 8).map(function (m) {
+                        var tname = escapeHtml(tmap[m.tournament_id] || 'Tournament');
+                        var cl = escapeHtml(catLabel(m.category_id));
+                        var mat = m.mat_label ? ' · mat ' + escapeHtml(m.mat_label) : '';
+                        var st = escapeHtml((m.status || '').toUpperCase());
+                        return '<li><strong>' + st + '</strong> · ' + tname + ' · ' + cl + ' · R' + escapeHtml(String(m.round_number)) + mat
+                            + ' — <button type="button" class="ref-btn ref-btn-primary" style="padding:4px 10px;font-size:12px;" '
+                            + 'onclick="openNewMatchControl(\'' + escapeHtml(m.id) + '\',\'' + escapeHtml(m.category_id) + '\',\'' + escapeHtml(m.tournament_id) + '\')">Control</button></li>';
+                    }).join('') + '</ul>';
+                }
+            }
+            if (schedEl) {
+                schedRows.sort(function (a, b) {
+                    var ta = a.scheduled_start || '';
+                    var tb = b.scheduled_start || '';
+                    return ta < tb ? -1 : ta > tb ? 1 : 0;
+                });
+                if (!schedRows.length) schedEl.innerHTML = '<p class="ref-muted" style="margin:0;">No scheduled bouts visible. Generate draws in setup or wait for scheduling.</p>';
+                else {
+                    schedEl.innerHTML = '<ul>' + schedRows.slice(0, 8).map(function (m) {
+                        var tname = escapeHtml(tmap[m.tournament_id] || 'Tournament');
+                        var cl = escapeHtml(catLabel(m.category_id));
+                        var mat = m.mat_label ? ' · mat ' + escapeHtml(m.mat_label) : '';
+                        var startBtn = (m.red_user_id && m.blue_user_id)
+                            ? ' — <button type="button" class="ref-btn ref-btn-primary" style="padding:4px 10px;font-size:12px;" '
+                            + 'onclick="openNewMatchControl(\'' + escapeHtml(m.id) + '\',\'' + escapeHtml(m.category_id) + '\',\'' + escapeHtml(m.tournament_id) + '\')">Start</button>'
+                            : '';
+                        return '<li>' + tname + ' · ' + cl + ' · R' + escapeHtml(String(m.round_number)) + mat + startBtn + '</li>';
+                    }).join('') + '</ul>';
+                }
+            }
+            doneRows.sort(function (a, b) {
+                var ua = (a.updated_at || '');
+                var ub = (b.updated_at || '');
+                return ua < ub ? 1 : ua > ub ? -1 : 0;
+            });
+            if (finEl) {
+                if (!doneRows.length) finEl.innerHTML = '<p class="ref-muted" style="margin:0;">No completed bouts in the loaded window.</p>';
+                else {
+                    finEl.innerHTML = '<ul>' + doneRows.slice(0, 8).map(function (m) {
+                        var tname = escapeHtml(tmap[m.tournament_id] || 'Tournament');
+                        var cl = escapeHtml(catLabel(m.category_id));
+                        return '<li>' + tname + ' · ' + cl + ' · R' + escapeHtml(String(m.round_number)) + '</li>';
+                    }).join('') + '</ul><p class="ref-muted" style="margin:10px 0 0;font-size:12px;">See <a href="referee-match-history.html" style="color:#2e7d32;font-weight:600;">Match history</a> for filters and exports.</p>';
+                }
+            }
+            if (_refRole === 'referees_plus' && plusCard && plusBody) {
+                plusCard.style.display = 'block';
+                var catAll = await sb.from('tournament_categories').select('id,tournament_id,bracket_type').in('tournament_id', ids);
+                var cats = (!catAll.error && catAll.data) ? catAll.data : [];
+                var withDraw = {};
+                matches.forEach(function (m) { if (m.category_id) withDraw[m.category_id] = true; });
+                var needDraw = 0;
+                cats.forEach(function (c) { if (!withDraw[c.id]) needDraw++; });
+                var rc = await sb.from('tournament_referees').select('id', { count: 'exact', head: true }).in('tournament_id', ids);
+                var refSlots = (!rc.error && rc.count != null) ? rc.count : '—';
+                var readyStates = { setup: 0, ready: 0, live: 0, completed: 0 };
+                var tsq = await sb.from('tournaments').select('id,competition_state').in('id', ids);
+                if (tsq.error && /competition_state|column|schema/i.test(String(tsq.error.message || ''))) {
+                    tsq = await sb.from('tournaments').select('id').in('id', ids);
+                }
+                if (!tsq.error && tsq.data) {
+                    tsq.data.forEach(function (t) {
+                        var cs = (t.competition_state || 'setup').toLowerCase();
+                        if (readyStates[cs] != null) readyStates[cs]++;
+                        else readyStates.setup++;
+                    });
+                }
+                plusBody.innerHTML = '<ul style="margin:0;padding-left:1.1rem;">'
+                    + '<li><strong>' + cats.length + '</strong> categories across active events</li>'
+                    + '<li><strong>' + needDraw + '</strong> categor' + (needDraw === 1 ? 'y' : 'ies') + ' still need a generated draw (no matches yet)</li>'
+                    + '<li><strong>' + refSlots + '</strong> referee assignment row(s) on these events</li>'
+                    + '<li>Competition state: setup ' + readyStates.setup + ', ready ' + readyStates.ready + ', live ' + readyStates.live + ', completed ' + readyStates.completed + '</li>'
+                    + '</ul><p class="ref-muted" style="margin:10px 0 0;font-size:12px;">Use bracket setup pages for draw tools and category detail.</p>';
+            } else if (plusCard) {
+                plusCard.style.display = 'none';
+            }
+            refOvSubscribeRealtime(ids);
+        }
+
+        document.addEventListener('DOMContentLoaded', async function () {
+            var token = localStorage.getItem('token');
+            var userStr = localStorage.getItem('user');
+            if (!token || !userStr) {
+                window.location.href = 'index.html';
+                return;
+            }
+            var user = JSON.parse(userStr);
+            var role = (user.role || '').toLowerCase();
+            var nr = (typeof SKFRoleLayout !== 'undefined') ? SKFRoleLayout.normalizeRole(role) : role;
+            if (nr !== 'referee' && nr !== 'referees_plus') {
+                alert('This dashboard is for referees only.');
+                window.location.href = typeof getDashboardUrl === 'function' ? getDashboardUrl(user.role) : 'index.html';
+                return;
+            }
+            _refRole = nr;
+
+            var disp = document.getElementById('userDisplay');
+            if (disp && user.fullName) {
+                disp.textContent = 'Welcome, ' + user.fullName + (nr === 'referees_plus' ? ' (Referee+)' : ' (Referee)');
+            }
+
+            await refreshRefJwtFromSupabaseAuth();
+            _refSb = refSupabase();
+            if (!_refSb) {
+                document.getElementById('overviewBlurb').textContent = 'Sign in with your SKF account to load tournaments.';
+                var liveEl0 = document.getElementById('refOvLiveList');
+                if (liveEl0) liveEl0.innerHTML = '<p class="ref-muted" style="margin:0;">Sign in with your SKF account to load match data.</p>';
+                var se0 = document.getElementById('refOvScheduledList');
+                var fe0 = document.getElementById('refOvFinishedList');
+                if (se0) se0.innerHTML = '<p class="ref-muted" style="margin:0;">—</p>';
+                if (fe0) fe0.innerHTML = '<p class="ref-muted" style="margin:0;">—</p>';
+                var s0 = ['refOvStatTournaments', 'refOvStatLive', 'refOvStatScheduled', 'refOvStatDone'];
+                s0.forEach(function (id) { var el = document.getElementById(id); if (el) el.textContent = '—'; });
+                return;
+            }
+
+            _refUserId = user.id || null;
+
+            if (typeof SKFRoleLayout !== 'undefined') {
+                SKFRoleLayout.initRefereePage('dashboard');
+                var h = (location.hash || '').toLowerCase();
+                if (h === '#operations') { showSection('operations', null); }
+                else if (h === '#setup' && nr === 'referees_plus') { showSection('setup', null); }
+                else if (h === '#belttest' && nr === 'referees_plus') { showSection('belttest', null); }
+
+                // Handle same-page hash navigation (clicking nav links while already on this page)
+                window.addEventListener('hashchange', function () {
+                    var nh = (location.hash || '').toLowerCase();
+                    var role = (JSON.parse(localStorage.getItem('user') || '{}').role || '').toLowerCase().replace(/-/g, '_');
+                    if (nh === '#operations') showSection('operations', null);
+                    else if (nh === '#setup' && role === 'referees_plus') showSection('setup', null);
+                    else if (nh === '#belttest' && role === 'referees_plus') showSection('belttest', null);
+                    else if (nh === '' || nh === '#') showSection('overview', null);
+                });
+            }
+
+            var opsIntro = document.getElementById('opsIntro');
+            if (nr === 'referees_plus') {
+                document.getElementById('overviewTitle').textContent = 'Referee+ — structure & draws';
+                document.getElementById('overviewBlurb').textContent = 'SKF administration creates tournaments and marks them active. Use Tournament setup to choose bracket types and generate draws from approved registrations. Use Match operations to run bouts.';
+                document.getElementById('plusHints').style.display = 'block';
+                if (opsIntro) opsIntro.textContent = 'You can open any active tournament. Record status, scores, and winner; knockout advancement runs when a bout is marked completed.';
+            } else {
+                document.getElementById('overviewTitle').textContent = 'Referee — match operations';
+                document.getElementById('overviewBlurb').textContent = 'Use Match operations for events where SKF Admin has assigned you as a tournament referee. Referee+ accounts handle draw generation under Tournament setup (Referee+).';
+                var ns = document.getElementById('navSetupItem');
+                if (ns) ns.style.display = 'none';
+                if (opsIntro) opsIntro.textContent = 'Only tournaments you are assigned to appear here. If athlete names are missing, contact SKF support.';
+            }
+
+            var oa = document.getElementById('refOverviewActions');
+            var mh = document.getElementById('refMenuHint');
+            var btnSetup = document.getElementById('btnGotoSetup');
+            var btnOps = document.getElementById('btnGotoOps');
+            if (oa) oa.style.display = 'flex';
+            if (mh) mh.style.display = 'block';
+            if (btnSetup) btnSetup.style.display = (nr === 'referees_plus') ? 'inline-block' : 'none';
+            if (btnOps) {
+                btnOps.onclick = function () { showSection('operations', null); };
+            }
+            if (btnSetup && nr === 'referees_plus') {
+                btnSetup.onclick = function () { showSection('setup', null); };
+            }
+
+            var refOvOps = document.getElementById('refOvGotoOps');
+            if (refOvOps) refOvOps.onclick = function () { showSection('operations', null); };
+            var refOvSetup = document.getElementById('refOvGotoSetup');
+            if (refOvSetup) refOvSetup.onclick = function () { showSection('setup', null); };
+
+            await loadRefereeOverview();
+
+            // Highlights Banner
+            if (typeof SKFHighlights !== 'undefined') {
+                SKFHighlights.init({
+                    containerId: 'skfHlBannerRef',
+                    getSb: refSupabase,
+                    supabaseUrl: REF_SUPABASE_URL
+                });
+            }
+
+            document.getElementById('menuToggle').addEventListener('click', function () {
+                this.classList.toggle('active');
+                document.getElementById('dashboardNav').classList.toggle('active');
+            });
+
+            if (nr === 'referees_plus') {
+                document.getElementById('btnSaveTournamentState').style.display = '';
+                document.getElementById('tournamentStateSelect').disabled = false;
+            } else {
+                document.getElementById('btnSaveTournamentState').style.display = 'none';
+                document.getElementById('tournamentStateSelect').disabled = true;
+            }
         });
-    }
-</script>
+
+        // ── Belt Tests (Referee+ examiner) ─────────────────────────────────────
+        var _refBtEvents = [];
+        var _refBtSelectedEventId = null;
+
+        function makeRefSupabase() {
+            var tok = localStorage.getItem('token');
+            if (!tok || isRefLocalToken()) return null;
+            if (typeof supabase === 'undefined') return null;
+            return supabase.createClient(REF_SUPABASE_URL, REF_SUPABASE_ANON, {
+                global: { headers: { Authorization: 'Bearer ' + tok } },
+                auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+            });
+        }
+
+        function refBtEsc(s) {
+            if (s == null) return '';
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+        }
+
+        async function loadRefBtEvents() {
+            var tb = document.getElementById('refBtEventsTbody');
+            if (!tb) return;
+            var sb = makeRefSupabase();
+            if (!sb) {
+                tb.innerHTML = '<tr><td colspan="5" style="color:#888;">Not connected.</td></tr>';
+                return;
+            }
+            var q = await sb.from('belt_test_events')
+                .select('id, title, event_date, location, status')
+                .order('event_date', { ascending: false });
+            if (q.error) {
+                tb.innerHTML = '<tr><td colspan="5" style="color:#c00;">' + refBtEsc(q.error.message) + '</td></tr>';
+                return;
+            }
+            _refBtEvents = q.data || [];
+            if (!_refBtEvents.length) {
+                tb.innerHTML = '<tr><td colspan="5" style="color:#888;text-align:center;padding:14px;">No belt test events found.</td></tr>';
+                return;
+            }
+
+            // Count candidates per event via SECURITY DEFINER RPC (bypasses RLS)
+            var eids = _refBtEvents.map(function (e) { return e.id; });
+            var countByEvent = {};
+            var cq = await sb.rpc('skf_count_belt_test_candidates', { p_event_ids: eids });
+            if (!cq.error && cq.data) {
+                cq.data.forEach(function (r) { countByEvent[r.event_id] = Number(r.cnt) || 0; });
+            }
+
+            var statusColor = { draft: '#888', open: '#2e7d32', closed: '#f57c00', completed: '#1565c0' };
+            tb.innerHTML = _refBtEvents.map(function (ev) {
+                var d = ev.event_date ? new Date(ev.event_date).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+                var col = statusColor[ev.status] || '#555';
+                var active = _refBtSelectedEventId === ev.id ? 'background:#f1f8e9;' : '';
+                return '<tr style="cursor:pointer;' + active + '" onclick="refBtSelectEvent(' + refBtEsc(JSON.stringify(ev.id)) + ')">'
+                    + '<td><strong>' + refBtEsc(ev.title) + '</strong></td>'
+                    + '<td style="white-space:nowrap;">' + refBtEsc(d) + '</td>'
+                    + '<td>' + refBtEsc(ev.location || '—') + '</td>'
+                    + '<td><span style="color:' + col + ';font-weight:700;text-transform:capitalize;">' + refBtEsc(ev.status) + '</span></td>'
+                    + '<td style="text-align:center;">' + (countByEvent[ev.id] || 0) + '</td>'
+                    + '</tr>';
+            }).join('');
+        }
+
+        async function refBtSelectEvent(eventId) {
+            _refBtSelectedEventId = eventId;
+            // Re-render events table to highlight selected row
+            var tb = document.getElementById('refBtEventsTbody');
+            if (tb) {
+                tb.querySelectorAll('tr').forEach(function (tr) { tr.style.background = ''; });
+            }
+            var ev = _refBtEvents.find(function (e) { return e.id === eventId; });
+            var card = document.getElementById('refBtCandidatesCard');
+            if (card) card.style.display = 'block';
+            var h = document.getElementById('refBtCandidatesTitle');
+            if (h && ev) h.textContent = 'Candidates — ' + ev.title;
+            await loadRefBtCandidates(eventId);
+            // Scroll to candidates card
+            if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        var _refBtCandidates = [];
+
+        function refBtPhotoEl(c, size) {
+            var s = size || 40;
+            var cls = size === 80 ? 'bt-exam-photo' : 'bt-candidate-photo';
+            var phCls = size === 80 ? 'bt-exam-photo-ph' : 'bt-candidate-ph';
+            if (c.photo_url) {
+                return '<img class="' + cls + '" src="' + refBtEsc(c.photo_url) + '" alt="" onerror="this.style.display=\'none\'">';
+            }
+            var init = (c.full_name || '?').charAt(0).toUpperCase();
+            return '<div class="' + phCls + '">' + init + '</div>';
+        }
+
+        async function loadRefBtCandidates(eventId) {
+            var tb = document.getElementById('refBtCandidatesTbody');
+            if (!tb) return;
+            tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:14px;color:#888;">Loading…</td></tr>';
+            var sb = makeRefSupabase();
+            if (!sb) return;
+
+            var q = await sb.rpc('skf_fetch_belt_test_candidates', { p_event_id: eventId });
+            if (q.error) {
+                tb.innerHTML = '<tr><td colspan="6" style="color:#c00;padding:12px;">' + refBtEsc(q.error.message) + '</td></tr>';
+                return;
+            }
+            if (!q.data || !q.data.length) {
+                tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:14px;color:#888;">No candidates yet for this event.</td></tr>';
+                return;
+            }
+            _refBtCandidates = q.data;
+
+            var statusColor = { pending: '#f57c00', approved: '#2e7d32', rejected: '#c62828', passed: '#1565c0', failed: '#555' };
+            tb.innerHTML = q.data.map(function (c) {
+                var pname = c.full_name || c.email || '(player ' + String(c.user_id).slice(0, 8) + '…)';
+                var col = statusColor[c.status] || '#555';
+                var photoHtml = refBtPhotoEl(c, 40);
+                var actions = '';
+                if (c.status === 'pending') {
+                    actions = '<button type="button" class="ref-btn ref-btn-primary" style="font-size:12px;padding:4px 10px;margin-right:4px;" onclick="refBtSetStatus(' + refBtEsc(JSON.stringify(c.id)) + ',\'approved\')">Approve</button>'
+                            + '<button type="button" class="ref-btn" style="font-size:12px;padding:4px 10px;border:1px solid #c62828;color:#c62828;background:#fff;" onclick="refBtSetStatus(' + refBtEsc(JSON.stringify(c.id)) + ',\'rejected\')">Reject</button>';
+                } else if (c.status === 'approved') {
+                    actions = '<button type="button" class="ref-btn ref-btn-primary" style="font-size:12px;padding:4px 10px;" onclick="refBtOpenResultModal(' + refBtEsc(JSON.stringify(c.id)) + ',\'approved\')">Record result</button>';
+                }
+                return '<tr>'
+                    + '<td><div class="bt-name-cell">' + photoHtml + '<span>' + refBtEsc(pname) + '</span></div></td>'
+                    + '<td>' + refBtEsc(c.current_rank || '—') + '</td>'
+                    + '<td>' + refBtEsc(c.requested_rank || '—') + '</td>'
+                    + '<td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="' + refBtEsc(c.notes || '') + '">' + refBtEsc(c.notes || '—') + '</td>'
+                    + '<td><span style="color:' + col + ';font-weight:700;text-transform:capitalize;">' + refBtEsc(c.status)
+                    + (c.result_notes ? ' <small style="display:block;font-weight:400;color:#666;">' + refBtEsc(c.result_notes) + '</small>' : '')
+                    + '</span></td>'
+                    + '<td>' + actions + '</td>'
+                    + '</tr>';
+            }).join('');
+        }
+
+        async function refBtSetStatus(candidateId, newStatus) {
+            var sb = makeRefSupabase();
+            if (!sb) return;
+            var upd = await sb.rpc('skf_belt_test_set_status', { p_candidate_id: candidateId, p_new_status: newStatus });
+            if (upd.error) { alert('Could not update: ' + upd.error.message); return; }
+            if (_refBtSelectedEventId) {
+                await loadRefBtCandidates(_refBtSelectedEventId);
+                // Refresh exam grid if open
+                var ep = document.getElementById('refBtExamPanel');
+                if (ep && ep.style.display !== 'none') refBtRenderExamGrid();
+            }
+        }
+
+        // ── Exam Mode ─────────────────────────────────────────────────────────
+        function refBtStartExam() {
+            var ep = document.getElementById('refBtExamPanel');
+            if (!ep) return;
+            var ev = _refBtEvents.find(function (e) { return e.id === _refBtSelectedEventId; });
+            var title = document.getElementById('refBtExamTitle');
+            if (title && ev) title.textContent = 'Examination — ' + ev.title;
+            ep.style.display = 'block';
+            refBtRenderExamGrid();
+            ep.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        function refBtCloseExam() {
+            var ep = document.getElementById('refBtExamPanel');
+            if (ep) ep.style.display = 'none';
+        }
+
+        function refBtRenderExamGrid() {
+            var grid = document.getElementById('refBtExamGrid');
+            var warn = document.getElementById('refBtPendingWarning');
+            if (!grid) return;
+            var hasPending = _refBtCandidates.some(function (c) { return c.status === 'pending'; });
+            if (warn) warn.style.display = hasPending ? 'flex' : 'none';
+
+            var active = _refBtCandidates.filter(function (c) { return c.status !== 'rejected'; });
+            if (!active.length) {
+                grid.innerHTML = '<p style="color:#888;grid-column:1/-1;text-align:center;padding:24px;">No approved candidates yet — approve applications in the list above first.</p>';
+                return;
+            }
+            grid.innerHTML = active.map(function (c) {
+                var pname = c.full_name || c.email || '(player ' + String(c.user_id).slice(0, 8) + '…)';
+                var photoHtml = refBtPhotoEl(c, 80);
+                var cardClass = 'bt-exam-card ' + c.status + '-card';
+                var body = '';
+                if (c.status === 'approved') {
+                    body = '<div class="bt-exam-actions">'
+                         + '<button class="bt-btn-pass" onclick="refBtOpenResultModal(' + refBtEsc(JSON.stringify(c.id)) + ',\'passed\')">&#10003; Pass</button>'
+                         + '<button class="bt-btn-fail" onclick="refBtOpenResultModal(' + refBtEsc(JSON.stringify(c.id)) + ',\'failed\')">&#10007; Fail</button>'
+                         + '</div>';
+                } else {
+                    var label = c.status.charAt(0).toUpperCase() + c.status.slice(1);
+                    body = '<div style="text-align:center;padding:0 16px 16px;">'
+                         + '<span class="bt-exam-badge ' + refBtEsc(c.status) + '">' + label + '</span>'
+                         + (c.result_notes ? '<p style="font-size:12px;color:#666;margin:6px 0 0;">' + refBtEsc(c.result_notes) + '</p>' : '')
+                         + '</div>';
+                }
+                return '<div class="' + cardClass + '">'
+                    + '<div class="bt-exam-card-body">'
+                    + photoHtml
+                    + '<p class="bt-exam-name">' + refBtEsc(pname) + '</p>'
+                    + '<p class="bt-exam-rank">' + refBtEsc(c.current_rank || 'Unranked') + ' &rarr; <strong>' + refBtEsc(c.requested_rank) + '</strong></p>'
+                    + '</div>'
+                    + body
+                    + '</div>';
+            }).join('');
+        }
+
+        function refBtOpenResultModal(candidateId, preset) {
+            var c = _refBtCandidates.find(function (x) { return x.id === candidateId; });
+            var pname = c ? (c.full_name || c.email || candidateId) : candidateId;
+            var m = document.getElementById('refBtResultModal');
+            if (!m) return;
+            var h = document.getElementById('refBtResultTitle');
+            if (h) h.textContent = pname;
+            var rl = document.getElementById('refBtResultRankLine');
+            if (rl && c) rl.textContent = (c.current_rank || 'Unranked') + ' → ' + (c.requested_rank || '');
+            // Photo in modal
+            var ph = document.getElementById('refBtModalPhoto');
+            if (ph) {
+                if (c && c.photo_url) {
+                    ph.innerHTML = '<img src="' + refBtEsc(c.photo_url) + '" style="width:100%;height:100%;object-fit:cover;" onerror="this.parentElement.textContent=\'' + (pname.charAt(0).toUpperCase()) + '\'">';
+                } else {
+                    ph.textContent = pname.charAt(0).toUpperCase();
+                }
+            }
+            document.getElementById('refBtResultCandidateId').value = candidateId;
+            // preset = 'passed' | 'failed' | 'approved' (neutral)
+            var sel = document.getElementById('refBtResultValue');
+            sel.value = (preset === 'passed' || preset === 'failed') ? preset : 'passed';
+            document.getElementById('refBtResultNotes').value = '';
+            m.style.display = 'flex';
+        }
+
+        function refBtCloseResultModal() {
+            var m = document.getElementById('refBtResultModal');
+            if (m) m.style.display = 'none';
+        }
+
+        async function refBtRecordResult() {
+            var btn = document.getElementById('refBtResultSaveBtn');
+            var cid    = (document.getElementById('refBtResultCandidateId') || {}).value || '';
+            var result = (document.getElementById('refBtResultValue') || {}).value || 'passed';
+            var notes  = ((document.getElementById('refBtResultNotes') || {}).value || '').trim();
+            var sb = makeRefSupabase();
+            if (!sb || !cid) return;
+            if (btn) { btn.disabled = true; btn.textContent = 'Saving…'; }
+            var res = await sb.rpc('skf_belt_test_record_result', {
+                p_candidate_id: cid,
+                p_result: result,
+                p_result_notes: notes || null
+            });
+            if (btn) { btn.disabled = false; btn.textContent = 'Save Result'; }
+            if (res.error) { alert('Could not record result: ' + res.error.message); return; }
+            refBtCloseResultModal();
+            if (_refBtSelectedEventId) {
+                await loadRefBtCandidates(_refBtSelectedEventId);
+                // Refresh exam grid live if exam mode is open
+                var ep = document.getElementById('refBtExamPanel');
+                if (ep && ep.style.display !== 'none') refBtRenderExamGrid();
+            }
+        }
+    </script>
 </body>
 </html>

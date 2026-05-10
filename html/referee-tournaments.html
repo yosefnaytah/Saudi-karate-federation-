@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tournaments — SKF Referee</title>
+    <link rel="stylesheet" href="dashboard.css?v=20260503">
+    <style>
+        .rt-content { padding: 24px 20px; max-width: 960px; margin: 0 auto; }
+        .rt-breadcrumb { font-size: 12px; color: rgba(255,255,255,0.8); margin-bottom: 2px; }
+        .rt-page-title { font-size: 22px; font-weight: 700; color: #fff; margin: 0; }
+        .rt-toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 20px; }
+        .rt-search { flex: 1; min-width: 200px; padding: 10px 14px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; background: #fff; }
+        .rt-filter-btn { padding: 10px 16px; border: 1px solid #2e7d32; border-radius: 8px; background: #fff; color: #2e7d32; font-weight: 600; font-size: 13px; cursor: pointer; transition: background .2s, color .2s; }
+        .rt-filter-btn.active, .rt-filter-btn:hover { background: #2e7d32; color: #fff; }
+        .rt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+        .rt-card { background: #fff; border-radius: 12px; box-shadow: 0 4px 14px rgba(0,0,0,.08); border: 1px solid #eee; overflow: hidden; cursor: pointer; transition: transform .2s, box-shadow .2s; }
+        .rt-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,.12); }
+        .rt-card-accent { height: 5px; background: linear-gradient(90deg, #2e7d32, #66bb6a); }
+        .rt-card-body { padding: 16px 18px 18px; }
+        .rt-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+        .rt-card-name { font-size: 16px; font-weight: 700; color: #1b1b1b; line-height: 1.3; }
+        .rt-status-badge { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 999px; white-space: nowrap; flex-shrink: 0; }
+        .rt-status-badge.draft { background: #f5f5f5; color: #888; }
+        .rt-status-badge.registration_open { background: #e8f5e9; color: #2e7d32; }
+        .rt-status-badge.registration_closed { background: #fff3e0; color: #e65100; }
+        .rt-status-badge.live { background: #e3f2fd; color: #1565c0; }
+        .rt-status-badge.completed { background: #ede7f6; color: #5e35b1; }
+        .rt-card-meta { font-size: 12px; color: #777; margin-bottom: 14px; line-height: 1.9; }
+        .rt-card-meta span { display: block; }
+        .rt-card-meta .icon { margin-right: 5px; }
+        .rt-card-cats { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+        .rt-cat-pill { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 999px; background: #e8f5e9; color: #2e7d32; }
+        .rt-card-footer { display: flex; gap: 8px; border-top: 1px solid #f0f0f0; padding-top: 12px; }
+        .rt-btn { flex: 1; padding: 9px 0; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .2s; }
+        .rt-btn-primary { background: #2e7d32; color: #fff; }
+        .rt-btn-primary:hover { background: #1b5e20; }
+        .rt-btn-secondary { background: #f5f5f5; color: #333; border: 1px solid #ddd; }
+        .rt-btn-secondary:hover { background: #ebebeb; }
+        .rt-empty { text-align: center; padding: 48px 20px; color: #888; font-size: 14px; }
+        .rt-empty .rt-empty-icon { font-size: 40px; margin-bottom: 12px; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="auth.js?v=20260503" defer></script>
+    <script src="skf-role-layout.js?v=20260506"></script>
+</head>
+<body>
+<div class="dashboard-container">
+    <header class="dashboard-header">
+        <div class="header-left">
+            <img src="full badge.png" alt="Saudi Karate Federation" class="header-badge">
+            <div class="header-fed-name">
+                <span class="header-fed-ar">الاتحاد السعودي للكاراتيه</span>
+                <span class="header-fed-en">Saudi Karate Federation</span>
+            </div>
+            <div>
+                <div class="rt-breadcrumb">Referee workspace</div>
+                <div class="rt-page-title">Tournaments</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="user-role" id="userDisplay">Loading...</div>
+            <div class="vision-logo">
+                <p class="vision-title">VISION (رؤية)</p>
+                <p class="vision-year">2030</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="menu-toggle" id="menuToggle" title="Menu" aria-label="Open menu">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </div>
+
+    <nav class="dashboard-nav" id="dashboardNav">
+        <ul class="nav-menu"></ul>
+    </nav>
+
+    <main class="dashboard-content">
+        <div class="rt-content">
+            <div class="rt-toolbar">
+                <input type="search" class="rt-search" id="rtSearch" placeholder="Search tournaments..." oninput="renderTournaments()">
+                <button class="rt-filter-btn active" onclick="setFilter('all',this)">All</button>
+                <button class="rt-filter-btn" onclick="setFilter('registration_open',this)">Open</button>
+                <button class="rt-filter-btn" onclick="setFilter('live',this)">Live</button>
+                <button class="rt-filter-btn" onclick="setFilter('completed',this)">Completed</button>
+            </div>
+            <div class="rt-grid" id="rtGrid">
+                <div class="rt-empty"><p>Loading tournaments...</p></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+var RT_SB_URL  = 'https://uqlpxdphikmmpdsuojil.supabase.co';
+var RT_SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxbHB4ZHBoaWttbXBkc3VvamlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3OTI5NDEsImV4cCI6MjA4NjM2ODk0MX0.03xQ8ltwZm_TTEAHDOHocfFKG2j_PHmL1Lzt2t-aFJU';
+var _rtTournaments = [];
+var _rtFilter = 'all';
+var _rtRefRole = '';
+var _rtRefUserId = null;
+
+// Refresh the JWT from Supabase's own session before every data load.
+// This is the same pattern as referee-dashboard.html (refreshRefJwtFromSupabaseAuth).
+async function skfRefreshToken(sbUrl, sbAnon) {
+    try {
+        if (typeof supabase === 'undefined') return;
+        var tok = localStorage.getItem('token') || '';
+        if (!tok || tok.indexOf('local-token') === 0) return;
+        var sb = supabase.createClient(sbUrl, sbAnon, {
+            auth: { persistSession: true, storage: localStorage, autoRefreshToken: true, detectSessionInUrl: false }
+        });
+        var r1 = await sb.auth.getSession();
+        var sess = r1.data && r1.data.session;
+        if (!sess) return;
+        var expMs = sess.expires_at ? sess.expires_at * 1000 : 0;
+        if (!expMs || expMs < Date.now() + 120000) {
+            var r2 = await sb.auth.refreshSession();
+            if (r2.data && r2.data.session) sess = r2.data.session;
+        }
+        if (sess && sess.access_token) localStorage.setItem('token', sess.access_token);
+    } catch (e) { console.warn('[SKF] token refresh error:', e); }
+}
+
+
+function rtSb() {
+    var tok = localStorage.getItem('token');
+    if (!tok) return null;
+    return supabase.createClient(RT_SB_URL, RT_SB_ANON, {
+        global: { headers: { Authorization: 'Bearer ' + tok } },
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    });
+}
+
+function escHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+}
+
+function statusLabel(s) {
+    return { draft:'Draft', registration_open:'Open', registration_closed:'Closed', live:'Live', completed:'Completed' }[s] || (s || '—');
+}
+
+function fmtDate(iso) {
+    if (!iso) return '';
+    var d = new Date(iso);
+    if (isNaN(d.getTime())) return iso;
+    return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+
+function setFilter(f, btn) {
+    _rtFilter = f;
+    document.querySelectorAll('.rt-filter-btn').forEach(function(b){ b.classList.remove('active'); });
+    if (btn) btn.classList.add('active');
+    renderTournaments();
+}
+
+function renderTournaments() {
+    var grid = document.getElementById('rtGrid');
+    var q = (document.getElementById('rtSearch').value || '').trim().toLowerCase();
+    var list = _rtTournaments.filter(function(t) {
+        if (_rtFilter !== 'all' && t.status !== _rtFilter) return false;
+        if (!q) return true;
+        return (t.name || '').toLowerCase().indexOf(q) !== -1 || (t.location || '').toLowerCase().indexOf(q) !== -1;
+    });
+    if (!list.length) {
+        grid.innerHTML = '<div class="rt-empty"><p>No tournaments found.</p></div>';
+        return;
+    }
+    grid.innerHTML = list.map(function(t) {
+        var cats = (t._cats || []).slice(0,4);
+        var catsHtml = cats.length
+            ? cats.map(function(c){ return '<span class="rt-cat-pill">' + escHtml(c) + '</span>'; }).join('')
+            : '<span style="font-size:12px;color:#aaa;">No categories</span>';
+        return '<div class="rt-card">'
+            + '<div class="rt-card-accent"></div>'
+            + '<div class="rt-card-body">'
+            +   '<div class="rt-card-header">'
+            +     '<div class="rt-card-name">' + escHtml(t.name) + '</div>'
+            +     '<span class="rt-status-badge ' + escHtml(t.status || 'draft') + '">' + escHtml(statusLabel(t.status)) + '</span>'
+            +   '</div>'
+            +   '<div class="rt-card-meta">'
+            +     (t.location ? '<span>Location: ' + escHtml(t.location) + '</span>' : '')
+            +     (t.start_date ? '<span>Dates: ' + escHtml(fmtDate(t.start_date)) + (t.end_date ? ' – ' + escHtml(fmtDate(t.end_date)) : '') + '</span>' : '')
+            +     '<span>Registrations: ' + (t._total != null ? escHtml(String(t._total)) + ' total' : '—') + (t._approved != null && t._approved > 0 ? ' &bull; <span style="color:#2e7d32;font-weight:700;">' + escHtml(String(t._approved)) + ' approved</span>' : (t._total > 0 ? ' &bull; <span style="color:#e65100;">pending approval</span>' : '')) + '</span>'
+            +   '</div>'
+            +   '<div class="rt-card-cats">' + catsHtml + '</div>'
+            +   '<div class="rt-card-footer">'
+            +     '<button class="rt-btn rt-btn-primary" onclick="goToBracket(\'' + t.id + '\')">View Bracket</button>'
+            +     '<button class="rt-btn rt-btn-secondary" onclick="goToSetup(\'' + t.id + '\')">Setup</button>'
+            +   '</div>'
+            + '</div>'
+            + '</div>';
+    }).join('');
+}
+
+function goToBracket(tid) {
+    localStorage.setItem('skf_ref_tournament_id', tid);
+    window.location.href = 'referee-bracket.html';
+}
+
+function goToSetup(tid) {
+    localStorage.setItem('skf_ref_tournament_id', tid);
+    window.location.href = 'referee-bracket-setup.html';
+}
+
+async function loadTournaments() {
+    await skfRefreshToken(RT_SB_URL, RT_SB_ANON);
+    var sb = rtSb();
+    if (!sb) {
+        document.getElementById('rtGrid').innerHTML = '<div class="rt-empty"><p>Please sign in first.</p></div>';
+        return;
+    }
+    var list = [];
+    var role = _rtRefRole;
+    if (role === 'referees_plus' || role === 'skf_admin' || role === 'admin') {
+        var tq = await sb.from('tournaments').select('id,name,location,start_date,end_date,status,is_active').order('start_date', { ascending: false }).limit(50);
+        if (tq.error) {
+            document.getElementById('rtGrid').innerHTML = '<div class="rt-empty"><p style="color:#c62828;">' + escHtml(tq.error.message) + '</p></div>';
+            return;
+        }
+        list = tq.data || [];
+    } else if (role === 'referee' && _rtRefUserId) {
+        var r = await sb.from('tournament_referees').select('tournament_id').eq('referee_id', _rtRefUserId);
+        if (r.error) {
+            document.getElementById('rtGrid').innerHTML = '<div class="rt-empty"><p style="color:#c62828;">' + escHtml(r.error.message) + '</p></div>';
+            return;
+        }
+        var tids = [];
+        (r.data || []).forEach(function (row) {
+            if (row.tournament_id && tids.indexOf(row.tournament_id) < 0) tids.push(row.tournament_id);
+        });
+        if (!tids.length) {
+            _rtTournaments = [];
+            document.getElementById('rtGrid').innerHTML = '<div class="rt-empty"><p>No assigned tournaments. SKF Admin must add you under tournament referees for each event (same as Match operations).</p></div>';
+            return;
+        }
+        var tq = await sb.from('tournaments').select('id,name,location,start_date,end_date,status,is_active').in('id', tids).order('start_date', { ascending: false }).limit(50);
+        if (tq.error) {
+            document.getElementById('rtGrid').innerHTML = '<div class="rt-empty"><p style="color:#c62828;">' + escHtml(tq.error.message) + '</p></div>';
+            return;
+        }
+        list = tq.data || [];
+    } else {
+        list = [];
+    }
+    _rtTournaments = list;
+
+    for (var i = 0; i < _rtTournaments.length; i++) {
+        var t = _rtTournaments[i];
+        var cq = await sb.from('tournament_categories').select('event_type,age_category,gender,weight_class,discipline,age_group').eq('tournament_id', t.id).limit(8);
+        if (!cq.error && cq.data) {
+            t._cats = cq.data.map(function(c) {
+                var ev = (c.event_type || c.discipline || '').toLowerCase();
+                var age = c.age_category || c.age_group || '';
+                var g = (c.gender || '').charAt(0).toUpperCase();
+                var prefix = (g ? g + ' ' : '') + (age ? age + ' ' : '');
+                if (ev === 'kumite') return prefix + 'Kumite' + (c.weight_class ? ' ' + c.weight_class : '');
+                if (ev === 'kata_individual' || ev === 'kata') return prefix + 'Kata';
+                if (ev === 'kata_team') return prefix + 'Team Kata';
+                return age || ev || 'Category';
+            });
+        }
+        // Total registrations count
+        var rqTotal = await sb.from('tournament_registrations').select('id', { count: 'exact', head: true }).eq('tournament_id', t.id);
+        t._total = (!rqTotal.error && rqTotal.count != null) ? rqTotal.count : null;
+        // Approved only count
+        var rq = await sb.from('tournament_registrations').select('id', { count: 'exact', head: true }).eq('tournament_id', t.id).eq('status', 'approved');
+        t._approved = (!rq.error && rq.count != null) ? rq.count : null;
+    }
+    renderTournaments();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (!localStorage.getItem('token') || !localStorage.getItem('user')) { window.location.href = 'index.html'; return; }
+    if (typeof SKFRoleLayout !== 'undefined' && SKFRoleLayout.initRefereePage('tournaments') === false) return;
+
+    var mt = document.getElementById('menuToggle');
+    var nav = document.getElementById('dashboardNav');
+    if (mt && nav) mt.addEventListener('click', function() {
+        this.classList.toggle('active');
+        nav.classList.toggle('active');
+    });
+
+    var tok = localStorage.getItem('token');
+    var usr = localStorage.getItem('user');
+    if (!tok || !usr) { window.location.href = 'index.html'; return; }
+    try {
+        var user = JSON.parse(usr);
+        var el = document.getElementById('userDisplay');
+        if (el) el.textContent = 'Welcome, ' + (user.fullName || user.email || 'Referee');
+        _rtRefRole = typeof SKFRoleLayout !== 'undefined'
+            ? SKFRoleLayout.normalizeRole((user.role || '').toLowerCase())
+            : (user.role || '').toLowerCase();
+        _rtRefUserId = user.id || null;
+        loadTournaments();
+    } catch(e) { window.location.href = 'index.html'; }
+});
+</script>
+</body>
+</html>

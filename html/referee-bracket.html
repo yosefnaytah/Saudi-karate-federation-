@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bracket View — SKF Referee</title>
+    <link rel="stylesheet" href="dashboard.css?v=20260504">
+    <style>
+        .rb-content { padding: 24px 20px; }
+        .rb-breadcrumb { font-size: 12px; color: rgba(255,255,255,0.8); margin-bottom: 2px; }
+        .rb-page-title { font-size: 22px; font-weight: 700; color: #fff; margin: 0; }
+
+        /* Top bar selectors */
+        .rb-topbar { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 22px; background:#fff; padding:14px 18px; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.07); }
+        .rb-topbar label { display:flex; flex-direction:column; gap:4px; font-size:12px; font-weight:600; color:#555; }
+        .rb-select { padding:9px 12px; border:1px solid #ddd; border-radius:8px; font-size:13px; min-width:180px; background:#fafafa; }
+        .rb-back-btn { padding:9px 16px; background:#f5f5f5; border:1px solid #ddd; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; color:#333; }
+        .rb-back-btn:hover { background:#ebebeb; }
+        .rb-setup-btn { padding:9px 16px; background:#2e7d32; border:none; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; color:#fff; }
+        .rb-setup-btn:hover { background:#1b5e20; }
+
+        /* Bracket container */
+        .rb-bracket-wrap { overflow-x: auto; padding-bottom: 20px; }
+        .rb-bracket { display: flex; gap: 0; align-items: flex-start; }
+
+        .rb-banner-warn {
+            background: #fff8e1; border: 1px solid #ffcc80; color: #e65100;
+            border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; line-height: 1.45;
+        }
+        .rb-banner-err {
+            background: #ffebee; border: 1px solid #ef9a9a; color: #b71c1c;
+            border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px;
+        }
+        .rb-banner-warn strong, .rb-banner-err strong { display: block; margin-bottom: 4px; }
+
+        /* Round column */
+        .rb-round {
+            display: flex; flex-direction: column; min-width: 200px;
+            justify-content: space-around; position: relative; padding-right: 28px;
+        }
+        .rb-round-title { font-size:12px; font-weight:700; text-transform:uppercase; color:#2e7d32; text-align:center; padding:8px 0 14px; letter-spacing:.05em; }
+
+        /* Match card */
+        .rb-match-slots { display: flex; flex-direction: column; position: relative; margin-bottom: 0; }
+        .rb-match-wrapper { position: relative; z-index: 1; }
+        /* Horizontal stub toward next round (single-elim tree hint) */
+        .rb-round:not(:last-child) .rb-match-wrapper::after {
+            content: ''; position: absolute; right: -24px; top: 50%; width: 24px; height: 2px;
+            background: #9e9e9e; transform: translateY(-50%); pointer-events: none;
+        }
+        .rb-round:not(:last-child)::before {
+            content: ''; position: absolute; right: 0; top: 15%; bottom: 15%; width: 2px;
+            background: linear-gradient(180deg, #9e9e9e 0%, #bdbdbd 50%, #9e9e9e 100%);
+            border-radius: 1px; opacity: 0.85; pointer-events: none;
+        }
+        .rb-match {
+            background: #fff; border: 1.5px solid #e0e0e0;
+            border-radius: 10px; overflow: hidden; width: 180px; margin: 0 10px;
+            cursor: pointer; transition: box-shadow .2s, border-color .2s;
+            box-shadow: 0 2px 8px rgba(0,0,0,.06);
+        }
+        .rb-match:hover { border-color: #2e7d32; box-shadow: 0 4px 16px rgba(46,125,50,.18); }
+        .rb-match.winner-decided { border-color: #2e7d32; }
+        .rb-match.live { border-color: #1565c0; animation: pulseBorder 1.5s infinite; }
+        @keyframes pulseBorder { 0%,100%{box-shadow:0 0 0 0 rgba(21,101,192,.3);} 50%{box-shadow:0 0 0 6px rgba(21,101,192,.1);} }
+        .rb-match.bye-match { opacity:.5; cursor:default; }
+        .rb-match.bye-match:hover { border-color:#e0e0e0; box-shadow:0 2px 8px rgba(0,0,0,.06); }
+
+        .rb-slot {
+            display: flex; align-items: center; gap: 8px; padding: 8px 10px;
+            min-height: 44px; border-bottom: 1px solid #f0f0f0;
+        }
+        .rb-slot:last-child { border-bottom: none; }
+        .rb-slot.winner-slot { background: #e8f5e9; }
+        .rb-slot.tbd-slot { background: #fafafa; }
+
+        .rb-player-img { width:28px; height:28px; border-radius:50%; object-fit:cover; background:#e0e0e0; flex-shrink:0; }
+        .rb-player-img.placeholder { background:#e8e8e8; display:flex; align-items:center; justify-content:center; font-size:14px; }
+        .rb-player-info { flex:1; min-width:0; }
+        .rb-player-name { font-size:12px; font-weight:700; color:#1b1b1b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .rb-player-club { font-size:10px; color:#888; }
+        .rb-player-score { font-size:15px; font-weight:800; color:#333; flex-shrink:0; min-width:18px; text-align:right; }
+        .rb-player-score.winner-score { color:#2e7d32; }
+
+        /* Match status badge */
+        .rb-match-status { font-size:9px; font-weight:700; text-align:center; padding:3px; text-transform:uppercase; letter-spacing:.05em; }
+        .rb-match-status.status-scheduled { background:#f5f5f5; color:#888; }
+        .rb-match-status.status-live { background:#e3f2fd; color:#1565c0; }
+        .rb-match-status.status-completed { background:#e8f5e9; color:#2e7d32; }
+
+        /* Connector lines */
+        .rb-connector { width:20px; }
+
+        /* Legend */
+        .rb-legend { display:flex; gap:14px; flex-wrap:wrap; margin-top:16px; align-items:center; font-size:12px; color:#666; }
+        .rb-legend-dot { width:10px; height:10px; border-radius:50%; display:inline-block; margin-right:4px; }
+
+        /* Empty state */
+        .rb-empty { text-align:center; padding:60px 20px; color:#888; font-size:14px; }
+        .rb-empty-icon { font-size:44px; margin-bottom:14px; }
+
+        /* RR table */
+        .rb-rr-wrap { background:#fff; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,.07); padding:20px; overflow-x:auto; }
+        .rb-rr-wrap h3 { margin:0 0 14px; font-size:15px; color:#1b5e20; }
+        table.rb-rr-table { width:100%; border-collapse:collapse; font-size:13px; }
+        table.rb-rr-table th, table.rb-rr-table td { border:1px solid #e0e0e0; padding:8px 10px; }
+        table.rb-rr-table th { background:#f5f5f5; font-weight:700; }
+        table.rb-rr-table tr:hover td { background:#f9fbe7; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="skf-bracket-engine.js?v=20260504"></script>
+    <script src="auth.js?v=20260504"></script>
+    <script src="skf-role-layout.js?v=20260506"></script>
+    <script src="skf-realtime-matches.js?v=20260506"></script>
+</head>
+<body>
+<div class="dashboard-container">
+    <header class="dashboard-header">
+        <div class="header-left">
+            <img src="full badge.png" alt="Saudi Karate Federation" class="header-badge">
+            <div class="header-fed-name">
+                <span class="header-fed-ar">الاتحاد السعودي للكاراتيه</span>
+                <span class="header-fed-en">Saudi Karate Federation</span>
+            </div>
+            <div>
+                <div class="rb-breadcrumb">Referee &rsaquo; Tournaments &rsaquo; Bracket</div>
+                <div class="rb-page-title">Tournament Brackets</div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="user-role" id="userDisplay">Loading...</div>
+            <div class="vision-logo">
+                <p class="vision-title">VISION (رؤية)</p>
+                <p class="vision-year">2030</p>
+            </div>
+        </div>
+    </header>
+
+    <div class="menu-toggle" id="menuToggle">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+    </div>
+
+    <nav class="dashboard-nav" id="dashboardNav">
+        <ul class="nav-menu"></ul>
+    </nav>
+
+    <main class="dashboard-content">
+        <div class="rb-content">
+            <!-- Top selector bar -->
+            <div class="rb-topbar">
+                <button class="rb-back-btn" onclick="window.location.href='referee-tournaments.html'">&larr; Back</button>
+                <label>Tournament
+                    <select class="rb-select" id="rbTournamentSelect" onchange="onTournamentChange()"></select>
+                </label>
+                <label>Category
+                    <select class="rb-select" id="rbCategorySelect" onchange="loadBracket()"></select>
+                </label>
+                <div style="flex:1"></div>
+                <button class="rb-setup-btn" id="rbSetupBtn" onclick="goToSetup()">Bracket Setup</button>
+            </div>
+
+            <!-- Bracket output -->
+            <div id="rbMain">
+                <div class="rb-empty"><p>Select a tournament and category to view the bracket.</p></div>
+            </div>
+
+            <!-- Legend -->
+            <div class="rb-legend" id="rbLegend" style="display:none;">
+                <span><span style="display:inline-block;background:#ef5350;color:#fff;font-size:8px;font-weight:800;padding:2px 6px;border-radius:3px;margin-right:4px;letter-spacing:.05em;">RED</span>Red corner athlete</span>
+                <span><span style="display:inline-block;background:#1e88e5;color:#fff;font-size:8px;font-weight:800;padding:2px 6px;border-radius:3px;margin-right:4px;letter-spacing:.05em;">BLUE</span>Blue corner athlete</span>
+                <span><span style="display:inline-block;background:#2e7d32;color:#fff;font-size:8px;font-weight:800;padding:2px 6px;border-radius:3px;margin-right:4px;letter-spacing:.05em;">WIN</span>Winner</span>
+                <span><span style="display:inline-block;background:#1565c0;color:#fff;font-size:8px;font-weight:800;padding:2px 6px;border-radius:3px;margin-right:4px;letter-spacing:.05em;">LIVE</span>Match in progress</span>
+            </div>
+        </div>
+    </main>
+</div>
+
+<script>
+var RB_SB_URL  = 'https://uqlpxdphikmmpdsuojil.supabase.co';
+var RB_SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxbHB4ZHBoaWttbXBkc3VvamlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3OTI5NDEsImV4cCI6MjA4NjM2ODk0MX0.03xQ8ltwZm_TTEAHDOHocfFKG2j_PHmL1Lzt2t-aFJU';
+var _rbSb = null;
+var _rbCategories = [];
+var _rbPlayerCache = {};
+var _rbDiagHtml = "";
+/** Same as referee-dashboard: plain referee only sees assigned tournaments */
+var _rbRefRole = '';
+var _rbRefUserId = null;
+
+var _rbRtUnsub = null;
+var _rbRtDebounce = null;
+function rbUnsubscribeRealtime() {
+    if (_rbRtUnsub) { try { _rbRtUnsub.unsubscribe(); } catch (e) {} _rbRtUnsub = null; }
+}
+function rbSubscribeBracketRealtime(tournamentId) {
+    rbUnsubscribeRealtime();
+    if (!tournamentId || typeof SKFMatchRealtime === 'undefined') return;
+    var sb = rbSb();
+    if (!sb) return;
+    _rbRtUnsub = SKFMatchRealtime.subscribeTournamentMatches(sb, tournamentId, function () {
+        clearTimeout(_rbRtDebounce);
+        _rbRtDebounce = setTimeout(function () {
+            var c = document.getElementById('rbCategorySelect') && document.getElementById('rbCategorySelect').value;
+            if (c) loadBracket();
+        }, 320);
+    });
+}
+
+// Refresh the JWT from Supabase's own session before every data load.
+// This is the same pattern as referee-dashboard.html (refreshRefJwtFromSupabaseAuth).
+async function skfRefreshToken(sbUrl, sbAnon) {
+    try {
+        if (typeof supabase === 'undefined') return;
+        var tok = localStorage.getItem('token') || '';
+        if (!tok || tok.indexOf('local-token') === 0) return;
+        var sb = supabase.createClient(sbUrl, sbAnon, {
+            auth: { persistSession: true, storage: localStorage, autoRefreshToken: true, detectSessionInUrl: false }
+        });
+        var r1 = await sb.auth.getSession();
+        var sess = r1.data && r1.data.session;
+        if (!sess) return;
+        var expMs = sess.expires_at ? sess.expires_at * 1000 : 0;
+        if (!expMs || expMs < Date.now() + 120000) {
+            var r2 = await sb.auth.refreshSession();
+            if (r2.data && r2.data.session) sess = r2.data.session;
+        }
+        if (sess && sess.access_token) localStorage.setItem('token', sess.access_token);
+    } catch (e) { console.warn('[SKF] token refresh error:', e); }
+}
+
+
+function rbSb() {
+    var tok = localStorage.getItem('token');
+    if (!tok) return null;
+    return supabase.createClient(RB_SB_URL, RB_SB_ANON, {
+        global: { headers: { Authorization: 'Bearer ' + tok } },
+        auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+    });
+}
+
+function escHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function rbResolvedProfileUrl(raw) {
+    if (raw == null || raw === '') return null;
+    var base = String(RB_SB_URL || (typeof window !== 'undefined' && window.SKF_SUPABASE_URL) || '').replace(/\/$/, '');
+    var z = (typeof skfResolveAvatarUrl === 'function') ? skfResolveAvatarUrl(raw, base || undefined) : '';
+    if (z) return z;
+    var u = String(raw).trim();
+    return u || null;
+}
+
+/**
+ * Fetch avatar_url from public.profiles for all IDs in _rbPlayerCache,
+ * merging back into cache entries so the bracket engine can render photos.
+ */
+async function rbEnrichWithAvatars(sb) {
+    var ids = Object.keys(_rbPlayerCache).filter(Boolean);
+    if (!ids.length) return;
+    var avatarMap = {};
+
+    // Direct join attempt
+    var pq = await sb.from('profiles').select('user_id,avatar_url').in('user_id', ids);
+    if (!pq.error && pq.data) {
+        pq.data.forEach(function (row) {
+            if (row.avatar_url && String(row.avatar_url).trim())
+                avatarMap[String(row.user_id)] = String(row.avatar_url).trim();
+        });
+    }
+
+    // RPC fallback for any still-missing IDs
+    var stillMissing = ids.filter(function (id) { return !avatarMap[id]; });
+    if (stillMissing.length) {
+        var rpc = await sb.rpc('bracket_setup_fetch_avatars', { p_user_ids: stillMissing });
+        if (!rpc.error && rpc.data) {
+            var list = Array.isArray(rpc.data) ? rpc.data : [rpc.data];
+            list.forEach(function (row) {
+                if (row && row.user_id && row.avatar_url && String(row.avatar_url).trim())
+                    avatarMap[String(row.user_id)] = String(row.avatar_url).trim();
+            });
+        }
+    }
+
+    // Merge into cache: prefer profiles.avatar_url
+    Object.keys(avatarMap).forEach(function (uid) {
+        if (_rbPlayerCache[uid]) _rbPlayerCache[uid].profile_image_url = avatarMap[uid];
+    });
+}
+
+
+function rbDisplayAthleteName(p, userId) {
+    if (p) {
+        var n = (p.full_name && String(p.full_name).trim()) || (p.email && String(p.email).trim());
+        return n || 'Participant';
+    }
+    if (userId) return 'Participant';
+    return 'To be determined';
+}
+
+function playerImgHtml(p, size) {
+    size = size || 28;
+    var style = 'width:' + size + 'px;height:' + size + 'px;border-radius:50%;object-fit:cover;';
+    var ph = '<div style="display:flex;' + style + 'background:#e5e9ec;align-items:center;justify-content:center;border:1px solid #cfd8dc;flex-shrink:0;"></div>';
+    if (p && p.profile_image_url) {
+        var src = rbResolvedProfileUrl(p.profile_image_url) || p.profile_image_url;
+        return '<span style="display:inline-flex;align-items:center;flex-shrink:0;">'
+            + '<img src="' + escHtml(src) + '" style="' + style + '" alt="" onerror="this.style.display=\'none\';var n=this.nextElementSibling;if(n)n.style.display=\'flex\';">'
+            + '<div style="display:none;' + style + 'background:#e8f5e9;align-items:center;justify-content:center;font-size:' + Math.round(size*.5) + 'px;" class="rb-img-fallback"></div>'
+            + '</span>';
+    }
+    return ph;
+}
+
+async function getPlayer(sb, uid) {
+    if (!uid) return null;
+    var key = String(uid);
+    if (_rbPlayerCache[key]) return _rbPlayerCache[key];
+    var q = await sb.from('users').select('id,full_name,email,club_name').eq('id', uid).single();
+    if (!q.error && q.data) { _rbPlayerCache[key] = q.data; return q.data; }
+    return null;
+}
+
+/** Category labels — same rules as referee-dashboard.html (wkfCategoryLabelFromRow) */
+function rbWkfGenderLabel(g) {
+    var s = String(g || '').toLowerCase();
+    if (s === 'male') return 'Male';
+    if (s === 'female') return 'Female';
+    return g || '—';
+}
+function rbWkfAgeCategoryLabel(a) {
+    var s = String(a || '').toLowerCase();
+    if (s === 'cadet') return 'Cadet';
+    if (s === 'junior') return 'Junior';
+    if (s === 'u21' || s === 'under 21' || s === 'under21') return 'U21';
+    if (s === 'senior') return 'Senior';
+    return a || '—';
+}
+function rbWkfEventTypeLabel(ev) {
+    var s = String(ev || '').toLowerCase();
+    if (s === 'kumite') return 'Kumite';
+    if (s === 'kata_individual' || s === 'kata') return 'Kata';
+    if (s === 'kata_team' || s === 'team_kata') return 'Team Kata';
+    return ev || 'Event';
+}
+function rbCategoryLabelFromRow(c) {
+    if (!c) return 'Category';
+    var ev = String(c.event_type || '').toLowerCase();
+    if (!ev) ev = (String(c.discipline || '').toLowerCase() === 'kumite') ? 'kumite' : 'kata_individual';
+    if (String(c.is_team_event).toLowerCase() === 'true') ev = 'kata_team';
+    var isKumite = ev === 'kumite';
+    var base = rbWkfGenderLabel(c.gender) + ' ' + rbWkfAgeCategoryLabel(c.age_category || c.age_group) + ' ' + rbWkfEventTypeLabel(ev);
+    if (isKumite && c.weight_class) base += ' ' + String(c.weight_class);
+    return base;
+}
+
+async function loadTournaments() {
+    await skfRefreshToken(RB_SB_URL, RB_SB_ANON);
+    var sb = rbSb();
+    if (!sb) return;
+    var list = [];
+    var role = _rbRefRole;
+    if (role === 'referees_plus' || role === 'skf_admin' || role === 'admin') {
+        var q = await sb.from('tournaments').select('id,name,status').eq('is_active', true).order('start_date', { ascending: false });
+        if (q.error) return;
+        list = q.data || [];
+    } else if (role === 'referee' && _rbRefUserId) {
+        var r = await sb.from('tournament_referees').select('tournament_id').eq('referee_id', _rbRefUserId);
+        if (r.error) return;
+        var tids = [];
+        (r.data || []).forEach(function (row) {
+            if (row.tournament_id && tids.indexOf(row.tournament_id) < 0) tids.push(row.tournament_id);
+        });
+        if (tids.length) {
+            var tq = await sb.from('tournaments').select('id,name,status').in('id', tids).eq('is_active', true).order('start_date', { ascending: false });
+            if (tq.error) return;
+            list = tq.data || [];
+        }
+    }
+    var sel = document.getElementById('rbTournamentSelect');
+    if (!list.length) {
+        sel.innerHTML = '<option value="">' + (role === 'referee' ? 'No assigned tournaments (SKF Admin must add you under tournament referees).' : 'No active tournaments.') + '</option>';
+        return;
+    }
+    sel.innerHTML = '<option value="">-- Select tournament --</option>'
+        + list.map(function(t){ return '<option value="' + t.id + '">' + escHtml(t.name) + '</option>'; }).join('');
+    var saved = localStorage.getItem('skf_ref_tournament_id');
+    if (saved && list.some(function (t) { return String(t.id) === String(saved); })) {
+        sel.value = saved;
+        onTournamentChange();
+    }
+}
+
+async function onTournamentChange() {
+    var tid = document.getElementById('rbTournamentSelect').value;
+    if (!tid) {
+        rbUnsubscribeRealtime();
+        document.getElementById('rbCategorySelect').innerHTML = '<option value="">-- Select category --</option>';
+        return;
+    }
+    localStorage.setItem('skf_ref_tournament_id', tid);
+    await skfRefreshToken(RB_SB_URL, RB_SB_ANON);
+    var sb = rbSb();
+    var q = await sb.from('tournament_categories')
+        .select('id, discipline, gender, age_group, weight_class, event_type, age_category, is_team_event, bracket_type')
+        .eq('tournament_id', tid)
+        .order('discipline');
+    _rbCategories = q.data || [];
+    var catSel = document.getElementById('rbCategorySelect');
+    catSel.innerHTML = '<option value="">-- Select category --</option>'
+        + _rbCategories.map(function(c) {
+            return '<option value="' + c.id + '">' + escHtml(rbCategoryLabelFromRow(c)) + '</option>';
+        }).join('');
+    var savedCat = localStorage.getItem('skf_ref_category_id');
+    rbSubscribeBracketRealtime(tid);
+    if (savedCat && _rbCategories.some(function (c) { return String(c.id) === String(savedCat); })) {
+        catSel.value = savedCat;
+        loadBracket();
+    } else if (_rbCategories.length === 1) {
+        catSel.value = _rbCategories[0].id;
+        loadBracket();
+    }
+}
+
+
+function rbIsPowerOfTwo(n) {
+    return typeof n === 'number' && n >= 2 && ((n & (n - 1)) === 0);
+}
+function rbExpectedKnockoutMatchCountFromPlayers(n) {
+    return rbIsPowerOfTwo(n) ? (n - 1) : null;
+}
+function rbBuildBracketDiagnostics(matches, bracketType, approvedCount, userFetchError, missingProfileCount) {
+    var parts = [];
+    if (userFetchError) {
+        if (userFetchError) console.error('[SKF bracket]', userFetchError);
+        parts.push('<div class="rb-banner-err"><strong>Unable to load athlete details</strong> '
+            + 'Please try again. If names or photos stay missing, contact SKF support.</div>');
+    } else if (missingProfileCount > 0) {
+        parts.push('<div class="rb-banner-warn"><strong>Some athlete details could not be loaded</strong> '
+            + 'Please refresh the page. If the problem continues, contact SKF support.</div>');
+    }
+    var bt = (bracketType || '').toLowerCase();
+    if (bt !== 'league' && bt !== 'round_robin' && approvedCount != null && rbIsPowerOfTwo(approvedCount)) {
+        var exp = rbExpectedKnockoutMatchCountFromPlayers(approvedCount);
+        if (exp != null && matches.length < exp) {
+            parts.push('<div class="rb-banner-warn"><strong>The draw may be incomplete</strong> '
+                + 'This category has <b>' + approvedCount + '</b> approved athletes, which usually needs <b>' + exp + '</b> matches for a full knockout. '
+                + 'Only <b>' + matches.length + '</b> match(es) are present. Open <strong>Bracket Setup</strong> and use <strong>Generate Bracket</strong>, or ask Referee Plus / SKF administration for help.</div>');
+        }
+    }
+    return parts.join('');
+}
+
+async function loadBracket() {
+    await skfRefreshToken(RB_SB_URL, RB_SB_ANON);
+    var tid = document.getElementById('rbTournamentSelect').value;
+    var catId = document.getElementById('rbCategorySelect').value;
+    var main = document.getElementById('rbMain');
+    var legend = document.getElementById('rbLegend');
+    if (!catId) {
+        main.innerHTML = '<div class="rb-empty"><p>Select a category to view the bracket.</p></div>';
+        legend.style.display = 'none';
+        return;
+    }
+    if (!tid) {
+        main.innerHTML = '<div class="rb-empty"><p>Select a tournament first.</p></div>';
+        legend.style.display = 'none';
+        return;
+    }
+    localStorage.setItem('skf_ref_category_id', catId);
+    main.innerHTML = '<div class="rb-empty"><p>Loading bracket...</p></div>';
+    var catObj = _rbCategories.find(function(c){ return String(c.id) === String(catId); });
+    var bracketType = catObj ? (catObj.bracket_type || 'knockout') : 'knockout';
+    var sb = rbSb();
+    /** Same filters as referee-dashboard match operations */
+    var q = await sb.from('tournament_matches')
+        .select('id,round_number,bracket_position,status,red_user_id,blue_user_id,winner_user_id,red_score,blue_score,mat_label,scheduled_start,category_id')
+        .eq('tournament_id', tid)
+        .eq('category_id', catId)
+        .order('round_number', { ascending: true })
+        .order('bracket_position', { ascending: true });
+    if (q.error) {
+        console.error('[SKF bracket]', q.error);
+        main.innerHTML = '<div class="rb-empty">'
+            + '<p style="color:#c62828;font-weight:700;">Unable to load the bracket.</p>'
+            + '<p style="font-size:12px;color:#888;">Please try again. If the problem continues, contact SKF support.</p>'
+            + '</div>';
+        legend.style.display = 'none';
+        return;
+    }
+    var matches = q.data || [];
+    if (!matches.length) {
+        // Try a wider query (no category filter) to see if ANY matches exist
+        var testQ = await sb.from('tournament_matches').select('id', { count: 'exact', head: true }).eq('tournament_id', tid);
+        var totalMatches = (!testQ.error && testQ.count != null) ? testQ.count : '?';
+        main.innerHTML = '<div class="rb-empty">'
+            + '<p style="font-weight:700;">No matches for this category yet.</p>'
+            + '<p style="font-size:12px;color:#888;">'
+            + (totalMatches === 0 || totalMatches === '0' ? 'Use Bracket Setup to create the draw.' : 'Try another category, or use Bracket Setup if the draw was created under a different category.')
+            + '</p>'
+            + '<br><button onclick="goToSetup()" style="padding:10px 20px;background:#2e7d32;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Open bracket setup</button>'
+            + '</div>';
+        legend.style.display = 'none';
+        return;
+    }
+
+    _rbPlayerCache = {};
+    _rbDiagHtml = '';
+
+    var approvedCount = null;
+    var rc = await sb.from('tournament_registrations').select('id', { count: 'exact', head: true })
+        .eq('category_id', catId).eq('status', 'approved');
+    if (!rc.error && rc.count != null) approvedCount = rc.count;
+    if ((approvedCount === 0 || rc.error) && catId) {
+        var rc2 = await sb.from('tournament_registrations').select('id', { count: 'exact', head: true })
+            .eq('tournament_category_id', catId).eq('status', 'approved');
+        if (!rc2.error && rc2.count != null && rc2.count > 0) approvedCount = rc2.count;
+    }
+
+    var playerIds = [];
+    matches.forEach(function(m) {
+        if (m.red_user_id && playerIds.indexOf(m.red_user_id) === -1) playerIds.push(m.red_user_id);
+        if (m.blue_user_id && playerIds.indexOf(m.blue_user_id) === -1) playerIds.push(m.blue_user_id);
+        if (m.winner_user_id && playerIds.indexOf(m.winner_user_id) === -1) playerIds.push(m.winner_user_id);
+    });
+
+    var userFetchError = '';
+    var missingAfter = 0;
+    if (playerIds.length) {
+        var pq = await sb.from('users').select('id,full_name,email,club_name').in('id', playerIds);
+        if (pq.error) userFetchError = pq.error.message || String(pq.error);
+        if (!pq.error && pq.data) pq.data.forEach(function(p){ _rbPlayerCache[String(p.id)] = p; });
+        var missing = [];
+        playerIds.forEach(function(pid) {
+            if (!_rbPlayerCache[String(pid)]) missing.push(pid);
+        });
+        for (var fi = 0; fi < missing.length && fi < 20; fi++) {
+            var oq = await sb.from('users').select('id,full_name,email,club_name').eq('id', missing[fi]).maybeSingle();
+            if (!oq.error && oq.data) _rbPlayerCache[String(oq.data.id)] = oq.data;
+        }
+        missingAfter = playerIds.filter(function(pid){ return !_rbPlayerCache[String(pid)]; }).length;
+    }
+
+    _rbDiagHtml = rbBuildBracketDiagnostics(matches, bracketType, approvedCount, userFetchError, missingAfter);
+
+    await rbEnrichWithAvatars(sb);
+
+    if (bracketType === 'league' || bracketType === 'round_robin') {
+        renderLeague(matches);
+    } else {
+        renderKnockout(matches);
+    }
+    legend.style.display = 'flex';
+}
+
+function renderKnockout(matches) {
+    if (typeof SKFBracket !== 'undefined') {
+        SKFBracket.injectCSS();
+        var bracketHtml = SKFBracket.renderView(matches, function(uid) {
+            return _rbPlayerCache[String(uid)] || null;
+        });
+        document.getElementById('rbMain').innerHTML =
+            (_rbDiagHtml || '') + '<div style="overflow-x:auto;padding-bottom:20px;">' + bracketHtml + '</div>';
+    } else {
+        document.getElementById('rbMain').innerHTML =
+            (_rbDiagHtml || '') + '<div class="rb-empty">Bracket engine loading, please wait...</div>';
+    }
+}
+
+function calcRRStandings(matches, playerIds, cache) {
+    /* Returns array sorted by Pts DESC, Wins DESC, ScoreDiff DESC, Name ASC */
+    var stats = {};
+    playerIds.forEach(function(pid) {
+        var key = String(pid);
+        stats[key] = { id: pid, player: cache[key] || null, mp: 0, w: 0, l: 0, pts: 0, diff: 0 };
+    });
+    matches.forEach(function(m) {
+        if (m.status !== 'completed' && m.status !== 'walkover') return;
+        var rid  = m.red_user_id;
+        var bid  = m.blue_user_id;
+        var wid  = m.winner_user_id;
+        var rs   = m.red_score  != null ? m.red_score  : 0;
+        var bs   = m.blue_score != null ? m.blue_score : 0;
+        if (rid && stats[String(rid)]) {
+            stats[String(rid)].mp++;
+            stats[String(rid)].diff += (rs - bs);
+            if (wid === rid) { stats[String(rid)].w++;  stats[String(rid)].pts += 3; }
+            else             { stats[String(rid)].l++; }
+        }
+        if (bid && stats[String(bid)]) {
+            stats[String(bid)].mp++;
+            stats[String(bid)].diff += (bs - rs);
+            if (wid === bid) { stats[String(bid)].w++;  stats[String(bid)].pts += 3; }
+            else             { stats[String(bid)].l++; }
+        }
+    });
+    return Object.keys(stats).map(function(k){ return stats[k]; }).sort(function(a, b) {
+        if (b.pts  !== a.pts)  return b.pts  - a.pts;
+        if (b.w    !== a.w)    return b.w    - a.w;
+        if (b.diff !== a.diff) return b.diff - a.diff;
+        var na = (a.player && a.player.full_name) || '';
+        var nb = (b.player && b.player.full_name) || '';
+        return na.localeCompare(nb);
+    });
+}
+
+function renderLeague(matches) {
+    /* ── Collect all unique player IDs ── */
+    var pidSet = {};
+    matches.forEach(function(m) {
+        if (m.red_user_id)  pidSet[String(m.red_user_id)]  = true;
+        if (m.blue_user_id) pidSet[String(m.blue_user_id)] = true;
+    });
+    var playerIds = Object.keys(pidSet);
+    var standings = calcRRStandings(matches, playerIds, _rbPlayerCache);
+
+    var done  = matches.filter(function(m){ return m.status === 'completed'; }).length;
+    var live  = matches.filter(function(m){ return m.status === 'live' || m.status === 'in_progress'; }).length;
+    var allDone = done === matches.length && matches.length > 0;
+
+    var STATUS_LABEL = { scheduled:'Scheduled', pending:'Scheduled', in_progress:'In Progress', live:'Live', completed:'Completed', walkover:'Walkover', cancelled:'Cancelled' };
+    var STATUS_BG    = { in_progress:'#e3f2fd', live:'#fff3e0', completed:'#e8f5e9', walkover:'#f3e5f5', cancelled:'#fafafa' };
+    var STATUS_FG    = { in_progress:'#1565c0', live:'#e65100', completed:'#2e7d32', walkover:'#7b1fa2', cancelled:'#aaa' };
+
+    var html = '<div style="padding:4px 0 20px;">';
+
+    /* ─────────── 1. STANDINGS TABLE ─────────── */
+    html += '<div style="background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;margin-bottom:24px;">';
+    /* header bar */
+    html += '<div style="background:#1b5e20;padding:14px 20px;display:flex;align-items:center;gap:12px;">'
+        + '<span style="font-size:14px;font-weight:700;color:#fff;">Group Standings</span>'
+        + '<span style="font-size:12px;color:#a5d6a7;">' + standings.length + ' players &middot; ' + matches.length + ' matches</span>'
+        + (live  ? '<span style="font-size:11px;font-weight:700;background:#e53935;color:#fff;padding:2px 8px;border-radius:999px;margin-left:auto;">LIVE: ' + live + '</span>' : '')
+        + (allDone && !live ? '<span style="font-size:11px;font-weight:700;background:#4caf50;color:#fff;padding:2px 8px;border-radius:999px;margin-left:auto;">Group Complete</span>' : '')
+        + '</div>';
+    /* table */
+    html += '<div style="overflow-x:auto;">'
+        + '<table style="width:100%;border-collapse:collapse;font-size:13px;">'
+        + '<thead><tr style="background:#f5f5f5;">'
+        + '<th style="padding:10px 12px;text-align:left;font-weight:700;color:#555;border-bottom:2px solid #e0e0e0;min-width:28px;">#</th>'
+        + '<th style="padding:10px 12px;text-align:left;font-weight:700;color:#555;border-bottom:2px solid #e0e0e0;">Player</th>'
+        + '<th style="padding:10px 8px;text-align:center;font-weight:700;color:#555;border-bottom:2px solid #e0e0e0;" title="Matches Played">MP</th>'
+        + '<th style="padding:10px 8px;text-align:center;font-weight:700;color:#555;border-bottom:2px solid #e0e0e0;" title="Wins">W</th>'
+        + '<th style="padding:10px 8px;text-align:center;font-weight:700;color:#555;border-bottom:2px solid #e0e0e0;" title="Losses">L</th>'
+        + '<th style="padding:10px 8px;text-align:center;font-weight:700;color:#2e7d32;border-bottom:2px solid #e0e0e0;" title="Points">Pts</th>'
+        + '<th style="padding:10px 8px;text-align:center;font-weight:700;color:#555;border-bottom:2px solid #e0e0e0;" title="Score Difference">+/-</th>'
+        + '<th style="padding:10px 12px;text-align:center;font-weight:700;color:#555;border-bottom:2px solid #e0e0e0;"></th>'
+        + '</tr></thead><tbody>';
+
+    standings.forEach(function(row, idx) {
+        var rank   = idx + 1;
+        var qualifies = rank <= 2;
+        var rowBg  = qualifies ? '#f0fdf4' : (idx % 2 === 0 ? '#fff' : '#fafafa');
+        var rankBg = rank === 1 ? '#ffd700' : rank === 2 ? '#c0c0c0' : '#eee';
+        var rankFg = rank <= 2  ? '#1b5e20' : '#888';
+        var p      = row.player;
+        var name   = p && p.full_name ? p.full_name : 'Participant';
+        var club   = p && p.club_name ? p.club_name : '';
+        var img    = '';
+        if (p && p.profile_image_url) {
+            var imgUrl = (typeof rbResolvedProfileUrl === 'function') ? rbResolvedProfileUrl(p.profile_image_url) : p.profile_image_url;
+            var ini = name.split(/\s+/).filter(Boolean).map(function(w){return w.charAt(0).toUpperCase();}).slice(0,2).join('');
+            img = '<img src="' + escHtml(imgUrl) + '" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;border:1px solid #e0e0e0;" alt="" '
+                + 'onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\';">'
+                + '<span style="display:none;width:32px;height:32px;border-radius:50%;background:#e8f5e9;color:#2e7d32;font-size:11px;font-weight:700;align-items:center;justify-content:center;flex-shrink:0;">' + escHtml(ini) + '</span>';
+        } else {
+            var ini2 = name.split(/\s+/).filter(Boolean).map(function(w){return w.charAt(0).toUpperCase();}).slice(0,2).join('');
+            img = '<span style="display:inline-flex;width:32px;height:32px;border-radius:50%;background:#e8f5e9;color:#2e7d32;font-size:11px;font-weight:700;align-items:center;justify-content:center;flex-shrink:0;">' + escHtml(ini2) + '</span>';
+        }
+        var qualBadge = qualifies
+            ? '<span style="font-size:10px;font-weight:700;color:#fff;background:' + (rank===1?'#2e7d32':'#388e3c') + ';padding:2px 7px;border-radius:999px;white-space:nowrap;">'
+              + (allDone ? 'QUALIFIED' : 'TOP ' + rank) + '</span>'
+            : '';
+        var diffStr = row.diff > 0 ? '+' + row.diff : String(row.diff);
+        html += '<tr style="background:' + rowBg + ';border-bottom:1px solid #f0f0f0;">'
+            + '<td style="padding:10px 12px;text-align:center;">'
+            +   '<span style="display:inline-flex;width:22px;height:22px;border-radius:50%;background:' + rankBg + ';color:' + rankFg + ';font-size:11px;font-weight:800;align-items:center;justify-content:center;">' + rank + '</span>'
+            + '</td>'
+            + '<td style="padding:10px 12px;">'
+            +   '<div style="display:flex;align-items:center;gap:9px;">'
+            +     img
+            +     '<div>'
+            +       '<div style="font-weight:600;font-size:13px;color:#222;">' + escHtml(name) + '</div>'
+            +       (club ? '<div style="font-size:11px;color:#aaa;">' + escHtml(club) + '</div>' : '')
+            +     '</div>'
+            +   '</div>'
+            + '</td>'
+            + '<td style="padding:10px 8px;text-align:center;color:#555;">' + row.mp + '</td>'
+            + '<td style="padding:10px 8px;text-align:center;font-weight:700;color:#2e7d32;">' + row.w + '</td>'
+            + '<td style="padding:10px 8px;text-align:center;font-weight:700;color:#c62828;">' + row.l + '</td>'
+            + '<td style="padding:10px 8px;text-align:center;font-size:15px;font-weight:800;color:#1b5e20;">' + row.pts + '</td>'
+            + '<td style="padding:10px 8px;text-align:center;color:' + (row.diff >= 0 ? '#2e7d32' : '#c62828') + ';font-weight:700;">' + diffStr + '</td>'
+            + '<td style="padding:10px 12px;text-align:center;">' + qualBadge + '</td>'
+            + '</tr>';
+    });
+
+    html += '</tbody></table></div>';
+    /* points legend */
+    html += '<div style="padding:10px 16px;background:#fafafa;border-top:1px solid #f0f0f0;font-size:11px;color:#aaa;">'
+        + 'Points: Win = 3 &middot; Loss = 0 &nbsp;|&nbsp; Top 2 players qualify for the next stage'
+        + '</div>';
+    html += '</div>'; /* /standings card */
+
+    /* ─────────── 2. MATCH SCHEDULE ─────────── */
+    html += '<div style="background:#fff;border-radius:14px;box-shadow:0 2px 12px rgba(0,0,0,.07);overflow:hidden;">';
+    html += '<div style="background:#37474f;padding:12px 20px;">'
+        + '<span style="font-size:14px;font-weight:700;color:#fff;">Match Schedule</span>'
+        + (done > 0 ? '<span style="font-size:12px;color:#cfd8dc;margin-left:12px;">' + done + '/' + matches.length + ' completed</span>' : '')
+        + '</div>';
+
+    html += '<div style="padding:16px 16px 8px;">';
+    matches.forEach(function(m, mi) {
+        var p1   = m.red_user_id  ? (_rbPlayerCache[String(m.red_user_id)]  || null) : null;
+        var p2   = m.blue_user_id ? (_rbPlayerCache[String(m.blue_user_id)] || null) : null;
+        var n1   = (p1 && p1.full_name) ? p1.full_name : (m.red_user_id  ? 'Participant' : 'TBD');
+        var n2   = (p2 && p2.full_name) ? p2.full_name : (m.blue_user_id ? 'Participant' : 'TBD');
+        var c1   = p1 && p1.club_name ? p1.club_name : '';
+        var c2   = p2 && p2.club_name ? p2.club_name : '';
+        var st   = String(m.status || 'scheduled').toLowerCase();
+        var stLabel = STATUS_LABEL[st] || st;
+        var stBg    = STATUS_BG[st]    || '#f5f5f5';
+        var stFg    = STATUS_FG[st]    || '#888';
+        var score = (st === 'completed' || st === 'in_progress' || st === 'live')
+            ? '<span style="font-size:17px;font-weight:800;color:#333;background:#f5f5f5;padding:4px 12px;border-radius:8px;display:inline-block;">'
+              + (m.red_score != null ? m.red_score : '0') + ' &ndash; ' + (m.blue_score != null ? m.blue_score : '0')
+              + '</span>'
+            : '<span style="font-size:13px;color:#bbb;font-weight:700;">vs</span>';
+        var winMark = function(uid) {
+            if (!m.winner_user_id || !uid || m.winner_user_id !== uid) return '';
+            return '<span style="font-size:10px;font-weight:700;color:#2e7d32;background:#e8f5e9;border-radius:4px;padding:1px 5px;margin-left:4px;vertical-align:middle;">W</span>';
+        };
+        html += '<div onclick="onMatchClick(\'' + m.id + '\')" '
+            + 'style="display:flex;align-items:center;background:#fff;border:1px solid #e8edf3;border-radius:12px;padding:12px 14px;margin-bottom:8px;gap:10px;cursor:pointer;" '
+            + 'onmouseover="this.style.borderColor=\'#a5d6a7\';this.style.background=\'#f9fdf9\'" onmouseout="this.style.borderColor=\'#e8edf3\';this.style.background=\'#fff\'">'
+            + '<div style="font-size:11px;color:#bbb;font-weight:700;min-width:26px;text-align:center;">M' + (mi+1) + '</div>'
+            /* red */
+            + '<div style="flex:1;text-align:right;">'
+            +   '<div style="font-size:10px;font-weight:700;color:#ef5350;margin-bottom:2px;">RED</div>'
+            +   '<div style="font-weight:600;font-size:13px;">' + escHtml(n1) + winMark(m.red_user_id) + '</div>'
+            +   (c1 ? '<div style="font-size:11px;color:#aaa;">' + escHtml(c1) + '</div>' : '')
+            + '</div>'
+            /* score */
+            + '<div style="text-align:center;min-width:64px;">' + score + '</div>'
+            /* blue */
+            + '<div style="flex:1;text-align:left;">'
+            +   '<div style="font-size:10px;font-weight:700;color:#1e88e5;margin-bottom:2px;">BLUE</div>'
+            +   '<div style="font-weight:600;font-size:13px;">' + winMark(m.blue_user_id) + escHtml(n2) + '</div>'
+            +   (c2 ? '<div style="font-size:11px;color:#aaa;">' + escHtml(c2) + '</div>' : '')
+            + '</div>'
+            /* status + control */
+            + '<div style="display:flex;flex-direction:column;align-items:center;gap:5px;min-width:76px;">'
+            +   '<span style="font-size:10px;font-weight:700;padding:3px 8px;border-radius:999px;background:' + stBg + ';color:' + stFg + ';white-space:nowrap;">' + escHtml(stLabel) + '</span>'
+            +   '<button onclick="event.stopPropagation();onMatchClick(\'' + m.id + '\')" style="padding:4px 10px;font-size:11px;background:#2e7d32;color:#fff;border:none;border-radius:6px;cursor:pointer;white-space:nowrap;">'
+            + (function() {
+                var st = String(m.status || '').toLowerCase();
+                if (st === 'scheduled' && m.red_user_id && m.blue_user_id) return 'Start';
+                if (st === 'live' || st === 'paused') return 'Continue';
+                return 'Control';
+            })()
+            + '</button>'
+            + '</div>'
+            + '</div>';
+    });
+    html += '</div></div>'; /* /schedule card */
+
+    html += '</div>';
+    document.getElementById('rbMain').innerHTML = (_rbDiagHtml || '') + html;
+}
+
+function onMatchClick(matchId) {
+    var catId = document.getElementById('rbCategorySelect').value;
+    var tid = document.getElementById('rbTournamentSelect').value;
+    localStorage.setItem('skf_ref_match_id', matchId);
+    localStorage.setItem('skf_ref_tournament_id', tid);
+    localStorage.setItem('skf_ref_category_id', catId);
+    window.location.href = 'referee-match-control.html';
+}
+
+function goToSetup() {
+    var tid = document.getElementById('rbTournamentSelect').value;
+    var catId = document.getElementById('rbCategorySelect').value;
+    if (tid) localStorage.setItem('skf_ref_tournament_id', tid);
+    if (catId) localStorage.setItem('skf_ref_category_id', catId);
+    window.location.href = 'referee-bracket-setup.html';
+}
+
+document.addEventListener('DOMContentLoaded', async function() {
+    await skfRefreshToken(RB_SB_URL, RB_SB_ANON);
+    if (!localStorage.getItem('token') || !localStorage.getItem('user')) { window.location.href = 'index.html'; return; }
+    if (typeof SKFRoleLayout !== 'undefined' && SKFRoleLayout.initRefereePage('bracket') === false) return;
+
+    var mt = document.getElementById('menuToggle');
+    var nav = document.getElementById('dashboardNav');
+    if (mt && nav) mt.addEventListener('click', function() {
+        this.classList.toggle('active');
+        nav.classList.toggle('active');
+    });
+
+    var tok = localStorage.getItem('token');
+    var usr = localStorage.getItem('user');
+    if (!tok || !usr) { window.location.href = 'index.html'; return; }
+    try {
+        var user = JSON.parse(usr);
+        var el = document.getElementById('userDisplay');
+        if (el) el.textContent = 'Welcome, ' + (user.fullName || user.email || 'Referee');
+        _rbRefRole = (typeof SKFRoleLayout !== 'undefined') ? SKFRoleLayout.normalizeRole((user.role || '').toLowerCase()) : '';
+        _rbRefUserId = user.id || null;
+        loadTournaments();
+    } catch(e) { window.location.href = 'index.html'; }
+});
+</script>
+</body>
+</html>

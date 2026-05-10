@@ -12,13 +12,37 @@ CREATE TABLE IF NOT EXISTS public.users (
     player_id TEXT UNIQUE NOT NULL,
     player_id_card TEXT,
     phone TEXT NOT NULL,
-    club_name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     username TEXT UNIQUE NOT NULL,
     role TEXT NOT NULL CHECK (role IN ('skf_admin', 'player', 'coach', 'referee', 'club_admin', 'referees_plus')),
+    profile_image_url TEXT,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW(),
     is_active BOOLEAN DEFAULT TRUE
+);
+
+-- Specific Role Profiles
+CREATE TABLE IF NOT EXISTS public.player_profiles (
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE PRIMARY KEY,
+    weight DECIMAL(5,2),
+    date_of_birth DATE,
+    belt_level TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.coach_profiles (
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE PRIMARY KEY,
+    coaching_license_level TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.referee_profiles (
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE PRIMARY KEY,
+    referee_license_level TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Tournaments table
@@ -88,6 +112,28 @@ CREATE TABLE IF NOT EXISTS public.clubs (
     contact_phone TEXT,
     established_date DATE,
     is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Players to Clubs Contracts Table
+CREATE TABLE IF NOT EXISTS public.contracts (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    player_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+    club_id UUID REFERENCES public.clubs(id) ON DELETE CASCADE NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'expired', 'terminated', 'pending')),
+    document_url TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE(player_id, club_id, status)
+);
+
+-- Club Admin Profile Mapping
+CREATE TABLE IF NOT EXISTS public.club_admin_profiles (
+    user_id UUID REFERENCES public.users(id) ON DELETE CASCADE PRIMARY KEY,
+    club_id UUID REFERENCES public.clubs(id) ON DELETE SET NULL,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -296,8 +342,20 @@ BEGIN
   IF EXISTS (SELECT 1 FROM public.users WHERE id = NEW.id) THEN RETURN NEW; END IF;
   IF nid IS NULL OR length(nid) <> 10 THEN nid := right(replace(NEW.id::text, '-', ''), 10); END IF;
   IF ph IS NULL OR ph = '' THEN ph := '0500000000'; END IF;
-  INSERT INTO public.users (id, full_name, national_id, player_id, phone, club_name, email, username, role, is_active)
-  VALUES (NEW.id, fn, nid, nid, ph, COALESCE(NULLIF(trim(NEW.raw_user_meta_data->>'club_name'), ''), ''), NEW.email, NEW.email, r, CASE WHEN r = 'player' THEN true ELSE false END);
+  INSERT INTO public.users (id, full_name, national_id, player_id, phone, email, username, role, is_active)
+  VALUES (NEW.id, fn, nid, nid, ph, NEW.email, NEW.email, r, CASE WHEN r = 'player' THEN true ELSE false END);
+  
+  -- Create base role profile entry based on role
+  IF r = 'player' THEN
+      INSERT INTO public.player_profiles (user_id) VALUES (NEW.id);
+  ELSIF r = 'coach' THEN
+      INSERT INTO public.coach_profiles (user_id) VALUES (NEW.id);
+  ELSIF r = 'referee' OR r = 'referees_plus' THEN
+      INSERT INTO public.referee_profiles (user_id) VALUES (NEW.id);
+  ELSIF r = 'club_admin' THEN
+      INSERT INTO public.club_admin_profiles (user_id) VALUES (NEW.id);
+  END IF;
+
   RETURN NEW;
 EXCEPTION WHEN unique_violation THEN RETURN NEW;
 END;

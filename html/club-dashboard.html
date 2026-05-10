@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Club Dashboard - Saudi Karate Federation</title>
+    <link rel="stylesheet" href="dashboard.css?v=20260417">
+    <style>
+        .club-players-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(168px, 1fr));
+            gap: 18px;
+            margin-top: 8px;
+        }
+        .club-player-card {
+            text-align: center;
+            background: #fafafa;
+            border-radius: 12px;
+            padding: 16px 12px;
+            border: 1px solid #e8e8e8;
+            transition: box-shadow 0.2s ease;
+        }
+        .club-player-card:hover { box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
+        .club-player-card img {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #2e7d32;
+            display: block;
+            margin: 0 auto 12px;
+        }
+        .club-player-placeholder {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #e8f5e9, #c8e6c9);
+            margin: 0 auto 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #2e7d32;
+        }
+        .club-player-name { font-weight: 600; font-size: 15px; color: #1b1b1b; line-height: 1.3; word-break: break-word; }
+        .club-player-email { font-size: 12px; color: #666; margin-top: 6px; word-break: break-all; }
+        .ranking-toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: flex-end;
+            margin-bottom: 16px;
+        }
+        .ranking-toolbar label { font-size: 13px; font-weight: 600; color: #333; display: flex; flex-direction: column; gap: 6px; }
+        .ranking-toolbar input[type="search"] {
+            flex: 1;
+            min-width: 220px;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .ranking-toolbar select {
+            min-width: 180px;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .ranking-photo {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #2e7d32;
+            vertical-align: middle;
+        }
+        .ranking-photo-ph {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #e8f5e9;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #2e7d32;
+            font-size: 14px;
+        }
+        .rank-badge {
+            display: inline-block;
+            background: #e8f5e9;
+            color: #1b5e20;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+        .dashboard-container .menu-toggle { z-index: 2100; }
+        .dashboard-container .dashboard-nav.active { z-index: 2000; }
+        .roster-photo { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid #2e7d32; }
+        .roster-photo-ph {
+            width: 40px; height: 40px; border-radius: 50%; background: #e8f5e9; color: #2e7d32;
+            display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px;
+            border: 2px solid #2e7d32;
+        }
+        .club-overview-hero { background: linear-gradient(120deg, #e8f5e9, #fff); border-radius: 12px; border: 1px solid #c8e6c9; padding: 18px 20px; margin-bottom: 16px; }
+        .club-overview-hero h2 { margin: 0 0 6px; color: #1b5e20; font-size: 1.3rem; }
+        .club-overview-hero p { margin: 0; color: #444; font-size: 14px; line-height: 1.5; }
+        .club-ov-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; margin-bottom: 16px; }
+        .club-ov-grid .dashboard-card { margin-bottom: 0; }
+        .club-ov-note { font-size: 13px; color: #555; line-height: 1.45; }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="skf-role-layout.js?v=20260506"></script>
+    <script src="auth.js?v=20260414" defer></script>
+    <script src="skf-highlights.js?v=20260510"></script>
+    <script src="skf-live-board.js?v=20260510"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <div class="header-left">
+                <img src="full badge.png" alt="Saudi Karate Federation" class="header-badge">
+            <div class="header-fed-name">
+                <span class="header-fed-ar">الاتحاد السعودي للكاراتيه</span>
+                <span class="header-fed-en">Saudi Karate Federation</span>
+            </div>
+            </div>
+            <div class="header-right">
+                <div class="user-role" id="userDisplay">Loading…</div>
+                <div class="vision-logo">
+                    <p class="vision-title">VISION (رؤية)</p>
+                    <p class="vision-year">2030</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="menu-toggle" id="menuToggle" title="Menu" aria-label="Open menu">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+        </div>
+
+        <nav class="dashboard-nav" id="dashboardNav">
+            <ul class="nav-menu"></ul>
+        </nav>
+
+        <main class="dashboard-content">
+            <!-- SKF Highlights Banner -->
+            <div id="skfHlBannerClub"></div>
+
+            <div class="club-overview-hero">
+                <h2>Club command center</h2>
+                <p>Your club’s roster, tournament entries, registrations, and alerts are summarized here. Scroll down or use the menu for detailed management screens.</p>
+            </div>
+            <div class="stats-container" id="clubOverviewStats" style="margin-bottom:16px;">
+                <div class="stat-card"><div class="stat-value" id="clubOvStatPlayers">—</div><div class="stat-label">Players on roster</div></div>
+                <div class="stat-card"><div class="stat-value" id="clubOvStatRegs">—</div><div class="stat-label">Active registrations</div></div>
+                <div class="stat-card"><div class="stat-value" id="clubOvStatPending">—</div><div class="stat-label">Pending approvals</div></div>
+                <div class="stat-card"><div class="stat-value" id="clubOvStatEvents">—</div><div class="stat-label">Open tournaments</div></div>
+            </div>
+            <div class="club-ov-grid">
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header"><h2 class="dashboard-card-title">Roster snapshot</h2></div>
+                    <div id="clubOvRoster" class="club-ov-note" style="padding:8px 16px 16px;">Loading…</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header"><h2 class="dashboard-card-title">Tournament registrations</h2></div>
+                    <div id="clubOvRegPreview" class="club-ov-note" style="padding:8px 16px 16px;">Loading…</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header"><h2 class="dashboard-card-title">Upcoming events</h2></div>
+                    <div id="clubOvEvents" class="club-ov-note" style="padding:8px 16px 16px;">Loading…</div>
+                </div>
+                <div class="dashboard-card">
+                    <div class="dashboard-card-header"><h2 class="dashboard-card-title">Alerts</h2></div>
+                    <div id="clubOvAlerts" class="club-ov-note" style="padding:8px 16px 16px;">Loading…</div>
+                </div>
+            </div>
+
+            <!-- Live Match Board -->
+            <div style="margin-bottom:16px;" id="clubLiveBoardWrap">
+                <div id="clubLiveBoard"></div>
+            </div>
+
+            <div class="dashboard-card" style="background:#f0f9f4;border:1px solid #c8e6c9;margin-bottom:16px;">
+                <div style="padding:14px 20px;font-size:14px;color:#1b5e20;line-height:1.5;">
+                    <strong>Club administrator dashboard</strong> — this page is live in the SKF site.
+                    <span style="display:block;margin-top:8px;font-size:13px;color:#333;">
+                        (1) Request federation club registration and track status below.
+                        (2) Once SKF approves and links your account to a club, the roster and tournament registration tools become available under <em>Players &amp; tournaments</em>.
+                    </span>
+                </div>
+            </div>
+            <div class="dashboard-card" id="club-reg">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Your club</h2>
+                </div>
+                <div id="clubStatusBody" style="padding:12px 20px;color:#555;">Loading…</div>
+            </div>
+
+            <div class="dashboard-card">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Federation club registration</h2>
+                </div>
+                <p style="font-size:13px;color:#666;margin:0 20px 12px;">Submit a request for SKF to create your club and link your account. You will see the status here after submission. SKF Admin approves requests in the admin dashboard.</p>
+                <div id="clubRequestFormWrap" style="padding:0 20px 20px;">
+                    <form id="clubRegForm" onsubmit="submitClubRegistrationRequest(event)" style="max-width:520px;">
+                        <div style="margin-bottom:14px;">
+                            <label for="proposed_club_name" style="display:block;font-weight:600;font-size:13px;margin-bottom:6px;">Proposed club name *</label>
+                            <input id="proposed_club_name" type="text" required maxlength="200"
+                                style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:14px;">
+                        </div>
+                        <div style="margin-bottom:14px;">
+                            <label for="proposed_location" style="display:block;font-weight:600;font-size:13px;margin-bottom:6px;">City / region</label>
+                            <input id="proposed_location" type="text" maxlength="200" placeholder="e.g. Riyadh"
+                                style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:14px;">
+                        </div>
+                        <div style="margin-bottom:14px;">
+                            <label for="requested_initial_player_count" style="display:block;font-weight:600;font-size:13px;margin-bottom:6px;">Estimated players to register</label>
+                            <input id="requested_initial_player_count" type="number" min="0" max="50000" step="1"
+                                style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:14px;">
+                        </div>
+                        <div style="margin-bottom:14px;">
+                            <label for="club_reg_notes" style="display:block;font-weight:600;font-size:13px;margin-bottom:6px;">Notes for SKF (optional)</label>
+                            <textarea id="club_reg_notes" rows="3" maxlength="2000"
+                                style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:14px;"></textarea>
+                        </div>
+                        <button type="submit" style="padding:12px 24px;border:none;border-radius:8px;cursor:pointer;font-weight:600;background:#2e7d32;color:#fff;">Submit request</button>
+                    </form>
+                </div>
+                <div style="padding:0 20px 20px;">
+                    <h3 style="font-size:15px;color:#333;margin:8px 0 12px;">Your requests</h3>
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Submitted</th>
+                                    <th>Club name</th>
+                                    <th>Location</th>
+                                    <th>Est. players</th>
+                                    <th>Status</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="clubRegHistoryBody">
+                                <tr><td colspan="6" style="text-align:center;padding:16px;color:#888;">Loading…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-card" id="players-mgmt">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Players management</h2>
+                    <button type="button" onclick="reloadClubOperations()" style="padding:8px 14px;background:#6c757d;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">Refresh</button>
+                </div>
+                <div id="playersMgmtNoLink" style="padding:12px 20px;color:#666;display:none;">
+                    <p>After SKF links your account to a club, every <strong>player</strong> affiliated with your club appears here with name and photo.</p>
+                </div>
+                <div id="playersMgmtBody" style="padding:0 20px 20px;display:none;">
+                    <p style="font-size:13px;color:#666;margin:0 0 12px;">All players registered under your club, with profile photos when available.</p>
+                    <div id="playersMgmtGrid" class="club-players-grid"></div>
+                </div>
+            </div>
+
+            <div class="dashboard-card" id="players-ranking">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Players ranking</h2>
+                    <button type="button" onclick="reloadClubOperations()" style="padding:8px 14px;background:#6c757d;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">Refresh</button>
+                </div>
+                <div id="playersRankNoLink" style="padding:12px 20px;color:#666;display:none;">
+                    <p>Link your club first. Then you can search and explore <strong>belt / rank</strong> for every player in your club.</p>
+                </div>
+                <div id="playersRankBody" style="padding:0 20px 20px;display:none;">
+                    <p style="font-size:13px;color:#666;margin:0 0 12px;">Ranks come from each player&rsquo;s belt profile. Search by name, email, rank, or age group, or filter by rank.</p>
+                    <div class="ranking-toolbar">
+                        <input type="search" id="playersRankSearch" placeholder="Search name, email, rank, age group…" autocomplete="off"
+                            oninput="renderPlayersRanking()">
+                        <label>Filter by rank
+                            <select id="playersRankRankFilter" onchange="renderPlayersRanking()">
+                                <option value="">All ranks</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div class="data-table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:56px;"></th>
+                                    <th>Name</th>
+                                    <th>Points</th>
+                                    <th>Rank</th>
+                                    <th>Age group</th>
+                                    <th>Email</th>
+                                </tr>
+                            </thead>
+                            <tbody id="playersRankTbody">
+                                <tr><td colspan="6" style="text-align:center;padding:16px;color:#888;">Loading…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <p id="playersRankCount" style="font-size:12px;color:#666;margin:10px 0 0;"></p>
+                </div>
+            </div>
+
+            <div class="dashboard-card" id="players-op">
+                <div class="dashboard-card-header">
+                    <h2 class="dashboard-card-title">Players &amp; tournament registration</h2>
+                    <button type="button" onclick="reloadClubOperations()" style="padding:8px 14px;background:#6c757d;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:13px;">Refresh</button>
+                </div>
+                <div id="clubOpsNoLink" style="padding:12px 20px;color:#666;display:none;">
+                    <p>After SKF approves your club and links your account, you can list players in your club and register them for tournaments.</p>
+                    <p style="font-size:13px;margin-top:8px;">If the roster does not load, try refreshing the page or contact SKF support.</p>
+                </div>
+                <div id="clubOpsWrap" style="display:none;">
+                    <p style="font-size:13px;color:#666;margin:0 20px 16px;">Players and coaches in your organization. Tournament registrations you enter are recorded for audit under your club administrator account.</p>
+
+                    <h3 style="font-size:15px;color:#333;margin:12px 20px;">Roster</h3>
+                    <div class="data-table-container" style="margin:0 20px 24px;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:56px;"></th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Age group</th>
+                                    <th>Rank</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clubPlayersBody">
+                                <tr><td colspan="6" style="text-align:center;padding:16px;color:#888;">Loading…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <h3 style="font-size:15px;color:#333;margin:12px 20px;">Register a player for a tournament</h3>
+                    <form id="clubTournamentRegForm" onsubmit="submitClubTournamentRegistration(event)" style="max-width:560px;padding:0 20px 24px;">
+                        <div style="margin-bottom:12px;">
+                            <label for="reg_tournament_id" style="display:block;font-weight:600;font-size:13px;margin-bottom:6px;">Tournament *</label>
+                            <select id="reg_tournament_id" required onchange="onClubRegTournamentChange()"
+                                style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:14px;">
+                                <option value="">— Select —</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom:12px;">
+                            <label for="reg_category_id" style="display:block;font-weight:600;font-size:13px;margin-bottom:6px;">Category *</label>
+                            <select id="reg_category_id"
+                                style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:14px;">
+                                <option value="">— Choose tournament first —</option>
+                            </select>
+                            <p id="regCategoryHint" style="font-size:12px;color:#888;margin:6px 0 0;display:none;">No categories exist yet for this tournament. SKF must add categories before registration.</p>
+                        </div>
+                        <div style="margin-bottom:12px;">
+                            <label for="reg_player_id" style="display:block;font-weight:600;font-size:13px;margin-bottom:6px;">Player *</label>
+                            <select id="reg_player_id" required
+                                style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:14px;">
+                                <option value="">— No players —</option>
+                            </select>
+                        </div>
+                        <div style="margin-bottom:12px;" id="regWeightGroup">
+                            <label for="reg_weight_category" style="display:block;font-weight:600;font-size:13px;margin-bottom:6px;">Weight division (Kumite only)</label>
+                            <input id="reg_weight_category" type="text" maxlength="120" placeholder="e.g. Kumite -67 kg"
+                                style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:14px;">
+                        </div>
+                        <div style="margin-bottom:12px;">
+                            <label for="reg_belt_level" style="display:block;font-weight:600;font-size:13px;margin-bottom:6px;">Belt level (optional)</label>
+                            <input id="reg_belt_level" type="text" maxlength="80"
+                                style="width:100%;padding:10px;border:1px solid #ccc;border-radius:8px;font-size:14px;">
+                        </div>
+                        <button type="submit" style="padding:12px 24px;border:none;border-radius:8px;cursor:pointer;font-weight:600;background:#2e7d32;color:#fff;">Submit registration</button>
+                    </form>
+
+                    <h3 style="font-size:15px;color:#333;margin:12px 20px;">Recent registrations (your club)</h3>
+                    <div class="data-table-container" style="margin:0 20px 20px;">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Tournament</th>
+                                    <th>Player</th>
+                                    <th>Weight / cat.</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="clubTournamentRegsBody">
+                                <tr><td colspan="5" style="text-align:center;padding:16px;color:#888;">Loading…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        (function () {
+            var menuToggle = document.getElementById('menuToggle');
+            var dashboardNav = document.getElementById('dashboardNav');
+            if (menuToggle && dashboardNav) {
+                menuToggle.addEventListener('click', function () {
+                    this.classList.toggle('active');
+                    dashboardNav.classList.toggle('active');
+                });
+            }
+        })();
+
+        function closeClubMenu() {
+            var nav = document.getElementById('dashboardNav');
+            var toggle = document.getElementById('menuToggle');
+            if (nav) nav.classList.remove('active');
+            if (toggle) toggle.classList.remove('active');
+        }
+
+        var SKF_SUPABASE_URL = 'https://uqlpxdphikmmpdsuojil.supabase.co';
+        var SKF_SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVxbHB4ZHBoaWttbXBkc3VvamlsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzA3OTI5NDEsImV4cCI6MjA4NjM2ODk0MX0.03xQ8ltwZm_TTEAHDOHocfFKG2j_PHmL1Lzt2t-aFJU';
+
+        var clubPlayersCache = [];
+        var clubPlayerAvatars = {};
+        var clubPlayersPointsTotals = {};
+        var currentClubId = null;
+
+        function makeClubSupabase() {
+            var token = localStorage.getItem('token');
+            if (!token || token.indexOf('local-token') === 0) return null;
+            if (typeof supabase === 'undefined') return null;
+            return supabase.createClient(SKF_SUPABASE_URL, SKF_SUPABASE_ANON, {
+                global: { headers: { Authorization: 'Bearer ' + token } },
+                auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
+            });
+        }
+
+        function escapeHtml(s) {
+            if (s == null || s === '') return '';
+            return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+        }
+
+        function escapeAttr(s) {
+            return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+        }
+
+        function wkfGenderLabel(g) {
+            var s = String(g || '').toLowerCase();
+            if (s === 'male') return 'Male';
+            if (s === 'female') return 'Female';
+            return g || '—';
+        }
+
+        function wkfAgeCategoryLabel(a) {
+            var s = String(a || '').toLowerCase();
+            if (s === 'cadet') return 'Cadet';
+            if (s === 'junior') return 'Junior';
+            if (s === 'u21' || s === 'under 21' || s === 'under21') return 'U21';
+            if (s === 'senior') return 'Senior';
+            return a || '—';
+        }
+
+        function wkfEventTypeLabel(ev) {
+            var s = String(ev || '').toLowerCase();
+            if (s === 'kumite') return 'Kumite';
+            if (s === 'kata_individual' || s === 'kata') return 'Kata';
+            if (s === 'kata_team' || s === 'team_kata') return 'Team Kata';
+            return ev || 'Event';
+        }
+
+        function clubRegSyncWeightUi() {
+            var catSel = document.getElementById('reg_category_id');
+            var opt = catSel && catSel.options ? catSel.options[catSel.selectedIndex] : null;
+            var ev = opt ? (opt.getAttribute('data-event') || '') : '';
+            var w = opt ? (opt.getAttribute('data-weight') || '') : '';
+            var wInput = document.getElementById('reg_weight_category');
+            var wGroup = document.getElementById('regWeightGroup');
+            var isKumite = String(ev).toLowerCase() === 'kumite';
+            if (wGroup) wGroup.style.display = isKumite ? '' : 'none';
+            if (wInput) {
+                wInput.required = false;
+                wInput.value = isKumite ? (w || '') : '';
+            }
+        }
+
+        function fmtWhen(iso) {
+            if (!iso) return '—';
+            try {
+                var d = new Date(iso);
+                return isNaN(d.getTime()) ? '—' : d.toLocaleString();
+            } catch (e) { return '—'; }
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var token = localStorage.getItem('token');
+            var userStr = localStorage.getItem('user');
+            if (!token || !userStr) {
+                window.location.href = 'index.html';
+                return;
+            }
+            var h = (window.location.hash || '').replace(/^#/, '').toLowerCase();
+            var allowedNav = ['club-reg', 'players-mgmt', 'players-ranking', 'players-op'];
+            var navKey = allowedNav.indexOf(h) >= 0 ? h : 'club-reg';
+            if (typeof SKFRoleLayout !== 'undefined' && !SKFRoleLayout.initClubPage(navKey)) return;
+            displayUserInfo();
+            refreshClubDashboard();
+
+            // Live Match Board
+            if (typeof SKFLiveBoard !== 'undefined') {
+                SKFLiveBoard.init({
+                    containerId: 'clubLiveBoard',
+                    getSb: makeClubSupabase,
+                    supabaseUrl: SKF_SUPABASE_URL
+                });
+            }
+            // Highlights Banner
+            if (typeof SKFHighlights !== 'undefined') {
+                SKFHighlights.init({
+                    containerId: 'skfHlBannerClub',
+                    getSb: makeClubSupabase,
+                    supabaseUrl: SKF_SUPABASE_URL
+                });
+            }
+
+            // dashboard.css hides .dashboard-card until .loaded (same pattern as player-dashboard.html).
+            var dashboardCards = document.querySelectorAll('.dashboard-content .dashboard-card');
+            setTimeout(function () {
+                dashboardCards.forEach(function (card, index) {
+                    setTimeout(function () { card.classList.add('loaded'); }, index * 120);
+                });
+            }, 100);
+
+            window.addEventListener('hashchange', function () {
+                var h2 = (window.location.hash || '').replace(/^#/, '').toLowerCase();
+                if (allowedNav.indexOf(h2) >= 0 && typeof SKFRoleLayout !== 'undefined' && SKFRoleLayout.applyClubSidebar) {
+                    SKFRoleLayout.applyClubSidebar(h2);
+                }
+            });
+        });
+
+        function displayUserInfo() {
+            var user = JSON.parse(localStorage.getItem('user') || '{}');
+            var el = document.getElementById('userDisplay');
+            if (el) el.textContent = 'Welcome, ' + (user.fullName || user.email || 'User') + ' (Club Admin)';
+        }
+
+        async function loadClubOverviewDashboard() {
+            var sb = makeClubSupabase();
+            var uid = JSON.parse(localStorage.getItem('user') || '{}').id;
+            var sp = document.getElementById('clubOverviewStats');
+            if (!sb || !uid) {
+                if (sp) sp.style.opacity = '0.5';
+                return;
+            }
+            if (sp) sp.style.opacity = '1';
+            var uq = await sb.from('users').select('club_id,club_name').eq('id', uid).maybeSingle();
+            var cid = (!uq.error && uq.data && uq.data.club_id) ? uq.data.club_id : null;
+            var cname = (!uq.error && uq.data && uq.data.club_name) ? uq.data.club_name : '';
+
+            if (!cid) {
+                var z = '—';
+                var elp = document.getElementById('clubOvStatPlayers'); if (elp) elp.textContent = z;
+                var elr = document.getElementById('clubOvStatRegs'); if (elr) elr.textContent = z;
+                var elp2 = document.getElementById('clubOvStatPending'); if (elp2) elp2.textContent = z;
+                var ele = document.getElementById('clubOvStatEvents'); if (ele) ele.textContent = z;
+                var rEl = document.getElementById('clubOvRoster');
+                if (rEl) rEl.innerHTML = '<p style="margin:0;color:#666;">Player counts and registration insights will appear here once your club is approved and linked by SKF.</p>';
+                var rp = document.getElementById('clubOvRegPreview');
+                if (rp) rp.innerHTML = '<p style="margin:0;color:#666;">No club link yet.</p>';
+                var ev = document.getElementById('clubOvEvents');
+                if (ev) ev.innerHTML = '<p style="margin:0;color:#666;"><a href="tournament.html" style="color:#2e7d32;">Browse public tournaments</a> while your club is being created.</p>';
+                var al = document.getElementById('clubOvAlerts');
+                if (al) al.innerHTML = '<p style="margin:0;color:#666;">Submit a federation club registration below if you have not already.</p>';
+                return;
+            }
+
+            var pc = await sb.from('users').select('id', { count: 'exact', head: true }).eq('club_id', cid).eq('role', 'player');
+            var elp = document.getElementById('clubOvStatPlayers');
+            if (elp) elp.textContent = (!pc.error && pc.count != null) ? String(pc.count) : '—';
+
+            var idsQ = await sb.from('users').select('id').eq('club_id', cid).eq('role', 'player');
+            var pids = (!idsQ.error && idsQ.data) ? idsQ.data.map(function (x) { return x.id; }) : [];
+            var regCount = 0, pendReg = 0;
+            if (pids.length) {
+                var rg = await sb.from('tournament_registrations').select('status').in('user_id', pids);
+                if (!rg.error && rg.data) {
+                    regCount = rg.data.length;
+                    pendReg = rg.data.filter(function (r) { return String(r.status || '').toLowerCase() === 'pending'; }).length;
+                }
+            }
+            var elr = document.getElementById('clubOvStatRegs');
+            var elp2 = document.getElementById('clubOvStatPending');
+            if (elr) elr.textContent = String(regCount);
+            if (elp2) elp2.textContent = String(pendReg);
+
+            var tq = await sb.from('tournaments').select('id,name,start_date,status').eq('is_active', true).order('start_date', { ascending: true }).limit(8);
+            var tours = (!tq.error && tq.data) ? tq.data : [];
+            var open = tours.filter(function (t) { return (t.status || '') === 'registration_open'; });
+            var ele = document.getElementById('clubOvStatEvents');
+            if (ele) ele.textContent = String(open.length || tours.length || 0);
+
+            var rEl = document.getElementById('clubOvRoster');
+            if (rEl) {
+                var topQ = await sb.from('users').select('full_name,rank,age_group').eq('club_id', cid).eq('role', 'player').order('full_name').limit(5);
+                var tops = (!topQ.error && topQ.data) ? topQ.data : [];
+                if (!tops.length) {
+                    rEl.innerHTML = '<p style="margin:0;color:#666;">No players linked yet. Athletes are associated with your club once contracts are approved by SKF.</p>';
+                } else {
+                    rEl.innerHTML = '<p style="margin:0 0 8px;"><strong>' + escapeHtml(cname || 'Your club') + '</strong> — showing ' + String(pc.count || 0) + ' player(s).</p>'
+                        + '<ul style="margin:0;padding-left:1.1rem;">' + tops.map(function (p) {
+                            return '<li>' + escapeHtml(p.full_name || '—') + ' · ' + escapeHtml(p.rank || '—') + '</li>';
+                        }).join('') + '</ul>'
+                        + '<p style="margin:10px 0 0;font-size:12px;"><a href="#players-mgmt" onclick="if(typeof closeClubMenu===\'function\')closeClubMenu();" style="color:#2e7d32;">Open full roster &rarr;</a></p>';
+                }
+            }
+
+            var rp = document.getElementById('clubOvRegPreview');
+            if (rp) {
+                if (!pids.length) {
+                    rp.innerHTML = '<p style="margin:0;color:#666;">No players to register yet.</p>';
+                } else {
+                    var rq2 = await sb.from('tournament_registrations').select('status,registration_date,user_id,tournament_id').in('user_id', pids).order('registration_date', { ascending: false }).limit(6);
+                    var rows = (!rq2.error && rq2.data) ? rq2.data : [];
+                    if (!rows.length) {
+                        rp.innerHTML = '<p style="margin:0;color:#666;">No registrations yet. Use <strong>Players &amp; tournaments</strong> to enroll athletes.</p>';
+                    } else {
+                        var tids = [];
+                        rows.forEach(function (r) { if (r.tournament_id && tids.indexOf(r.tournament_id) < 0) tids.push(r.tournament_id); });
+                        var tmap = {};
+                        if (tids.length) {
+                            var tq2 = await sb.from('tournaments').select('id,name').in('id', tids);
+                            if (!tq2.error && tq2.data) tq2.data.forEach(function (t) { tmap[t.id] = t.name; });
+                        }
+                        rp.innerHTML = '<ul style="margin:0;padding-left:1.1rem;">' + rows.map(function (r) {
+                            return '<li>' + escapeHtml(tmap[r.tournament_id] || 'Event') + ' · <strong>' + escapeHtml(r.status || '—') + '</strong></li>';
+                        }).join('') + '</ul>'
+                            + '<p style="margin:10px 0 0;font-size:12px;"><a href="#players-op" style="color:#2e7d32;">Manage all registrations &rarr;</a></p>';
+                    }
+                }
+            }
+
+            var ev = document.getElementById('clubOvEvents');
+            if (ev) {
+                if (!tours.length) {
+                    ev.innerHTML = '<p style="margin:0;color:#666;">No active tournaments published.</p>';
+                } else {
+                    ev.innerHTML = '<ul style="margin:0;padding-left:1.1rem;">' + tours.slice(0, 5).map(function (t) {
+                        var d = t.start_date ? new Date(t.start_date).toLocaleDateString() : '—';
+                        return '<li><strong>' + escapeHtml(t.name || '—') + '</strong> · ' + escapeHtml(d) + ' · ' + escapeHtml(t.status || '') + '</li>';
+                    }).join('') + '</ul>';
+                }
+            }
+
+            var al = document.getElementById('clubOvAlerts');
+            if (al) {
+                var alerts = [];
+                if (pendReg > 0) alerts.push('<p style="margin:0 0 6px;"><strong>Registrations:</strong> ' + pendReg + ' pending SKF or organizer approval.</p>');
+                alerts.push('<p style="margin:0;">Review the <a href="transfers.html" style="color:#2e7d32;font-weight:600;">Transfer market</a> for player movement and SKF decisions.</p>');
+                al.innerHTML = alerts.join('');
+            }
+        }
+
+        async function refreshClubDashboard() {
+            var sb = makeClubSupabase();
+            var uid = JSON.parse(localStorage.getItem('user') || '{}').id;
+            var statusEl = document.getElementById('clubStatusBody');
+            var formWrap = document.getElementById('clubRequestFormWrap');
+
+            if (!sb || !uid) {
+                if (statusEl) statusEl.innerHTML = '<p>Sign in with your SKF account to load club data.</p>';
+                return;
+            }
+
+            var uq = await sb.from('users').select('club_id,club_name,full_name,email').eq('id', uid).maybeSingle();
+            if (uq.error) {
+                statusEl.innerHTML = '<p style="color:#c62828;">' + escapeHtml(uq.error.message) + '</p>';
+                currentClubId = null;
+            } else if (uq.data && uq.data.club_id) {
+                currentClubId = uq.data.club_id;
+                statusEl.innerHTML = '<p><strong>Linked club:</strong> ' + escapeHtml(uq.data.club_name || '—') + '</p>'
+                    + '<p style="font-size:13px;color:#666;margin-top:8px;">Reference ID: ' + escapeHtml(String(uq.data.club_id)) + '</p>';
+                if (formWrap) {
+                    formWrap.innerHTML = '<p style="color:#666;font-size:14px;">Your account is already linked to a federation club. New registration requests are not needed unless SKF asks you to submit an update.</p>';
+                }
+            } else {
+                currentClubId = null;
+                statusEl.innerHTML = '<p>No federation club linked yet. Submit a <strong>club registration request</strong> below. SKF will review and create the club.</p>';
+                if (formWrap) formWrap.style.display = 'block';
+            }
+
+            await loadClubRequestHistory();
+            updateClubOpsVisibility();
+            if (currentClubId) await loadClubOperations();
+            else resetClubOpsEmpty();
+            await loadClubOverviewDashboard();
+        }
+
+        function updateClubOpsVisibility() {
+            var noLink = document.getElementById('clubOpsNoLink');
+            var wrap = document.getElementById('clubOpsWrap');
+            if (!noLink || !wrap) return;
+            if (currentClubId) {
+                noLink.style.display = 'none';
+                wrap.style.display = 'block';
+            } else {
+                noLink.style.display = 'block';
+                wrap.style.display = 'none';
+            }
+            var pmNo = document.getElementById('playersMgmtNoLink');
+            var pmBody = document.getElementById('playersMgmtBody');
+            if (pmNo && pmBody) {
+                if (currentClubId) {
+                    pmNo.style.display = 'none';
+                    pmBody.style.display = 'block';
+                } else {
+                    pmNo.style.display = 'block';
+                    pmBody.style.display = 'none';
+                }
+            }
+            var prNo = document.getElementById('playersRankNoLink');
+            var prBody = document.getElementById('playersRankBody');
+            if (prNo && prBody) {
+                if (currentClubId) {
+                    prNo.style.display = 'none';
+                    prBody.style.display = 'block';
+                } else {
+                    prNo.style.display = 'block';
+                    prBody.style.display = 'none';
+                }
+            }
+        }
+
+        function resetClubOpsEmpty() {
+            var pb = document.getElementById('clubPlayersBody');
+            var tb = document.getElementById('clubTournamentRegsBody');
+            if (pb) pb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;">Link a club first.</td></tr>';
+            if (tb) tb.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#888;">—</td></tr>';
+            clubPlayersCache = [];
+            clubPlayerAvatars = {};
+            var mg = document.getElementById('playersMgmtGrid');
+            if (mg) mg.innerHTML = '';
+            var pmNo = document.getElementById('playersMgmtNoLink');
+            var pmBody = document.getElementById('playersMgmtBody');
+            if (pmNo && pmBody) {
+                pmNo.style.display = 'block';
+                pmBody.style.display = 'none';
+            }
+            var prNo = document.getElementById('playersRankNoLink');
+            var prBody = document.getElementById('playersRankBody');
+            if (prNo && prBody) {
+                prNo.style.display = 'block';
+                prBody.style.display = 'none';
+            }
+            var prTb = document.getElementById('playersRankTbody');
+            if (prTb) prTb.innerHTML = '';
+            var prCnt = document.getElementById('playersRankCount');
+            if (prCnt) prCnt.textContent = '';
+        }
+
+        function isSafeClubPhotoUrl(s) {
+            if (!s || typeof s !== 'string') return false;
+            if (s.length > 950000) return false;
+            var t = s.trim();
+            if (/^javascript:/i.test(t)) return false;
+            return /^data:image\/(jpeg|jpg|png);base64,/i.test(t) || /^https:\/\//i.test(t) || /^blob:/i.test(t)
+                || (/^[a-zA-Z0-9._\/-]+$/.test(t) && t.indexOf('..') === -1 && t.length <= 500);
+        }
+
+        function clubAvatarImgSrc(raw) {
+            if (raw == null || raw === '') return '';
+            var resolved = (typeof skfResolveAvatarUrl === 'function')
+                ? skfResolveAvatarUrl(String(raw).trim(), window.SKF_SUPABASE_URL)
+                : String(raw).trim();
+            return resolved && isSafeClubPhotoUrl(resolved) ? resolved : '';
+        }
+
+        function initialFromName(name) {
+            var s = String(name == null ? '' : name).trim();
+            if (!s) return '?';
+            return s.charAt(0).toUpperCase();
+        }
+
+        function rosterAvatarCellHtml(u) {
+            var raw = clubPlayerAvatars[u.id] || u.profile_image_url || u.profile_photo_url;
+            var url = clubAvatarImgSrc(raw);
+            if (url) {
+                return '<img class="roster-photo" src="' + escapeAttr(String(url)) + '" alt="" loading="lazy" referrerpolicy="no-referrer">';
+            }
+            return '<span class="roster-photo-ph">' + escapeHtml(initialFromName(u.full_name || u.email)) + '</span>';
+        }
+
+        function renderPlayersManagementGrid() {
+            var grid = document.getElementById('playersMgmtGrid');
+            if (!grid) return;
+            if (!currentClubId) {
+                grid.innerHTML = '';
+                return;
+            }
+            var players = clubPlayersCache.filter(function (u) {
+                return (u.role || '').toLowerCase() === 'player';
+            });
+            if (!players.length) {
+                grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#666;padding:12px;">No players are linked to this club yet. Contact SKF to have athletes associated with your club.</p>';
+                return;
+            }
+            grid.innerHTML = players.map(function (p) {
+                var name = escapeHtml(p.full_name || p.email || 'Player');
+                var sub = escapeHtml(p.email || '');
+                var url = clubAvatarImgSrc(clubPlayerAvatars[p.id] || p.profile_image_url || p.profile_photo_url);
+                var imgBlock;
+                if (url) {
+                    imgBlock = '<img src="' + escapeAttr(String(url)) + '" alt="" loading="lazy" referrerpolicy="no-referrer">';
+                } else {
+                    imgBlock = '<div class="club-player-placeholder" aria-hidden="true">' + escapeHtml(initialFromName(p.full_name || p.email)) + '</div>';
+                }
+                return '<div class="club-player-card">' + imgBlock
+                    + '<div class="club-player-name">' + name + '</div>'
+                    + (sub ? '<div class="club-player-email">' + sub + '</div>' : '')
+                    + '</div>';
+            }).join('');
+        }
+
+        function getRankingPlayersSorted() {
+            return clubPlayersCache.filter(function (u) {
+                return (u.role || '').toLowerCase() === 'player';
+            }).slice().sort(function (a, b) {
+                var pa = clubPlayersPointsTotals[String(a.id)] || 0;
+                var pb = clubPlayersPointsTotals[String(b.id)] || 0;
+                if (pb !== pa) return pb - pa;
+                var ra = (a.rank || '').toLowerCase();
+                var rb = (b.rank || '').toLowerCase();
+                if (ra !== rb) return ra.localeCompare(rb);
+                return (a.full_name || a.email || '').localeCompare(b.full_name || b.email || '');
+            });
+        }
+
+        function refreshPlayersRankFilterOptions() {
+            var sel = document.getElementById('playersRankRankFilter');
+            if (!sel) return;
+            var keep = sel.value || '';
+            var sorted = getRankingPlayersSorted();
+            var ranks = [];
+            sorted.forEach(function (p) {
+                var r = (p.rank || '').trim();
+                if (r && ranks.indexOf(r) === -1) ranks.push(r);
+            });
+            ranks.sort(function (a, b) { return a.localeCompare(b); });
+            sel.innerHTML = '<option value="">All ranks</option>' + ranks.map(function (r) {
+                return '<option value="' + escapeAttr(r) + '">' + escapeHtml(r) + '</option>';
+            }).join('');
+            if (keep && ranks.indexOf(keep) !== -1) sel.value = keep;
+        }
+
+        function renderPlayersRanking() {
+            var tb = document.getElementById('playersRankTbody');
+            var cntEl = document.getElementById('playersRankCount');
+            var sel = document.getElementById('playersRankRankFilter');
+            if (!tb || !currentClubId) return;
+
+            var sorted = getRankingPlayersSorted();
+            var q = (document.getElementById('playersRankSearch') && document.getElementById('playersRankSearch').value || '').trim().toLowerCase();
+            var rankOnly = sel ? sel.value : '';
+            var list = sorted.filter(function (p) {
+                if (rankOnly && (p.rank || '').trim() !== rankOnly) return false;
+                if (!q) return true;
+                var blob = [p.full_name, p.email, p.rank, p.age_group].map(function (x) {
+                    return String(x == null ? '' : x).toLowerCase();
+                }).join(' ');
+                return blob.indexOf(q) !== -1;
+            });
+
+            if (!list.length) {
+                tb.innerHTML = '<tr><td colspan="6" style="text-align:center;padding:20px;color:#666;">No players match your search.</td></tr>';
+                if (cntEl) cntEl.textContent = sorted.length ? '0 shown (filter active).' : 'No players in club roster yet.';
+                return;
+            }
+
+            tb.innerHTML = list.map(function (p) {
+                var url = clubAvatarImgSrc(clubPlayerAvatars[p.id] || p.profile_image_url || p.profile_photo_url);
+                var photoCell;
+                if (url) {
+                    photoCell = '<img class="ranking-photo" src="' + escapeAttr(String(url)) + '" alt="" loading="lazy" referrerpolicy="no-referrer">';
+                } else {
+                    photoCell = '<span class="ranking-photo-ph">' + escapeHtml(initialFromName(p.full_name || p.email)) + '</span>';
+                }
+                var pts = clubPlayersPointsTotals[String(p.id)] || 0;
+                var rankLabel = (p.rank || '').trim();
+                var rankHtml = rankLabel
+                    ? '<span class="rank-badge">' + escapeHtml(rankLabel) + '</span>'
+                    : '<span style="color:#999;">—</span>';
+                return '<tr>'
+                    + '<td>' + photoCell + '</td>'
+                    + '<td>' + escapeHtml(p.full_name || '—') + '</td>'
+                    + '<td>' + escapeHtml(String(pts)) + '</td>'
+                    + '<td>' + rankHtml + '</td>'
+                    + '<td>' + escapeHtml(p.age_group || '—') + '</td>'
+                    + '<td>' + escapeHtml(p.email || '—') + '</td>'
+                    + '</tr>';
+            }).join('');
+
+            if (cntEl) {
+                cntEl.textContent = 'Showing ' + list.length + ' of ' + sorted.length + ' player(s).';
+            }
+        }
+
+        async function reloadClubOperations() {
+            if (currentClubId) await loadClubOperations();
+        }
+
+        async function loadClubOperations() {
+            var sb = makeClubSupabase();
+            var cid = currentClubId;
+            var pb = document.getElementById('clubPlayersBody');
+            var selPlayer = document.getElementById('reg_player_id');
+            var selTour = document.getElementById('reg_tournament_id');
+            if (!sb || !cid || !pb) return;
+
+            pb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#888;">Loading…</td></tr>';
+            var mgLoad = document.getElementById('playersMgmtGrid');
+            if (mgLoad) mgLoad.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#888;">Loading…</p>';
+
+            var pq = await sb.from('users').select('id,full_name,email,phone,role,age_group,rank,profile_image_url,profile_photo_url').eq('club_id', cid).order('full_name');
+            if (pq.error) {
+                pb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#c62828;">' + escapeHtml(pq.error.message) + '</td></tr>';
+                clubPlayersCache = [];
+                clubPlayerAvatars = {};
+                if (mgLoad) mgLoad.innerHTML = '<p style="grid-column:1/-1;text-align:center;color:#c62828;">' + escapeHtml(pq.error.message) + '</p>';
+                var prE = document.getElementById('playersRankTbody');
+                if (prE) prE.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#c62828;">' + escapeHtml(pq.error.message) + '</td></tr>';
+                return;
+            }
+            clubPlayersCache = pq.data || [];
+            clubPlayerAvatars = {};
+            clubPlayersPointsTotals = {};
+            var playerIds = clubPlayersCache.filter(function (u) {
+                return (u.role || '').toLowerCase() === 'player';
+            }).map(function (u) { return u.id; });
+            if (playerIds.length) {
+                var av = await sb.from('profiles').select('user_id,avatar_url').in('user_id', playerIds);
+                if (!av.error && av.data) {
+                    av.data.forEach(function (r) {
+                        if (r.avatar_url) clubPlayerAvatars[r.user_id] = r.avatar_url;
+                    });
+                }
+
+                var ptsQ = await sb.from('v_player_points_totals').select('user_id,total_points').in('user_id', playerIds);
+                if (!ptsQ.error && ptsQ.data) {
+                    ptsQ.data.forEach(function (r) {
+                        clubPlayersPointsTotals[String(r.user_id)] = r.total_points || 0;
+                    });
+                }
+            }
+            var playersOnly = clubPlayersCache.filter(function (u) { return (u.role || '').toLowerCase() === 'player'; });
+
+            if (!clubPlayersCache.length) {
+                pb.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#666;">No members found for this club yet. Contact SKF to have players associated with your club.</td></tr>';
+            } else {
+                pb.innerHTML = clubPlayersCache.map(function (u) {
+                    return '<tr>'
+                        + '<td>' + rosterAvatarCellHtml(u) + '</td>'
+                        + '<td>' + escapeHtml(u.full_name || '—') + '</td>'
+                        + '<td>' + escapeHtml(u.email || '—') + '</td>'
+                        + '<td>' + escapeHtml(u.role || '—') + '</td>'
+                        + '<td>' + escapeHtml(u.age_group || '—') + '</td>'
+                        + '<td>' + escapeHtml(u.rank || '—') + '</td>'
+                        + '</tr>';
+                }).join('');
+            }
+
+            renderPlayersManagementGrid();
+            refreshPlayersRankFilterOptions();
+            renderPlayersRanking();
+
+            if (selPlayer) {
+                selPlayer.innerHTML = '<option value="">— Select player —</option>'
+                    + playersOnly.map(function (u) {
+                        return '<option value="' + escapeAttr(String(u.id)) + '">' + escapeHtml(u.full_name || u.email) + '</option>';
+                    }).join('');
+                if (!playersOnly.length) {
+                    selPlayer.innerHTML = '<option value="">No players in club (only coaches/other roles listed)</option>';
+                }
+            }
+
+            if (selTour) {
+                var tq = await sb.from('tournaments').select('id,name,status,start_date').eq('is_active', true).order('start_date', { ascending: true });
+                var tours = (!tq.error && tq.data) ? tq.data : [];
+                var open = tours.filter(function (t) { return (t.status || '') === 'registration_open'; });
+                var list = open.length ? open : tours;
+                selTour.innerHTML = '<option value="">— Select —</option>' + list.map(function (t) {
+                    var lab = (t.name || 'Tournament') + ' (' + (t.status || '') + ')';
+                    return '<option value="' + escapeAttr(String(t.id)) + '">' + escapeHtml(lab) + '</option>';
+                }).join('');
+            }
+
+            document.getElementById('reg_category_id').innerHTML = '<option value="">— Choose tournament first —</option>';
+            document.getElementById('regCategoryHint').style.display = 'none';
+
+            await loadClubTournamentRegistrations();
+        }
+
+        async function onClubRegTournamentChange() {
+            var sb = makeClubSupabase();
+            var tid = document.getElementById('reg_tournament_id').value;
+            var catSel = document.getElementById('reg_category_id');
+            var hint = document.getElementById('regCategoryHint');
+            var wInput = document.getElementById('reg_weight_category');
+            if (!sb || !catSel) return;
+            catSel.innerHTML = '<option value="">Loading…</option>';
+            catSel.dataset.noCats = '';
+            if (hint) hint.style.display = 'none';
+            if (!tid) {
+                catSel.removeAttribute('required');
+                catSel.innerHTML = '<option value="">— Choose tournament first —</option>';
+                clubRegSyncWeightUi();
+                return;
+            }
+            var cq = await sb.from('tournament_categories')
+                .select('id,discipline,gender,age_group,weight_class,event_type,age_category,is_team_event')
+                .eq('tournament_id', tid)
+                .order('age_group');
+            if (cq.error) {
+                catSel.innerHTML = '<option value="">' + escapeHtml(cq.error.message) + '</option>';
+                clubRegSyncWeightUi();
+                return;
+            }
+            var cats = cq.data || [];
+            if (!cats.length) {
+                catSel.innerHTML = '<option value="">— No categories —</option>';
+                catSel.removeAttribute('required');
+                catSel.dataset.noCats = '1';
+                if (hint) hint.style.display = 'block';
+            } else {
+                catSel.setAttribute('required', 'required');
+                catSel.innerHTML = '<option value="">— Select category —</option>' + cats.map(function (c) {
+                    var ev = String(c.event_type || '').toLowerCase();
+                    if (!ev) ev = (String(c.discipline || '').toLowerCase() === 'kumite') ? 'kumite' : 'kata_individual';
+                    if (String(c.is_team_event).toLowerCase() === 'true') ev = 'kata_team';
+                    var isKumite = ev === 'kumite';
+                    var lab = wkfGenderLabel(c.gender) + ' ' + wkfAgeCategoryLabel(c.age_category || c.age_group) + ' ' + wkfEventTypeLabel(ev);
+                    if (isKumite && c.weight_class) lab += ' ' + String(c.weight_class);
+                    return '<option value="' + escapeAttr(String(c.id)) + '" data-event="' + escapeAttr(ev) + '" data-weight="' + escapeAttr(isKumite ? (c.weight_class || '') : '') + '">' + escapeHtml(lab) + '</option>';
+                }).join('');
+            }
+            if (wInput) wInput.value = '';
+            clubRegSyncWeightUi();
+        }
+
+        document.addEventListener('change', function (e) {
+            if (e.target && e.target.id === 'reg_category_id') {
+                clubRegSyncWeightUi();
+            }
+        });
+
+        async function loadClubTournamentRegistrations() {
+            var tbody = document.getElementById('clubTournamentRegsBody');
+            var sb = makeClubSupabase();
+            var cid = currentClubId;
+            if (!tbody || !sb || !cid) return;
+
+            var pq = await sb.from('users').select('id').eq('club_id', cid).eq('role', 'player');
+            var ids = (!pq.error && pq.data) ? pq.data.map(function (x) { return x.id; }) : [];
+            if (!ids.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#666;">No players to show registrations for.</td></tr>';
+                return;
+            }
+
+            var rq = await sb.from('tournament_registrations').select('id,registration_date,status,weight_category,belt_level,user_id,tournament_id').in('user_id', ids).order('registration_date', { ascending: false }).limit(40);
+            if (rq.error) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#c62828;">' + escapeHtml(rq.error.message) + '</td></tr>';
+                return;
+            }
+            var rows = rq.data || [];
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#666;">No tournament registrations yet.</td></tr>';
+                return;
+            }
+
+            var tids = [];
+            rows.forEach(function (r) { if (r.tournament_id && tids.indexOf(r.tournament_id) < 0) tids.push(r.tournament_id); });
+            var tmap = {};
+            if (tids.length) {
+                var tq = await sb.from('tournaments').select('id,name').in('id', tids);
+                if (!tq.error && tq.data) tq.data.forEach(function (t) { tmap[t.id] = t.name; });
+            }
+            var pmap = {};
+            clubPlayersCache.forEach(function (u) { pmap[u.id] = u; });
+
+            tbody.innerHTML = rows.map(function (r) {
+                var p = pmap[r.user_id] || {};
+                return '<tr>'
+                    + '<td>' + escapeHtml(fmtWhen(r.registration_date)) + '</td>'
+                    + '<td>' + escapeHtml(tmap[r.tournament_id] || '—') + '</td>'
+                    + '<td>' + escapeHtml(p.full_name || p.email || String(r.user_id).slice(0, 8)) + '</td>'
+                    + '<td>' + escapeHtml(r.weight_category || '—') + '</td>'
+                    + '<td>' + escapeHtml(r.status || '—') + '</td>'
+                    + '</tr>';
+            }).join('');
+        }
+
+        async function submitClubTournamentRegistration(ev) {
+            ev.preventDefault();
+            var sb = makeClubSupabase();
+            var admin = JSON.parse(localStorage.getItem('user') || '{}');
+            var tid = document.getElementById('reg_tournament_id').value;
+            var pid = document.getElementById('reg_player_id').value;
+            var cidVal = document.getElementById('reg_category_id').value;
+            var w = document.getElementById('reg_weight_category').value.trim();
+            var belt = document.getElementById('reg_belt_level').value.trim() || null;
+            if (!sb || !currentClubId) {
+                alert('No club linked.');
+                return;
+            }
+            if (!tid || !pid) {
+                alert('Choose tournament and player.');
+                return;
+            }
+            var catSel = document.getElementById('reg_category_id');
+            if (catSel && catSel.dataset && catSel.dataset.noCats === '1') {
+                alert('This tournament has no linked categories. SKF Admin must attach official categories before registration.');
+                return;
+            }
+            var needCat = catSel && catSel.hasAttribute('required');
+            if (needCat && !cidVal) {
+                alert('Choose a category.');
+                return;
+            }
+            var playerOk = clubPlayersCache.some(function (u) {
+                return String(u.id) === String(pid) && (u.role || '').toLowerCase() === 'player';
+            });
+            if (!playerOk) {
+                alert('Selected user must be a player in your club.');
+                return;
+            }
+
+            var payload = {
+                tournament_id: tid,
+                user_id: pid,
+                category_id: cidVal || null,
+                weight_category: w || null,
+                belt_level: belt,
+                registered_by_user_id: admin.id,
+                status: 'pending'
+            };
+
+            var ins = await sb.from('tournament_registrations').insert(payload);
+            if (ins.error) {
+                alert(ins.error.message || 'Registration failed.');
+                return;
+            }
+            document.getElementById('clubTournamentRegForm').reset();
+            document.getElementById('reg_category_id').innerHTML = '<option value="">— Choose tournament first —</option>';
+            await loadClubOperations();
+            alert('Registration submitted.');
+        }
+
+        async function loadClubRequestHistory() {
+            var tbody = document.getElementById('clubRegHistoryBody');
+            var sb = makeClubSupabase();
+            var uid = JSON.parse(localStorage.getItem('user') || '{}').id;
+            if (!tbody || !sb || !uid) return;
+
+            var q = await sb.from('club_registration_requests')
+                .select('*')
+                .eq('applicant_user_id', uid)
+                .order('created_at', { ascending: false });
+            if (q.error) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#c62828;">' + escapeHtml(q.error.message) + '</td></tr>';
+                return;
+            }
+            var rows = q.data || [];
+            if (!rows.length) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#666;">No requests yet.</td></tr>';
+                return;
+            }
+            var hasPending = rows.some(function (r) { return (r.status || '').toLowerCase() === 'pending'; });
+            var form = document.getElementById('clubRegForm');
+            var phOld = document.getElementById('pendingFormHint');
+            if (phOld) phOld.remove();
+            var userStr = localStorage.getItem('user');
+            var uid2 = userStr ? JSON.parse(userStr).id : null;
+            var needBlockForm = false;
+            if (uid2) {
+                var ur = await sb.from('users').select('club_id').eq('id', uid2).maybeSingle();
+                if (!ur.error && ur.data && ur.data.club_id) needBlockForm = true;
+            }
+            if (hasPending && form && !needBlockForm) {
+                var p = document.createElement('p');
+                p.id = 'pendingFormHint';
+                p.style.cssText = 'font-size:13px;color:#e65100;margin-bottom:12px;';
+                p.textContent = 'You already have a pending request. Withdraw it below to submit a new one, or wait for SKF.';
+                form.parentNode.insertBefore(p, form);
+                form.style.opacity = '0.5';
+                var btn = form.querySelector('button[type="submit"]');
+                if (btn) btn.disabled = true;
+            } else if (form) {
+                form.style.opacity = '1';
+                var btn2 = form.querySelector('button[type="submit"]');
+                if (btn2) btn2.disabled = false;
+            }
+
+            tbody.innerHTML = rows.map(function (r) {
+                var st = (r.status || '').toLowerCase();
+                var rid = escapeAttr(String(r.id));
+                var withdraw = (st === 'pending')
+                    ? '<button type="button" style="padding:6px 12px;font-size:12px;background:#6c757d;color:#fff;border:none;border-radius:6px;cursor:pointer;" onclick="withdrawClubRequest(\'' + rid + '\')">Withdraw</button>'
+                    : '—';
+                return '<tr>'
+                    + '<td>' + escapeHtml(fmtWhen(r.created_at)) + '</td>'
+                    + '<td>' + escapeHtml(r.proposed_club_name || '—') + '</td>'
+                    + '<td>' + escapeHtml(r.proposed_location || '—') + '</td>'
+                    + '<td>' + (r.requested_initial_player_count != null ? escapeHtml(String(r.requested_initial_player_count)) : '—') + '</td>'
+                    + '<td>' + escapeHtml(st) + '</td>'
+                    + '<td>' + withdraw + '</td>'
+                    + '</tr>';
+            }).join('');
+        }
+
+        async function submitClubRegistrationRequest(ev) {
+            ev.preventDefault();
+            var sb = makeClubSupabase();
+            var uid = JSON.parse(localStorage.getItem('user') || '{}').id;
+            if (!sb || !uid) {
+                alert('Session required.');
+                return;
+            }
+            var ur = await sb.from('users').select('club_id').eq('id', uid).maybeSingle();
+            if (!ur.error && ur.data && ur.data.club_id) {
+                alert('Your account is already linked to a club.');
+                return;
+            }
+            var pendingQ = await sb.from('club_registration_requests')
+                .select('id')
+                .eq('applicant_user_id', uid)
+                .eq('status', 'pending')
+                .limit(1);
+            if (!pendingQ.error && pendingQ.data && pendingQ.data.length) {
+                alert('You already have a pending request.');
+                return;
+            }
+
+            var name = document.getElementById('proposed_club_name').value.trim();
+            var loc = document.getElementById('proposed_location').value.trim();
+            var cntEl = document.getElementById('requested_initial_player_count');
+            var cnt = cntEl && cntEl.value !== '' ? parseInt(cntEl.value, 10) : null;
+            var notes = document.getElementById('club_reg_notes').value.trim() || null;
+
+            var ins = await sb.from('club_registration_requests').insert({
+                applicant_user_id: uid,
+                proposed_club_name: name,
+                proposed_location: loc || null,
+                requested_initial_player_count: Number.isFinite(cnt) ? cnt : null,
+                notes: notes,
+                status: 'pending'
+            });
+            if (ins.error) {
+                alert(ins.error.message || 'Could not submit.');
+                return;
+            }
+            document.getElementById('clubRegForm').reset();
+            await refreshClubDashboard();
+            alert('Request submitted. SKF will review it.');
+        }
+
+        async function withdrawClubRequest(requestId) {
+            if (!confirm('Withdraw this pending request?')) return;
+            var sb = makeClubSupabase();
+            if (!sb) return;
+            var res = await sb.from('club_registration_requests').update({ status: 'withdrawn' })
+                .eq('id', requestId)
+                .eq('applicant_user_id', JSON.parse(localStorage.getItem('user') || '{}').id)
+                .eq('status', 'pending');
+            if (res.error) {
+                alert(res.error.message || 'Withdraw failed.');
+                return;
+            }
+            await refreshClubDashboard();
+        }
+    </script>
+</body>
+</html>

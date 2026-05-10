@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>REGISTER: SKF Admin &amp; Referees+ — Saudi Karate Federation</title>
+    <title>REGISTER: SKF staff — Saudi Karate Federation</title>
     <link rel="stylesheet" href="SKF.CSS">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="auth.js" defer></script>
+    <script src="auth.js?v=20260411d" defer></script>
     <style>
-        /* Same treatment as member login/register (SKF.CSS): full-viewport cover; this page uses SKF-REGISTER.png */
         body.staff-register-page {
             background-color: #1a237e;
             background-image: url('SKF-REGISTER.png');
@@ -26,13 +25,65 @@
             justify-content: center;
             align-items: center;
         }
-        .reg-wrap { max-width: 520px; width: 100%; margin: 0 auto; padding: 24px; background: rgba(255,255,255,0.95); border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.12); max-height: calc(100dvh - 48px); overflow-y: auto; }
-        .reg-wrap input, .reg-wrap select, .reg-wrap textarea { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; }
+        .reg-wrap {
+            max-width: 520px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 24px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+            max-height: calc(100dvh - 48px);
+            overflow-y: auto;
+        }
+        .reg-wrap input, .reg-wrap select, .reg-wrap textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
         .reg-wrap label { font-size: 13px; color: #444; display: block; margin-top: 10px; }
-        .btn { width: 100%; padding: 12px; background: #2e7d32; color: #fff; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 16px; }
+        .reg-wrap select.role-select {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: white;
+            box-sizing: border-box;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #2e7d32;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 16px;
+        }
         .btn:hover { background: #1b5e20; }
-        #regErr { display: none; background: #ffebee; color: #c62828; padding: 10px; border-radius: 6px; margin-bottom: 12px; font-size: 13px; }
-        #regOk { display: none; background: #e8f5e9; color: #2e7d32; padding: 12px; border-radius: 6px; margin-bottom: 12px; font-size: 14px; }
+        #regErr {
+            display: none;
+            background: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+        #regOk {
+            display: none;
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
         .reg-wrap a.btn-skf-staff-register { margin-top: 0; margin-bottom: 16px; }
     </style>
 </head>
@@ -51,6 +102,15 @@
 
             <label for="a_email">Email *</label>
             <input type="email" id="a_email" required autocomplete="email" placeholder="your@email.com">
+
+            <div id="refereeRoleWrap" style="display:none;">
+                <label for="staff_ref_role_select">Role *</label>
+                <select id="staff_ref_role_select" name="staff_ref_role_select" class="role-select" aria-required="true">
+                    <option value="" disabled selected>Select your role</option>
+                    <option value="referee">Referee</option>
+                    <option value="referees_plus">Referee+</option>
+                </select>
+            </div>
 
             <label for="a_pass">Password *</label>
             <input type="password" id="a_pass" required autocomplete="new-password" minlength="8" placeholder="At least 8 characters">
@@ -71,8 +131,38 @@
             var params = new URLSearchParams(window.location.search || '');
             var roleFromUrl = (params.get('role') || '').trim().toLowerCase();
             var roleEl = document.getElementById('a_role');
-            if (roleFromUrl === 'skf_admin' || roleFromUrl === 'referees_plus') {
-                if (roleEl) roleEl.value = roleFromUrl;
+            var refereeRoleWrap = document.getElementById('refereeRoleWrap');
+            var staffRefRoleSelect = document.getElementById('staff_ref_role_select');
+            var staffRegMode = '';
+
+            function syncStaffRefRoleRequired() {
+                if (!staffRefRoleSelect) return;
+                var v = staffRefRoleSelect.value;
+                staffRefRoleSelect.required = !v || v === '';
+            }
+
+            if (roleFromUrl === 'skf_admin') {
+                staffRegMode = 'skf_admin';
+                if (roleEl) roleEl.value = 'skf_admin';
+                if (refereeRoleWrap) refereeRoleWrap.style.display = 'none';
+            } else if (roleFromUrl === 'referee_staff' || roleFromUrl === 'referee' || roleFromUrl === 'referees_plus') {
+                staffRegMode = 'referee_pick';
+                if (roleEl) roleEl.value = '';
+                if (refereeRoleWrap) refereeRoleWrap.style.display = 'block';
+                if (staffRefRoleSelect) {
+                    if (roleFromUrl === 'referee') {
+                        staffRefRoleSelect.value = 'referee';
+                        staffRefRoleSelect.required = false;
+                    } else if (roleFromUrl === 'referees_plus') {
+                        staffRefRoleSelect.value = 'referees_plus';
+                        staffRefRoleSelect.required = false;
+                    } else {
+                        staffRefRoleSelect.value = '';
+                        staffRefRoleSelect.selectedIndex = 0;
+                        staffRefRoleSelect.required = true;
+                    }
+                    staffRefRoleSelect.addEventListener('change', syncStaffRefRoleRequired);
+                }
             } else {
                 if (roleEl) roleEl.value = '';
                 window.location.replace('registration.html');
@@ -99,15 +189,26 @@
                     err.style.display = 'block';
                     return;
                 }
-                var role = document.getElementById('a_role').value;
-                if (role !== 'skf_admin' && role !== 'referees_plus') {
-                    err.textContent = 'Open this page again from Registration and choose SKF Administrator or Referees+.';
+                var role;
+                if (staffRegMode === 'skf_admin') {
+                    role = 'skf_admin';
+                } else {
+                    role = staffRefRoleSelect ? String(staffRefRoleSelect.value || '').trim() : '';
+                    if (!role || (role !== 'referee' && role !== 'referees_plus')) {
+                        err.textContent = 'Please select a role.';
+                        err.style.display = 'block';
+                        return;
+                    }
+                }
+                if (role !== 'skf_admin' && role !== 'referees_plus' && role !== 'referee') {
+                    err.textContent = 'Invalid request. Start again from the registration menu.';
                     err.style.display = 'block';
                     return;
                 }
+                if (roleEl) roleEl.value = role;
                 var sb = typeof getSupabase === 'function' ? getSupabase() : null;
                 if (!sb) {
-                    err.textContent = 'Could not load Supabase. Check that auth.js and the Supabase script are available.';
+                    err.textContent = 'Sign-in service unavailable. Refresh the page or try again later.';
                     err.style.display = 'block';
                     return;
                 }
@@ -138,29 +239,38 @@
                             }
                         }
                     });
-                    if (res.error) {
+                    var createdUser = res.data && res.data.user && res.data.user.id;
+                    if (res.error && !createdUser) {
                         ok.style.display = 'none';
                         ok.innerHTML = '';
-                        var msg = res.error.message || 'Registration failed.';
-                        if (/database error saving new user/i.test(msg)) {
-                            msg += ' Your Supabase project could not create the profile row (often a role check on public.users). In the Supabase SQL Editor, run database/users_role_add_skf_admin.sql, then check Auth → Logs for details.';
-                        }
-                        err.textContent = msg;
+                        err.textContent = res.error.message || 'Could not sign up. Please try again.';
                         err.style.display = 'block';
                         return;
                     }
+                    if (res.error && createdUser) {
+                        console.warn('signUp returned error but user was created:', res.error.message || res.error);
+                    }
                     err.style.display = 'none';
                     err.textContent = '';
-                    ok.innerHTML = '<strong>Registration received.</strong> ' +
-                        '<strong>Email verification is required</strong> — use the link in your inbox (and spam) before you try to sign in. ' +
-                        '<strong>Your SKF official ID is not sent in this email.</strong> It is created only after an SKF administrator <strong>approves</strong> your request (via the federation admin queue); they can then share your ID with you. ' +
-                        'Your password stays the one you just chose.';
+                    ok.innerHTML = '<strong>Email sent.</strong> Check your inbox (and spam) to confirm.';
                     ok.style.display = 'block';
                     form.reset();
-                    if (roleEl) roleEl.value = roleFromUrl;
+                    if (staffRegMode === 'skf_admin') {
+                        if (roleEl) roleEl.value = 'skf_admin';
+                    } else if (staffRefRoleSelect) {
+                        if (roleEl) roleEl.value = '';
+                        if (roleFromUrl === 'referee_staff') {
+                            staffRefRoleSelect.selectedIndex = 0;
+                            staffRefRoleSelect.required = true;
+                        } else if (roleFromUrl === 'referee') {
+                            staffRefRoleSelect.value = 'referee';
+                        } else if (roleFromUrl === 'referees_plus') {
+                            staffRefRoleSelect.value = 'referees_plus';
+                        }
+                    }
                 } catch (x) {
                     console.error(x);
-                    err.textContent = 'Something went wrong. Try again or contact support.';
+                    err.textContent = 'Something went wrong. Please try again.';
                     err.style.display = 'block';
                 }
             });

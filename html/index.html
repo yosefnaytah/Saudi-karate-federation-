@@ -6,9 +6,10 @@
     <title>Login — Saudi Karate Federation</title>
     <link rel="stylesheet" href="SKF.CSS">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script src="auth.js" defer></script>
+    <!-- v= cache-bust so Live Server / browser pick up profile-login fixes -->
+    <script src="auth.js?v=20260411d" defer></script>
     <style>
-        #emailCodeError {
+        #emailCodeError, #passwordLoginError {
             display: none;
             background: #ffeaea;
             color: #c0392b;
@@ -30,12 +31,15 @@
             font-size: 13px;
             text-align: center;
         }
+        #loginPasswordPanel code { font-size: 12px; background: #eee; padding: 2px 6px; border-radius: 4px; }
     </style>
 </head>
 <body>
     <div class="login-container">
         <h2>Member sign-in</h2>
-        <p style="font-size:13px;color:#555;margin:0 0 14px;text-align:center;">For <strong>player</strong>, <strong>coach</strong>, and <strong>club admin</strong> only. Enter your registered email — we send a one-time code. No password on this page.</p>
+        <p id="memberLoginIntro" style="font-size:13px;color:#555;margin:0 0 14px;text-align:center;line-height:1.45;">
+            For <strong>player</strong>, <strong>coach</strong>, and <strong>club admin</strong> only. Enter your registered email — we send a one-time code. No password on this page.
+        </p>
 
         <div id="loginEmailCodePanel">
             <div id="emailCodeError"></div>
@@ -56,13 +60,27 @@
             </form>
         </div>
 
+        <div id="loginPasswordPanel" style="display:none;">
+            <div id="passwordLoginError"></div>
+            <form onsubmit="return handleMemberPasswordLogin(event)">
+                <label for="memberPasswordEmail">Email</label>
+                <input type="email" id="memberPasswordEmail" autocomplete="username" placeholder="your@email.com" required>
+                <label for="memberPasswordField" style="display:block;margin-top:10px;">Password</label>
+                <input type="password" id="memberPasswordField" autocomplete="current-password" required>
+                <button type="submit" style="margin-top:14px;">Sign in</button>
+            </form>
+        </div>
+
         <a href="registration.html" class="btn-skf-staff-register">Choose your registration path</a>
 
-        <p style="font-size:12px;color:#666;margin:10px 0 0;"><a href="skf-admin-login.html">SKF Admin portal</a></p>
+        <p style="font-size:12px;color:#666;margin:10px 0 0;text-align:center;">
+            <a href="skf-admin-login.html">Federation staff sign-in</a> <span style="color:#999;">(Admin, referees, Referees+)</span>
+        </p>
 
         <div class="login-links">
             <a href="registration.html" class="create-account">Create a new account</a>
         </div>
+        <p id="skfAuthBuild" style="font-size:11px;color:#2e7d32;text-align:center;margin-top:14px;font-family:system-ui,sans-serif;"></p>
     </div>
 </body>
 </html>

@@ -4,6 +4,10 @@ namespace SkfWebsite.Api.Services;
 
 public interface ISupabaseService
 {
+    // Legacy convenience for controllers that use _supabaseService.Client directly.
+    // Prefer GetClient() in new code (async initialization).
+    Supabase.Client Client { get; }
+
     Task<Supabase.Client> GetClient();
     Task<User?> GetUserByEmail(string email);
     Task<User?> GetUserById(string id);

@@ -9,6 +9,17 @@ public class SupabaseService : ISupabaseService
     private readonly IConfiguration _configuration;
     private readonly Client _supabaseClient;
 
+    public Client Client
+    {
+        get
+        {
+            // Some controllers use _supabaseService.Client directly (sync path).
+            // Ensure the client is initialized to avoid runtime failures.
+            _supabaseClient.InitializeAsync().GetAwaiter().GetResult();
+            return _supabaseClient;
+        }
+    }
+
     public SupabaseService(IConfiguration configuration)
     {
         _configuration = configuration;
